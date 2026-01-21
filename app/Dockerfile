@@ -1,23 +1,13 @@
-# Use Node.js as base for Vite build
-FROM node:18-alpine as build
+# Use Node.js 22
+FROM node:22-alpine
 # Set working directory
-WORKDIR /usr/src/app
-# Copy package files
+WORKDIR /app
+# Copy package files, Copies host's package.json to container (/usr/src/app/)
 COPY package*.json ./
-# Install dependencies
+# Install dependencies, Creates NEW node_modules in container (/usr/src/app/)
 RUN npm install
 # Copy source code
 COPY . .
-# Build the application
-RUN npm run build
-# Production stage
-FROM nginx:alpine
+# Start the application
+CMD ["npm", "run", "dev"]
 
-# Copy built files
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Expose port
-EXPOSE 5173
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]

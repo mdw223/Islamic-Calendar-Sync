@@ -1,27 +1,21 @@
-import logger from './middleware/logger.js';
+import requestLogger from './middleware/logger.js';
 import express from 'express';
 import { app as appConfig } from './config.js';
 import routes from './endpoints/routes.js';
 import ErrorHandlerMiddleware from './middleware/ErrorHandlerMiddleware.js';
 import NotFoundMiddleware from './middleware/NotFoundMiddleware.js';
-require('dotenv').config();
 
 const app = express();
 
-// Trust proxy (for environments behind proxies like Nginx)
 app.set('trust proxy', true);
 
-// Built-in middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Custom middleware would go here
-app.use(logger);
+app.use(requestLogger);
 
-// Routes
 app.use(routes);
 
-// Error handling middleware (must be last)
 app.use(NotFoundMiddleware);
 app.use(ErrorHandlerMiddleware);
 

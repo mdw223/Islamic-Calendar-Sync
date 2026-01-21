@@ -1,5 +1,5 @@
-import audit from 'express-request-logger';
 import { createLogger, format, transports } from 'winston';
+import morgan from 'morgan';
 
 const logger = createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -8,28 +8,38 @@ const logger = createLogger({
     format.json()
   ),
   transports: [
-    new transports.Console(),
-    new transports.File({ filename: 'logs/audit.log' })
+    new transports.Console({
+      format: format.combine(
+        format.colorize(),
+        format.simple()
+      )
+    }),
+    new transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new transports.File({ filename: 'logs/combined.log' })
   ]
 });
 
-export const requestLogger = audit({
-  logger: logger,
-  excludeURLs: ['/health', '/metrics'], // Skip health checks
-  request: {
-    maskBody: ['password', 'token', 'secret'], // Mask sensitive fields
-    excludeHeaders: ['authorization', 'cookie'], // Exclude headers
-    maxBodyLength: 1000 // Limit body length
-  },
-  response: {
-    maskBody: ['session_token', 'access_token'],
-    maxBodyLength: 1000
-  },
-  levels: {
-    '2xx': 'info',
-    '4xx': 'warn',
-    '5xx': 'error'
-  }
-});
+// Create a stream object for Morgan to use
+const stream = {
+  write: (message) => logger.info(message.trim())
+};
 
-export default logger;
+// Morgan middleware for HTTP request logging
+export const requestLogger = morgan(
+  ':method :url :status :res[content-length] - :response-time ms',
+  { stream }
+);
+
+// Custom error logger middleware
+export const errorLogger = (err, req, res, next) => {
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    method: req.method,
+    url: req.url,
+    ip: req.ip
+  });
+  next(err);
+};
+
+export default requestLogger;

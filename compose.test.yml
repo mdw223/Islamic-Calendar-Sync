@@ -1,0 +1,52 @@
+services:
+  # Backend API Service
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api_service
+    env_file:
+      - .env
+    volumes: # Maps host ./api to container /app/src
+      - ./api/src:/app/src
+      - ./logs:/app/logs
+    depends_on:
+      - database
+
+  # Frontend React App
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: react_app
+    volumes:
+      - ./app/src:/app/src
+    restart: unless-stopped
+
+  # Reverse Proxy (Nginx)
+  proxy:
+    image: nginx:latest
+    container_name: nginx_proxy
+    ports:
+      - "5000:80"  
+      - "443:443"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/templates/default.conf.template
+    depends_on:
+      - api
+      - app
+
+  # Database Service 
+  database:
+    image: postgres:15
+    container_name: ics_postgres_db_test
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_dev_data:
+    driver: local
