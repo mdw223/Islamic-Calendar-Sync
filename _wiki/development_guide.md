@@ -225,6 +225,7 @@ docker network inspect app-network
 
 ```
 project/
+├── _wiki                          # Wiki pages
 ├── compose.yml                    # Development configuration
 ├── compose-test.yml               # Testing configuration
 ├── .env                           # Development environment variables
