@@ -6,6 +6,7 @@ Download and install the following:
 
 - **PostgreSQL**: [https://www.enterprisedb.com/downloads/postgres-postgresql-downloads](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)
 - **Docker**: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+- **pgAdmin**: [https://www.pgadmin.org/](https://www.pgadmin.org/) is optional, a free, official PostgreSQL GUI tool for PostgreSQL database in Docker
 
 ## Installation
 

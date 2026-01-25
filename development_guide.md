@@ -35,7 +35,7 @@ docker compose -f compose.yml up -d
 
 ```bash
 # Start testing stack
-docker compose -f compose.test.yml up -d
+docker compose -f compose-test.yml up -d
 ```
 
 ### Container Management
@@ -50,51 +50,50 @@ docker ps
 docker ps -a
 
 # Check specific service status
-docker -f compose.yml ps
+docker compose -f compose.yml ps
 
 # Check database environment variables
 docker exec -it ics_postgres_db_dev env | grep POSTGRES
 ```
 
-# You should see 4 containers running:
+You should see 4 containers running:
 
-api_service (port 3000)
-react_app (port 5173)
-ics_postgres_db_dev (port 5432)
-nginx_proxy (port 8080)
+- api_service (port 3000)
+- react_app (port 5173)
+- ics_postgres_db_dev (port 5432)
+- nginx_proxy (port 8080)
 
 #### Rebuilding and Recreating Containers
 
 ```bash
 # Rebuild images and recreate containers (development)
-docker -f compose.yml up -d --build
+docker compose -f compose.yml up -d --build
 
 # Force recreate containers (loses database data!)
-docker -f compose.yml up -d --force-recreate
+docker compose -f compose.yml up -d --force-recreate
 
 # Normal development - reuse existing containers
-docker -f compose.yml up -d
+docker compose -f compose.yml up -d
 ```
 
-The -d flag stands for "detached mode," meaning the containers will run in the background.
-You won't see the logs in the terminal, but you can still interact with running containers.
+The `-d` flag stands for "detached mode," meaning the containers will run in the background. You won't see the logs in the terminal, but you can still interact with running containers.
 
 ### Stopping Services
 
 ```bash
 # Stop development services
-docker -f compose.yml down
+docker compose -f compose.yml down
 
 # Stop testing services
-docker -f compose-test.yml down
+docker compose -f compose-test.yml down
 
 # Stop services and remove volumes (resets database)
-docker -f compose.yml down -v
+docker compose -f compose.yml down -v
 ```
 
 ## Accessing the Application
 
-### Environment
+### Development Environment
 
 - **Frontend**: http://localhost:5000
 - **Backend API**: http://localhost/api
@@ -135,20 +134,20 @@ docker exec -it ics_postgres_db_test psql -U ${DB_USER} -d ${DB_NAME}
 
 ```bash
 # Stop services and remove development database volume
-docker -f compose.yml down -v
+docker compose -f compose.yml down -v
 
 # Restart with fresh database
-docker -f compose.yml up -d
+docker compose -f compose.yml up -d
 ```
 
 #### Testing Database Reset
 
 ```bash
 # Stop services and remove testing database volume
-docker -f compose-test.yml down -v
+docker compose -f compose-test.yml down -v
 
 # Restart with fresh database
-docker -f compose-test.yml up -d
+docker compose -f compose-test.yml up -d
 ```
 
 ## Development Tips
@@ -169,9 +168,9 @@ Environment variables are loaded from:
 
 ### Code Changes
 
-- Frontend (app/): Changes are reflected immediately
-- Backend (api/): Restart the api service or rebuild the image
-- Configuration (proxy/): Rebuild the proxy image
+- **Frontend (app/)**: Changes are reflected immediately
+- **Backend (api/)**: Restart the api service or rebuild the image
+- **Configuration (proxy/)**: Rebuild the proxy image
 
 ### Common Commands
 
@@ -179,42 +178,43 @@ Environment variables are loaded from:
 
 ```bash
 # Start development environment
-docker -f compose.yml up -d
+docker compose -f compose.yml up -d
 
 # View logs
-docker -f compose.yml logs -f
+docker compose -f compose.yml logs -f
 
 # View a specific service's logs (api)
-docker -f compose.yml logs api
+docker compose -f compose.yml logs api
 
-# Check logs of the React app container with
+# Check logs of the React app container
 docker logs <container_id>
 
 # Stop development environment
-docker -f compose.yml down
+docker compose -f compose.yml down
 ```
 
 #### Testing
 
 ```bash
 # Start testing environment
-docker -f compose-test.yml up -d
+docker compose -f compose-test.yml up -d
 
 # View logs
-docker -f compose-test.yml logs -f
+docker compose -f compose-test.yml logs -f
 
 # Stop testing environment
-docker -f compose-test.yml down
+docker compose -f compose-test.yml down
 ```
 
 #### Debugging
 
-```bash# Access container shell
+```bash
+# Access container shell
 docker exec -it ics_postgres_db_dev sh
 docker exec -it api_service sh
 
 # Check container status
-docker -f compose.yml ps
+docker compose -f compose.yml ps
 
 # Check network connections
 docker network ls
@@ -265,7 +265,7 @@ project/
 docker system prune -a
 
 # Rebuild specific service
-docker -f compose.yml build --no-cache api
+docker compose -f compose.yml build --no-cache api
 ```
 
 ### Network Issues
@@ -282,7 +282,7 @@ docker exec -it api_service curl http://database:5432
 
 ```bash
 # Check database container logs
-docker -f compose.yml logs database
+docker compose -f compose.yml logs database
 
 # Test database connection from API container
 docker exec -it api_service psql -h database -U ${DB_USER} -d ${DB_NAME}
