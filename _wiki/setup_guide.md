@@ -65,3 +65,21 @@ npm install react-dom
 ```
 
 The second command explicitly installs React DOM for rendering React components.
+
+Installs additional dependencies:
+
+```bash
+npm install tailwindcss @tailwindcss/vite
+npm install @headlessui/react @heroicons/react
+```
+
+### Database Setup
+
+In pgAdmin, register a new server with the following details:
+
+- **Name**: any name you prefer
+- **Host name**: localhost
+- **Port**: 5432
+- **Maintenance database**: ics_development
+- **Username**: postgres_user
+- **Password**: your PostgreSQL password in `.env` file

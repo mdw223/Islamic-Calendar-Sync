@@ -38,7 +38,7 @@ The Islamic Calendar Sync API follows RESTful principles and uses JSON for reque
 
 ```
 Production: https://api.islamiccalendarsync.com/v1
-Development: http://localhost:3000/api/v1
+Development: http://localhost:5000/api/v1
 ```
 
 ---

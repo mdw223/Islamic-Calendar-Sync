@@ -191,6 +191,9 @@ docker logs <container_id>
 
 # Stop development environment
 docker compose -f compose.yml down
+
+# To temporarily stop development environment
+docker compose -f compose.yml stop
 ```
 
 #### Testing
