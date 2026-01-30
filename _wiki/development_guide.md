@@ -97,7 +97,6 @@ docker compose down -v
 
 - **Frontend**: http://localhost:5000
 - **Backend API**: http://localhost/api
-- **Direct API**: http://localhost:3000
 - **Database**: localhost:5432 (credentials from .env)
 
 ## Database Management
