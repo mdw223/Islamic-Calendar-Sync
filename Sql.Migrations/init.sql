@@ -4,10 +4,8 @@
 -- Drop tables if they exist (in reverse order of dependencies)
 DROP TABLE IF EXISTS Event CASCADE;
 DROP TABLE IF EXISTS EventType CASCADE;
-DROP TABLE IF EXISTS EventConfiguration CASCADE;
 DROP TABLE IF EXISTS Prayer CASCADE;
 DROP TABLE IF EXISTS PrayerType CASCADE;
-DROP TABLE IF EXISTS PrayerConfiguration CASCADE;
 DROP TABLE IF EXISTS CalculationMethod CASCADE;
 DROP TABLE IF EXISTS Calendar CASCADE;
 DROP TABLE IF EXISTS Provider CASCADE;
@@ -23,18 +21,18 @@ CREATE TABLE Users (
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     LastLogin TIMESTAMP,
     IsAdmin BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- Create Settings table
-CREATE TABLE Settings (
-    SettingsId SERIAL PRIMARY KEY,
-    UserId INTEGER NOT NULL,
     Timezone VARCHAR(100),
     Latitude VARCHAR(50),
     Longitude VARCHAR(50),
     Language VARCHAR(10),
-    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+    EventConfigurationStart TIMESTAMP NOT NULL,
+    EventConfigurationEnd TIMESTAMP NOT NULL,
+    PrayerConfigurationStart TIMESTAMP NOT NULL,
+    PrayerConfigurationEnd TIMESTAMP NOT NULL,
+    CalculationMethodId INTEGER NOT NULL,
+    Hanafi BOOLEAN NOT NULL DEFAULT FALSE,
+    Salt VARCHAR(255),
+    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
 );
 
 -- Create ProviderType table
@@ -54,6 +52,8 @@ CREATE TABLE Provider (
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ExpiresAt TIMESTAMP,
+    Scopes VARCHAR(1000),
+    Salt VARCHAR(255),
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
     FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
@@ -63,7 +63,7 @@ CREATE TABLE Provider (
 CREATE TABLE Calendar (
     CalendarId SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
-    Identifier VARCHAR(255) NOT NULL,
+    IdentifierId VARCHAR(255) NOT NULL,
     ProviderId INTEGER NOT NULL,
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -78,19 +78,6 @@ CREATE TABLE CalculationMethod (
     Name VARCHAR(100) NOT NULL
 );
 
--- Create PrayerConfiguration table
-CREATE TABLE PrayerConfiguration (
-    PrayerConfigurationId SERIAL PRIMARY KEY,
-    UserId INTEGER NOT NULL,
-    StartDate TIMESTAMP NOT NULL,
-    EndDate TIMESTAMP NOT NULL,
-    CalculationMethodId INTEGER NOT NULL,
-    Hanafi BOOLEAN NOT NULL DEFAULT FALSE,
-    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE,
-    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
-);
-
 -- Create PrayerType table
 CREATE TABLE PrayerType (
     PrayerTypeId SERIAL PRIMARY KEY,
@@ -100,7 +87,6 @@ CREATE TABLE PrayerType (
 -- Create Prayer table
 CREATE TABLE Prayer (
     PrayerId SERIAL PRIMARY KEY,
-    PrayerConfigurationId INTEGER NOT NULL,
     Name VARCHAR(100) NOT NULL,
     StartTime TIMESTAMP NOT NULL,
     EndTime TIMESTAMP NOT NULL,
@@ -116,15 +102,6 @@ CREATE TABLE Prayer (
     FOREIGN KEY (PrayerTypeId) REFERENCES PrayerType(PrayerTypeId) ON DELETE RESTRICT
 );
 
--- Create EventConfiguration table
-CREATE TABLE EventConfiguration (
-    EventConfigurationId SERIAL PRIMARY KEY,
-    UserId INTEGER NOT NULL,
-    StartDate TIMESTAMP NOT NULL,
-    EndDate TIMESTAMP NOT NULL,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
-);
-
 -- Create EventType table
 CREATE TABLE EventType (
     EventTypeId SERIAL PRIMARY KEY,
@@ -135,7 +112,6 @@ CREATE TABLE EventType (
 CREATE TABLE Event (
     EventId SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
-    EventConfigurationId INTEGER NOT NULL,
     StartDate TIMESTAMP NOT NULL,
     EndDate TIMESTAMP NOT NULL,
     IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
@@ -143,6 +119,7 @@ CREATE TABLE Event (
     Hide BOOLEAN NOT NULL DEFAULT FALSE,
     EventTypeId INTEGER NOT NULL,
     IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
+    IsTask BOOLEAN NOT NULL DEFAULT FALSE,
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (EventConfigurationId) REFERENCES EventConfiguration(EventConfigurationId) ON DELETE CASCADE,
@@ -150,15 +127,10 @@ CREATE TABLE Event (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_settings_userid ON Settings(UserId);
 CREATE INDEX idx_provider_userid ON Provider(UserId);
 CREATE INDEX idx_provider_type ON Provider(ProviderTypeId);
 CREATE INDEX idx_calendar_provider ON Calendar(ProviderId);
-CREATE INDEX idx_prayer_config_userid ON PrayerConfiguration(UserId);
-CREATE INDEX idx_prayer_config ON Prayer(PrayerConfigurationId);
 CREATE INDEX idx_prayer_type ON Prayer(PrayerTypeId);
-CREATE INDEX idx_event_config_userid ON EventConfiguration(UserId);
-CREATE INDEX idx_event_config ON Event(EventConfigurationId);
 CREATE INDEX idx_event_type ON Event(EventTypeId);
 
 -- Create function to automatically update UpdatedAt timestamp
@@ -174,16 +146,10 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON Users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON Settings
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_provider_updated_at BEFORE UPDATE ON Provider
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_calendar_updated_at BEFORE UPDATE ON Calendar
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_prayer_config_updated_at BEFORE UPDATE ON PrayerConfiguration
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_prayer_updated_at BEFORE UPDATE ON Prayer
@@ -216,13 +182,11 @@ INSERT INTO PrayerType (Name) VALUES
     ('Asr'),
     ('Maghrib'),
     ('Isha'),
-    ('Midnight'),
     ('Custom');
 
 -- Insert default event types
 INSERT INTO EventType (Name) VALUES 
-    ('Islamic Holiday'),
     ('Ramadan'),
     ('Eid'),
-    ('Friday Prayer'),
+    ('Jumah'),
     ('Custom');

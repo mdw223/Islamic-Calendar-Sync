@@ -22,13 +22,12 @@ Islamic Calendar Sync is designed to help users generate and customize prayer ti
 
 ## 2. Core Entities
 
-### User
+### Users
 
 Can login via email or OAuth, configure settings, generate personal Islamic calendar events and prayer times to their calendar provider.
-
-### Settings
-
-Language and geographic settings to determine prayer time accuracy. Always asks the user to put current location and language to check if they want to change it.
+Users contain an event configuration such as the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
+Users contains settings such as the language and geographic settings to determine prayer time accuracy. Always asks the user to put current location and language to check if they want to change it.
+Users contain a prayer configuration for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
 
 ### Provider
 
@@ -42,10 +41,6 @@ The type of calendar provider like Google, Outlook, etc. (enum).
 
 The calendar identifier in their calendar provider and have the credential so that if they save events, then it can go in their calendar provider. Users can make a calendar and have other users add events to it, but only they can make updates in the app and they can persist their calendar provider.
 
-### PrayerConfiguration
-
-Options for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
-
 ### CalculationMethod
 
 The method of calculating prayer times such as per the Islamic Society of North America (ISNA), Muslim World League, Egyptian General Authority of Survey, etc. (enum).
@@ -57,10 +52,6 @@ Prayer time, duration, offset, description with virtues, type of prayer. Can be 
 ### PrayerType
 
 All the types of prayers as enum (Sunnah, Fard, Taraweeh, etc.).
-
-### EventConfiguration
-
-Contains the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
 
 ### Event
 
@@ -83,16 +74,17 @@ erDiagram
         datetime UpdatedAt
         datetime LastLogin
         bit IsAdmin
-    }
-
-    SETTINGS {
-        int SettingsId PK
-        int UserId FK
         varchar Timezone
         varchar Latitude
         varchar Longitude
         varchar Language
-        datetime UpdatedAt
+        datetime EventConfigurationStart
+        datetime EventConfigurationEnd
+        datetime PrayerConfigurationStart
+        datetime PrayerConfigurationEnd
+        int CalculationMethodId FK
+        bit Hanafi
+        varchar Salt
     }
 
     PROVIDER {
@@ -100,11 +92,13 @@ erDiagram
         int ProviderTypeId FK
         varchar Email
         int UserId FK
-        varchar AccessToken
-        varchar RefreshToken
         datetime CreatedAt
         datetime UpdatedAt
         datetime ExpiresAt
+        varchar AccessToken
+        varchar Scopes
+        varchar Salt
+        varchar RefreshToken
         bit IsActive
     }
 
@@ -116,22 +110,12 @@ erDiagram
     CALENDAR {
         int CalendarId PK
         varchar Name
-        varchar Identifier
+        varchar IdentifierId
         int ProviderId FK
         datetime CreatedAt
         datetime UpdatedAt
         varchar Color
         varchar Url
-    }
-
-    PRAYER_CONFIGURATION {
-        int PrayerConfigurationId PK
-        int UserId FK
-        datetime StartDate
-        datetime EndDate
-        int CalculationMethodId FK
-        bit Hanafi
-        datetime UpdatedAt
     }
 
     CALCULATION_METHOD {
@@ -141,7 +125,6 @@ erDiagram
 
     PRAYER {
         int PrayerId PK
-        int PrayerConfigurationId FK
         varchar Name
         datetime StartTime
         datetime EndTime
@@ -160,17 +143,9 @@ erDiagram
         varchar Name
     }
 
-    EVENT_CONFIGURATION {
-        int EventConfigurationId PK
-        int UserId FK
-        datetime StartDate
-        datetime EndDate
-    }
-
     EVENT {
         int EventId PK
         varchar Name
-        int EventConfigurationId FK
         datetime StartDate
         datetime EndDate
         bit IsAllDay
@@ -178,6 +153,7 @@ erDiagram
         bit Hide
         int EventTypeId FK
         bit IsCustom
+        bit IsTask
         datetime CreatedAt
         datetime UpdatedAt
     }
@@ -187,16 +163,13 @@ erDiagram
         varchar Name
     }
 
-    USERS ||--o| SETTINGS : "has"
     USERS ||--o{ PROVIDER : "connects to"
     PROVIDER }o--|| PROVIDER_TYPE : "is type"
     PROVIDER ||--o{ CALENDAR : "contains"
-    USERS ||--o| PRAYER_CONFIGURATION : "configures"
-    PRAYER_CONFIGURATION }o--|| CALCULATION_METHOD : "uses"
-    PRAYER_CONFIGURATION ||--o{ PRAYER : "generates"
+    USERS }o--|| CALCULATION_METHOD : "uses"
+    USERS ||--o{ PRAYER : "generates"
     PRAYER }o--|| PRAYER_TYPE : "is type"
-    USERS ||--o| EVENT_CONFIGURATION : "configures"
-    EVENT_CONFIGURATION ||--o{ EVENT : "generates"
+    USERS ||--o{ EVENT : "generates"
     EVENT }o--|| EVENT_TYPE : "is type"
 ```
 
@@ -206,15 +179,11 @@ erDiagram
 
 1. **User** authenticates and creates/updates their profile, optionally connecting with a **Provider**, then specifies language and location in **Settings**.
 
-2. **User** configures **PrayerConfiguration** (prayers to include, durations, calculation methods).
+2. **User** triggers calendar generation which creates **Prayer** times and **Event** entries based on their configurations.
 
-3. **User** configures **EventConfiguration** for the range of dates to make events for and selects Islamic **Events** of their preference and can modify them.
+3. **User** can preview **Prayer** times and **Events** before final export.
 
-4. **User** triggers calendar generation which creates **Prayer** times and **Event** entries based on their configurations.
-
-5. **User** can preview **Prayer** times and **Events** before final export.
-
-6. Islamic calendar events from **Event** and prayer times from **Prayer** are exported to their **Calendar** via **Provider**.
+4. Islamic calendar events from **Event** and prayer times from **Prayer** are exported to their **Calendar** via **Provider**.
 
 ---
 
