@@ -14,8 +14,6 @@
 
 Islamic Calendar Sync is designed to help users generate and customize prayer times and Islamic events to help them prioritize their faith with their busy schedules. The system revolves around several core entities that interact to provide a seamless user experience.
 
-<img width="2967" height="546" alt="ICS ER diagram" src="https://github.com/user-attachments/assets/cbf5c8c1-9f94-4e1e-bc92-acfb051ff715" />
-
 [Link to Lucid ERD](https://lucid.app/lucidchart/87773400-ec8c-428c-81de-9944dd3b9ef5/edit?viewport_loc=261%2C773%2C4099%2C1568%2C0_0&invitationId=inv_48e52ce0-ccbe-4a0a-bef9-8a656b1e0510)
 
 ---
