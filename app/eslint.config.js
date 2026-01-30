@@ -22,8 +22,10 @@ export default defineConfig([
         sourceType: 'module',
       },
     },
+    plugins: ['import'],
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'import/prefer-default-export': 'warn', // or 'error'
     },
   },
 ])

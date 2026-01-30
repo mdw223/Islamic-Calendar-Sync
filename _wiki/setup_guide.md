@@ -62,6 +62,7 @@ Install dependencies:
 ```bash
 npm install
 npm install react-dom
+npm install react-router
 ```
 
 The second command explicitly installs React DOM for rendering React components.
@@ -69,8 +70,9 @@ The second command explicitly installs React DOM for rendering React components.
 Installs additional dependencies:
 
 ```bash
-npm install tailwindcss @tailwindcss/vite
-npm install @headlessui/react @heroicons/react
+npm install @mui/icons-material @mui/material @emotion/react @emotion/styled
+npm install @fontsource/roboto
+npm install eslint-plugin-import --save-dev
 ```
 
 ### Database Setup
