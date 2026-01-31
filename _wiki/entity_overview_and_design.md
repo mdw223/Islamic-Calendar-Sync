@@ -2,11 +2,11 @@
 
 ## Table of Contents
 
-- [[1. General Overview](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#1-general-overview)](#1-general-overview)
-- [[2. Core Entities](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#2-core-entities)](#2-core-entities)
-- [[3. Entity Relationship Diagram](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#3-entity-relationship-diagram)](#3-entity-relationship-diagram)
-- [[4. Entity Interaction Flow](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#4-entity-interaction-flow)](#4-entity-interaction-flow)
-- [[5. User Roles and Permissions](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#5-user-roles-and-permissions)](#5-user-roles-and-permissions)
+- [[1. General Overview]()](#1-general-overview)
+- [[2. Core Entities]()](#2-core-entities)
+- [[3. Entity Relationship Diagram]()](#3-entity-relationship-diagram)
+- [[4. Entity Interaction Flow]()](#4-entity-interaction-flow)
+- [[5. User Roles and Permissions]()](#5-user-roles-and-permissions)
 
 ---
 
