@@ -2,17 +2,19 @@
 
 ## Table of Contents
 
-- [[1. General Overview]()](#1-general-overview)
-- [[2. Core Entities]()](#2-core-entities)
-- [[3. Entity Relationship Diagram]()](#3-entity-relationship-diagram)
-- [[4. Entity Interaction Flow]()](#4-entity-interaction-flow)
-- [[5. User Roles and Permissions]()](#5-user-roles-and-permissions)
+- [[1. General Overview](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#1-general-overview)](#1-general-overview)
+- [[2. Core Entities](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#2-core-entities)](#2-core-entities)
+- [[3. Entity Relationship Diagram](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#3-entity-relationship-diagram)](#3-entity-relationship-diagram)
+- [[4. Entity Interaction Flow](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#4-entity-interaction-flow)](#4-entity-interaction-flow)
+- [[5. User Roles and Permissions](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#5-user-roles-and-permissions)](#5-user-roles-and-permissions)
 
 ---
 
 ## 1. General Overview
 
 Islamic Calendar Sync is designed to help users generate and customize prayer times and Islamic events to help them prioritize their faith with their busy schedules. The system revolves around several core entities that interact to provide a seamless user experience.
+
+<img width="2967" height="546" alt="ICS ER diagram" src="https://github.com/user-attachments/assets/cbf5c8c1-9f94-4e1e-bc92-acfb051ff715" />
 
 [Link to Lucid ERD](https://lucid.app/lucidchart/87773400-ec8c-428c-81de-9944dd3b9ef5/edit?viewport_loc=261%2C773%2C4099%2C1568%2C0_0&invitationId=inv_48e52ce0-ccbe-4a0a-bef9-8a656b1e0510)
 
@@ -72,9 +74,6 @@ erDiagram
         datetime UpdatedAt
         datetime LastLogin
         bit IsAdmin
-        varchar Timezone
-        varchar Latitude
-        varchar Longitude
         varchar Language
         datetime EventConfigurationStart
         datetime EventConfigurationEnd
@@ -83,6 +82,14 @@ erDiagram
         int CalculationMethodId FK
         bit Hanafi
         varchar Salt
+    }
+
+    LOCATION {
+        int LocationId PK
+        varchar Latitude
+        varchar Longitude
+        varchar Timezone
+        int UserId FK
     }
 
     PROVIDER {
@@ -162,6 +169,7 @@ erDiagram
     }
 
     USERS ||--o{ PROVIDER : "connects to"
+    LOCATION ||--o{ CALENDAR : "contains"
     PROVIDER }o--|| PROVIDER_TYPE : "is type"
     PROVIDER ||--o{ CALENDAR : "contains"
     USERS }o--|| CALCULATION_METHOD : "uses"
