@@ -169,7 +169,7 @@ erDiagram
     }
 
     USERS ||--o{ PROVIDER : "connects to"
-    LOCATION ||--o{ CALENDAR : "contains"
+    USERS ||--o{ LOCATION : "contains"
     PROVIDER }o--|| PROVIDER_TYPE : "is type"
     PROVIDER ||--o{ CALENDAR : "contains"
     USERS }o--|| CALCULATION_METHOD : "uses"
