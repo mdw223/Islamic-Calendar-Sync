@@ -1,13 +1,14 @@
 import express from 'express';
 import healthRoutes from './health.js';
-// import apiRoutes from './api.js'; // Add your API routes here
+import LoginUser from './users/login-user.js'
 
 const router = express.Router();
 
 // Health check routes
 router.use('/health', healthRoutes);
 
-// // API routes
-// router.use('/api', apiRoutes);
+router.get('/users/me', GetCurrentUser); // TODO: finish
+router.get('/users/login', LoginUser);
+router.get('/users/:userId', Auth(SAME_USER, ADMIN), GetUserById);
 
 export default router;
