@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { AuthContext } from "./context";
+import { AuthContext } from "./Context";
 import APIClient from "../util/APIClient";
 
 export default function AuthContextProvider({ children }) {

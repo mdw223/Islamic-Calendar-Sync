@@ -69,8 +69,10 @@ The second command explicitly installs React DOM for rendering React components.
 
 Installs additional dependencies:
 
+[Link to Icons Library](https://lucide.dev/)
+
 ```bash
-npm install @mui/icons-material @mui/material @emotion/react @emotion/styled
+npm install lucide-react @mui/material @emotion/react @emotion/styled
 npm install @fontsource/roboto
 npm install eslint-plugin-import --save-dev
 ```

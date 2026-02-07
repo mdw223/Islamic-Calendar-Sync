@@ -1,30 +1,45 @@
-import { useState } from "react";
-import viteLogo from "/vite.svg";
+import React from "react";
+import { HashRouter as Router, Routes, Route } from "react-router";
+import { CssBaseline, Box } from "@mui/material";
+import { ThemeProviderWrapper } from "./contexts/ThemeContext";
+import { UserProvider } from "./contexts/UserContext";
+import NotFoundPage from "./pages/NotFoundPage";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Home from "./pages/app/home/Home";
+// import CalendarPage from "./pages/calendar-page";
+// import SettingsPage from "./pages/settings-page";
+// import LoginPage from "./pages/login-page";
 
-function App() {
-  const [count, setCount] = useState(0);
-  // TODO: add theme provider here
+const App = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <ThemeProviderWrapper>
+      <UserProvider>
+        <CssBaseline />
+        <Router>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: "100vh",
+            }}
+          >
+            <Navbar />
+            <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path={"*"} element={<NotFoundPage />} />
+                {/* <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/login" element={<LoginPage />} /> */}
+              </Routes>
+            </Box>
+            <Footer />
+          </Box>
+        </Router>
+      </UserProvider>
+    </ThemeProviderWrapper>
   );
-}
+};
 
 export default App;

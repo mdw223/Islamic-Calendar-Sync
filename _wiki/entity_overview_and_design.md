@@ -70,6 +70,7 @@ erDiagram
     USERS {
         int UserId PK
         string Email UK
+        string Name
         datetime CreatedAt
         datetime UpdatedAt
         datetime LastLogin

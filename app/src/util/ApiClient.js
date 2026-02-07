@@ -1,4 +1,4 @@
-import HTTPClient from './http-client'
+import HTTPClient from './HttpClient'
 // this is like the .data layer interacting with the backend
 
 const API_BASE = process.env.API_BASE_URL;

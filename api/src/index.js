@@ -1,7 +1,7 @@
-import requestLogger from './middleware/logger.js';
+import requestLogger from './middleware/Logger.js';
 import express from 'express';
 import { app as appConfig } from './config.js';
-import routes from './endpoints/routes.js';
+import routes from './endpoints/Routes.js';
 import ErrorHandlerMiddleware from './middleware/ErrorHandlerMiddleware.js';
 import NotFoundMiddleware from './middleware/NotFoundMiddleware.js';
 

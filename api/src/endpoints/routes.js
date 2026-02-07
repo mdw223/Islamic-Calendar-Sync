@@ -1,6 +1,6 @@
 import express from 'express';
-import healthRoutes from './health.js';
-import LoginUser from './users/login-user.js'
+import healthRoutes from './Health.js';
+import LoginUser from './users/LoginUser.js'
 
 const router = express.Router();
 
