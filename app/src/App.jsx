@@ -9,7 +9,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/app/home/Home";
 // import CalendarPage from "./pages/calendar-page";
 // import SettingsPage from "./pages/settings-page";
-// import LoginPage from "./pages/login-page";
+import Login from "./pages/app/login/Login";
 
 const App = () => {
   return (
@@ -28,10 +28,11 @@ const App = () => {
             <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
                 <Route path={"*"} element={<NotFoundPage />} />
                 {/* <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/login" element={<LoginPage />} /> */}
+                 */}
               </Routes>
             </Box>
             <Footer />

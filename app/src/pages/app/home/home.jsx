@@ -26,6 +26,7 @@ import {
   Star,
 } from "lucide-react";
 import { useAppTheme } from "../../../contexts/ThemeContext";
+import { Link as RouterLink, useNavigate } from "react-router";
 
 const Home = () => {
   const muiTheme = useTheme();
@@ -36,7 +37,7 @@ const Home = () => {
       icon: <Calendar color="#10b981" />,
       title: "Advanced Sync",
       description:
-        "Sync prayer times directly to Google, Outlook, and Apple calendars.",
+        "Sync prayer times directly to Google, Outlook, Apple, and Cal.com calendars.",
     },
     {
       icon: <Globe color="#3b82f6" />,
@@ -98,7 +99,7 @@ const Home = () => {
             variant="h1"
             sx={{ fontSize: { xs: "2.5rem", md: "4.5rem" }, lineHeight: 1.1 }}
           >
-            Sync Your Faith with <br />
+            Sync Your Deen with <br />
             <Box component="span" sx={{ color: "primary.main" }}>
               Your Daily Schedule
             </Box>
@@ -109,13 +110,15 @@ const Home = () => {
             sx={{ maxWidth: 800, fontWeight: 400 }}
           >
             Automatically synchronize accurate prayer times and Islamic events
-            with your Google, Microsoft, or Apple calendar. Manage your
-            spiritual life with precision and ease.
+            with your Google, Outlook, or Apple calendar. Manage your deen with
+            precision and ease.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <Button
               variant="contained"
               size="large"
+              component={RouterLink}
+              to="/login"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
               Get Started Free
@@ -123,6 +126,8 @@ const Home = () => {
             <Button
               variant="outlined"
               size="large"
+              component={RouterLink}
+              to="/login"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
               Learn More

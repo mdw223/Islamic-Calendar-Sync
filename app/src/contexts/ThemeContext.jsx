@@ -3,8 +3,18 @@ import { ThemeProvider, createTheme } from "@mui/material";
 
 const ThemeContext = createContext(undefined);
 
+const THEME_STORAGE_KEY = "app-theme-mode";
+
 export const ThemeProviderWrapper = ({ children }) => {
-  const [themeMode, setThemeMode] = useState("light");
+  const [themeMode, setThemeModeState] = useState(() => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return savedTheme || "light";
+  });
+
+  const setThemeMode = (newTheme) => {
+    setThemeModeState(newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  };
 
   const muiTheme = useMemo(() => {
     return createTheme({
