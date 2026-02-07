@@ -11,7 +11,7 @@ export const ThemeProviderWrapper = ({ children }) => {
       palette: {
         mode: themeMode === "dark" ? "dark" : "light",
         primary: {
-          main: "#10b981", // Islamic Green
+          main: "#10b981",
           contrastText: "#fff",
         },
         secondary: {
@@ -22,13 +22,13 @@ export const ThemeProviderWrapper = ({ children }) => {
             themeMode === "dark"
               ? "#0f172a"
               : themeMode === "green"
-                ? "#f0fdf4"
+                ? "#d1fae5"
                 : "#ffffff",
           paper:
             themeMode === "dark"
               ? "#1e293b"
               : themeMode === "green"
-                ? "#ffffff"
+                ? "#f0fdf4"
                 : "#ffffff",
         },
         text: {

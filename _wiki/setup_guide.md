@@ -24,7 +24,7 @@ This initializes a new Node.js project and creates a `package.json` file with de
 Install the required dependencies:
 
 ```bash
-npm install express@^4.18.2 cors@^2.8.5 dotenv@^16.3.1 pg@^8.11.3
+npm install express@^4.18.2 cors@^2.8.5 dotenv@^16.3.1 pg@^8.11.3 jsonwebtoken
 ```
 
 **Dependencies explained:**

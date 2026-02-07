@@ -142,7 +142,7 @@ const Home = () => {
           >
             <Box
               component="img"
-              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjXvlWSd4MJr6v8p5mmEXXRwVnWj_kPBWV0cLFOmSqv8AJbyMesXlrvEP1d3eUejtByjE9XWZP3Dw29DpncMA5G4W8ydq_myP4k5R3ERSElvlEsh0Pa3jlMqwf2ILLqKO5rfsiVJPoRLDK59f-ABX9HaUcwGoAmR3L3UuKrLj4PquRB7KMuJLVssbC2Q_8/s1024/Shab%20e%20Baraat%202025%20Sacred%20Night%20of%20Forgiveness,%20Prayers%20&%20Blessings.webp"
+              src="https://placehold.net/main.svg"
               sx={{
                 width: "100%",
                 height: "auto",
@@ -163,9 +163,22 @@ const Home = () => {
               Everything you need to keep your schedule aligned.
             </Typography>
           </Stack>
-          <Grid container spacing={4}>
+          <Grid
+            container
+            spacing={4}
+            alignItems="center"
+            justifyContent="center"
+          >
             {features.map((f, i) => (
-              <Grid item xs={12} sm={6} md={4} key={i}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                key={i}
+                width="30vw"
+                height="15vw"
+              >
                 <Card
                   sx={{
                     height: "100%",
@@ -177,8 +190,8 @@ const Home = () => {
                     <Box sx={{ mb: 2, display: "flex" }}>
                       <Box
                         sx={{
-                          p: 1.5,
-                          borderRadius: 2,
+                          p: 1,
+                          borderRadius: 1.5,
                           bgcolor: alpha(muiTheme.palette.primary.main, 0.1),
                         }}
                       >
@@ -204,7 +217,13 @@ const Home = () => {
         <Typography variant="h3" textAlign="center" sx={{ mb: 8 }}>
           Trusted by the Community
         </Typography>
-        <Grid container spacing={4}>
+        <Grid
+          container
+          spacing={4}
+          justifyContent="center"
+          alignItems="center"
+          sx={{ flexWrap: "wrap" }}
+        >
           {[
             {
               name: "Ahmed R.",
@@ -217,7 +236,7 @@ const Home = () => {
               text: "The event sync is amazing. I finally have all the Islamic holidays in one place!",
             },
           ].map((t, i) => (
-            <Grid item xs={12} md={6} key={i}>
+            <Grid item xs={12} md={6} key={i} maxWidth="25vw">
               <Paper sx={{ p: 4, height: "100%" }}>
                 <Typography
                   variant="h6"
@@ -225,7 +244,12 @@ const Home = () => {
                 >
                   "{t.text}"
                 </Typography>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="center"
+                >
                   <Avatar sx={{ bgcolor: "primary.light" }}>{t.name[0]}</Avatar>
                   <Box>
                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
