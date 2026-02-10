@@ -1,7 +1,16 @@
-import {dbConfig} from "../../config";
-const { Pool } = require('pg');
+import { dbConfig } from "../../config.js";
+import pkg from "pg";
+const { Pool } = pkg;
 
-const pool = new Pool(dbConfig);
+// node-pg expects lowercase keys (host, user, etc.); dbConfig uses uppercase
+const pgConfig = {
+  host: dbConfig.HOST,
+  user: dbConfig.USER,
+  password: dbConfig.PASSWORD,
+  database: dbConfig.DATABASE,
+  port: Number(dbConfig.PORT) || 5432,
+};
+const pool = new Pool(pgConfig);
 
 // Test the connection
 pool.on('connect', () => {
@@ -56,17 +65,12 @@ const getConnection = async () => {
 
 // Graceful shutdown
 const shutdown = async () => {
-  console.log('Closing database pool...');
+  console.log("Closing database pool...");
   await pool.end();
-  console.log('Database pool closed');
+  console.log("Database pool closed");
 };
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
-module.exports = {
-  query,
-  getConnection,
-  pool,
-  shutdown
-};
+export { query, getConnection, pool, shutdown };

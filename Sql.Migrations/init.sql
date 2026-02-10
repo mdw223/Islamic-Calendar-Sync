@@ -13,57 +13,59 @@ DROP TABLE IF EXISTS ProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
 DROP TABLE IF EXISTS Users CASCADE;
 
--- Create Users table
-CREATE TABLE Users (
-    UserId SERIAL PRIMARY KEY,
-    Email VARCHAR(255) NOT NULL UNIQUE,
-    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    LastLogin TIMESTAMP,
-    IsAdmin BOOLEAN NOT NULL DEFAULT FALSE
-    Timezone VARCHAR(100),
-    Latitude VARCHAR(50),
-    Longitude VARCHAR(50),
-    Language VARCHAR(10),
-    EventConfigurationStart TIMESTAMP NOT NULL,
-    EventConfigurationEnd TIMESTAMP NOT NULL,
-    PrayerConfigurationStart TIMESTAMP NOT NULL,
-    PrayerConfigurationEnd TIMESTAMP NOT NULL,
-    CalculationMethodId INTEGER NOT NULL,
-    Hanafi BOOLEAN NOT NULL DEFAULT FALSE,
-    Salt VARCHAR(255),
-    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
-);
-
 -- Create CalculationMethod table
 CREATE TABLE CalculationMethod (
     CalculationMethodId SERIAL PRIMARY KEY,
     Name VARCHAR(100) NOT NULL
 );
 
--- -- Create ProviderType table
--- CREATE TABLE ProviderType (
---     ProviderTypeId SERIAL PRIMARY KEY,
---     Name VARCHAR(100) NOT NULL
--- );
+-- Create ProviderType table
+CREATE TABLE ProviderType (
+    ProviderTypeId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL
+);
 
--- -- Create Provider table
--- CREATE TABLE Provider (
---     ProviderId SERIAL PRIMARY KEY,
---     ProviderTypeId INTEGER NOT NULL,
---     Email VARCHAR(255),
---     UserId INTEGER NOT NULL,
---     AccessToken VARCHAR(500),
---     RefreshToken VARCHAR(500),
---     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     ExpiresAt TIMESTAMP,
---     Scopes VARCHAR(1000),
---     Salt VARCHAR(255),
---     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
---     FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
---     FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
--- );
+-- Create Users table
+CREATE TABLE Users (
+    UserId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NULL,
+    Email VARCHAR(255) NULL UNIQUE,
+    CreatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    LastLogin TIMESTAMP,
+    IsAdmin BOOLEAN DEFAULT FALSE,
+    Timezone VARCHAR(100),
+    Latitude VARCHAR(50),
+    Longitude VARCHAR(50),
+    Language VARCHAR(10),
+    EventConfigurationStart TIMESTAMP NULL,
+    EventConfigurationEnd TIMESTAMP NULL,
+    PrayerConfigurationStart TIMESTAMP NULL,
+    PrayerConfigurationEnd TIMESTAMP NULL,
+    CalculationMethodId INTEGER NULL,
+    Hanafi BOOLEAN DEFAULT FALSE,
+    Salt VARCHAR(255),
+    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
+);
+
+-- Create Provider table
+CREATE TABLE Provider (
+    ProviderId SERIAL PRIMARY KEY,
+    ProviderTypeId INTEGER NOT NULL,
+    Name VARCHAR(100),
+    Email VARCHAR(255),
+    UserId INTEGER NOT NULL,
+    AccessToken VARCHAR(500),
+    RefreshToken VARCHAR(500),
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ExpiresAt TIMESTAMP,
+    Scopes VARCHAR(1000),
+    Salt VARCHAR(255),
+    IsActive BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+);
 
 -- -- Create Calendar table
 -- CREATE TABLE Calendar (
@@ -159,10 +161,11 @@ CREATE TABLE CalculationMethod (
 --     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- -- Insert default provider types
--- INSERT INTO ProviderType (Name) VALUES 
---     ('Google Calendar'),
---     ('Microsoft Outlook'),
---     ('Apple Calendar');
+INSERT INTO ProviderType (Name) VALUES 
+    ('Google Calendar'),
+    ('Microsoft Outlook'),
+    ('Apple Calendar'),
+    ('Cal.com');
 
 -- -- Insert default calculation methods
 -- INSERT INTO CalculationMethod (Name) VALUES 

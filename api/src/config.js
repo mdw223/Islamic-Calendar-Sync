@@ -6,11 +6,15 @@ export const appConfig = {
   TRUST_PROXY: true
 };
 
+// Used for signing/verifying JWT cookies (auth). Set JWT_SECRET or SESSION_SECRET in production.
+export const jwtSecret =
+  process.env.JWT_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
+
 export const dbConfig = {
-  HOST: process.env.DB_HOST || 'localhost',
-  USER: process.env.DB_USER || 'root',
-  PASSWORD: process.env.DB_PASSWORD || '',
-  DATABASE: process.env.DB_DATABASE || 'ics_development',
+  HOST: process.env.DB_HOST || 'database',
+  USER: process.env.POSTGRES_USER || 'postgres_user',
+  PASSWORD: process.env.POSTGRES_PASSWORD || '',
+  DATABASE: process.env.POSTGRES_DB || 'ics_development',
   PORT: process.env.DB_PORT || 5432
 }
 
