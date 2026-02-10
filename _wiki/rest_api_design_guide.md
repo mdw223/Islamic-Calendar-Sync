@@ -37,8 +37,8 @@ The Islamic Calendar Sync API follows RESTful principles and uses JSON for reque
 ## Base URL
 
 ```
-Production: https://api.islamiccalendarsync.com/v1
-Development: http://localhost:5000/api/v1
+Production: https://api.islamiccalendarsync.com/
+Development: http://localhost:5000/api/
 ```
 
 ---
@@ -1050,5 +1050,4 @@ GET /users/{userId}/prayers?page=1&limit=50
 - All requests and responses use `application/json` content type
 - Rate limiting: 1000 requests per hour per user
 - Guest users have limited rate: 100 requests per hour per IP
-- API versioning is included in the URL (`/v1`)
 - HTTPS is required for all requests in production

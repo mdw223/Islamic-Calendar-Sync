@@ -1,7 +1,6 @@
-import jwt from 'jsonwebtoken';
-import UserDAO from '../model/db/dao/UserDOA.js';
-
-const userDao = new UserDAO();
+import jwt from "jsonwebtoken";
+import { jwtSecret } from "../config.js";
+import UserDAO from "../model/db/dao/UserDOA.js";
 
 export const SAME_USER = 'SAME_USER';
 export const ADMIN = 'ADMIN';
@@ -11,19 +10,20 @@ const authenticateUser = async (req, res, next) => {
   try {
     // Step 1: Get cookie from request
     const token = req.cookies?.token;
-    
+    console.log('[Auth] GET /users/me request received, cookie present:', !!token);
+
     if (!token) {
       throw new Error('No token provided');
     }
 
     // Step 2: Verify JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
 
     // Step 3: Extract user ID from JWT
     const userId = decoded.userId;
 
     // Step 4: Use DAO to get user from database
-    const user = await userDao.findById(userId);
+    const user = await UserDAO.findById(userId);
 
     if (!user) {
       throw new Error('User not found');
@@ -36,7 +36,7 @@ const authenticateUser = async (req, res, next) => {
     next();
 
   } catch (error) {
-    // TODO: add proper logging
+    console.log('[Auth] Authentication failed:', error.message);
     res.status(401).json({
       success: false,
       message: 'Authentication failed',
@@ -65,7 +65,7 @@ export const Auth = (...allowedRoles) => {
             return next();
           }
           
-          if (role === SAME_USER && user.id === requestedUserId) {
+          if (role === SAME_USER && user.userid === parseInt(requestedUserId)) {
             // User is accessing their own resource
             return next();
           }

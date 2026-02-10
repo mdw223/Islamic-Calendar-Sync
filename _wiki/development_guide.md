@@ -59,7 +59,7 @@ docker exec -it ics_postgres_db_dev env | grep POSTGRES
 You should see 4 containers running:
 
 - api_service (port 3000)
-- react_app (port 5173)
+- react_app (port 5000)
 - ics_postgres_db_dev (port 5432)
 - nginx_proxy (port 8080)
 
@@ -209,6 +209,39 @@ docker compose -f compose-test.yml down
 ```
 
 #### Debugging
+
+Add the following launch.json for vs code
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Docker: Attach to API",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9229,
+      "localRoot": "${workspaceFolder}/api",
+      "remoteRoot": "/app",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
+```
+
+```bash
+docker compose -f compose.yml -f compose.debug.yml up -d
+```
+
+Testing your database
+
+```bash
+curl http://localhost:5000/api/health
+curl http://localhost:5000/api/health/db
+```
+
+The API only gets traffic when the path starts with /api: Nginx listens on port 5000 and forwards /api/* to the API (after stripping the /api prefix) and everything else to the React app. Calling localhost:5000/health/db goes to the app (so you see the React HTML), and localhost:3000 isn’t used because the API’s port isn’t published to the host. To hit the health/db endpoint, use http://localhost:5000/api/health/db.
 
 ```bash
 # Access container shell
