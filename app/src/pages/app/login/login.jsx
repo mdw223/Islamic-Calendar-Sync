@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 import {
   Container,
   Box,
@@ -11,38 +11,68 @@ import {
   Divider,
   alpha,
   useTheme,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import { ShieldCheck, MailQuestion } from "lucide-react";
 import AppleIcon from "../../../assets/apple.svg";
 import MicrosoftIcon from "../../../assets/microsoft.svg";
 import GoogleIcon from "../../../assets/google.svg";
 import CalIcon from "../../../assets/cal-com.svg";
+import { useUser } from "../../../contexts/UserContext";
+import APIClient from "../../../util/ApiClient";
 
-const LoginPage = ({ setUser }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [step, setStep] = useState("info");
   const [code, setCode] = useState("");
   const navigate = useNavigate();
   const muiTheme = useTheme();
+  const { login } = useUser();
 
-  const handleSendCode = () => {
-    if (email && name) setStep("code");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSendCode = async () => {
+    // TODO: finish when I add email verification
+    if (!email || !name) {
+      setError("Please enter both email and name");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await APIClient.sendVerificationCode(email, name);
+      setStep("code");
+    } catch (err) {
+      setError(err.message || "Failed to send verification code");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerify = () => {
-    if (code === "123456") {
-      setUser({
-        name,
-        email,
-        isLoggedIn: true,
-        addresses: ["Main St"],
-        timezone: "UTC+0",
-        language: "English",
-      });
-      navigate("/calendar");
-    } else {
-      alert("Wrong code! Try 123456");
+  const handleVerify = async () => {
+    // TODO: finish when I add email verification
+    if (!code) {
+      setError("Please enter the verification code");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await APIClient.verifyCode(email, code);
+      const data = await APIClient.getCurrentUser();
+      if (data?.success && data?.user) login(data.user);
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Invalid verification code");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,6 +114,12 @@ const LoginPage = ({ setUser }) => {
           </Typography>
         </Box>
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         {step === "info" ? (
           <Stack spacing={3}>
             <Stack spacing={1.5}>
@@ -98,6 +134,10 @@ const LoginPage = ({ setUser }) => {
                 }
                 fullWidth
                 sx={{ borderRadius: 2 }}
+                onClick={() => {
+                  console.log(window.location.href);
+                  window.location.href = APIClient.getGoogleLoginUrl();
+                }}
               >
                 Google
               </Button>
@@ -171,9 +211,14 @@ const LoginPage = ({ setUser }) => {
                 fullWidth
                 size="large"
                 onClick={handleSendCode}
+                disabled={isLoading}
                 sx={{ py: 1.5 }}
               >
-                Send Verification Code
+                {isLoading ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  "Send Verification Code"
+                )}
               </Button>
             </Stack>
           </Stack>
@@ -210,9 +255,10 @@ const LoginPage = ({ setUser }) => {
               fullWidth
               size="large"
               onClick={handleVerify}
+              disabled={isLoading}
               sx={{ py: 1.5 }}
             >
-              Verify & Continue
+              {isLoading ? <CircularProgress size={24} /> : "Verify & Continue"}
             </Button>
             <Button variant="text" size="small" onClick={() => setStep("info")}>
               Change Email

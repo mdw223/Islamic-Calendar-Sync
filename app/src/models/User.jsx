@@ -1,56 +1,144 @@
+/**
+ * User model aligned with DB schema (Users table).
+ * API returns lowercase column names (e.g. userid, createdat); we map to camelCase.
+ * "Logged in" is session-based (cookie): no isLoggedIn in DB; use user.userId != null or user.isLoggedIn getter.
+ */
+function fromApiRow(row) {
+  if (!row) return null;
+  return {
+    userId: row.userid ?? null,
+    id: row.userid ?? null,
+    name: row.name ?? "",
+    email: row.email ?? "",
+    createdAt: row.createdat ?? null,
+    updatedAt: row.updatedat ?? null,
+    lastLogin: row.lastlogin ?? null,
+    isAdmin: row.isadmin ?? false,
+    timezone: row.timezone ?? null,
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
+    language: row.language ?? null,
+    eventConfigurationStart: row.eventconfigurationstart ?? null,
+    eventConfigurationEnd: row.eventconfigurationend ?? null,
+    prayerConfigurationStart: row.prayerconfigurationstart ?? null,
+    prayerConfigurationEnd: row.prayerconfigurationend ?? null,
+    calculationMethodId: row.calculationmethodid ?? null,
+    hanafi: row.hanafi ?? false,
+  };
+}
+
 export const defaultUser = {
+  userId: null,
   id: null,
   name: "",
   email: "",
-  isLoggedIn: false,
-  addresses: [], // TODO: move to locations obj
-  timezone: "UTC+0", // TODO: move to locations obj
-  language: "English", // TODO: CHANGE TO ENUM?
-
+  createdAt: null,
+  updatedAt: null,
+  lastLogin: null,
+  isAdmin: false,
+  timezone: null,
+  latitude: null,
+  longitude: null,
+  language: null,
+  eventConfigurationStart: null,
+  eventConfigurationEnd: null,
+  prayerConfigurationStart: null,
+  prayerConfigurationEnd: null,
+  calculationMethodId: null,
+  hanafi: false,
   preferences: {
+    // TODO: add preferences
     theme: "light",
     notifications: true,
     emailUpdates: false,
   },
 };
 
-// User class model
 export class User {
   constructor(data = {}) {
-    this.id = data.id || null;
-    this.name = data.name || "";
-    this.email = data.email || "";
-    this.isLoggedIn = data.isLoggedIn || false;
-    this.addresses = data.addresses || [];
-    this.timezone = data.timezone || "UTC+0";
-    this.language = data.language || "English";
+    const normalized =
+      data.userid != null ? fromApiRow(data) : { ...defaultUser, ...data };
+    this.userId = normalized.userId ?? normalized.id ?? null;
+    this.id = this.userId;
+    this.name = normalized.name ?? "";
+    this.email = normalized.email ?? "";
+    this.createdAt = normalized.createdAt ?? null;
+    this.updatedAt = normalized.updatedAt ?? null;
+    this.lastLogin = normalized.lastLogin ?? null;
+    this.isAdmin = normalized.isAdmin ?? false;
+    this.timezone = normalized.timezone ?? null;
+    this.latitude = normalized.latitude ?? null;
+    this.longitude = normalized.longitude ?? null;
+    this.language = normalized.language ?? null;
+    this.eventConfigurationStart = normalized.eventConfigurationStart ?? null;
+    this.eventConfigurationEnd = normalized.eventConfigurationEnd ?? null;
+    this.prayerConfigurationStart = normalized.prayerConfigurationStart ?? null;
+    this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
+    this.calculationMethodId = normalized.calculationMethodId ?? null;
+    this.hanafi = normalized.hanafi ?? false;
     this.preferences = {
-      theme: data.preferences?.theme || "light",
-      notifications: data.preferences?.notifications ?? true,
-      emailUpdates: data.preferences?.emailUpdates ?? false,
+      theme: normalized.preferences?.theme ?? "light",
+      notifications: normalized.preferences?.notifications ?? true,
+      emailUpdates: normalized.preferences?.emailUpdates ?? false,
     };
-    this.createdAt = data.createdAt || null;
-    this.lastLogin = data.lastLogin || null;
   }
 
-  // Methods
+  /** Session-based: logged in when we have a user id (from API/cookie). */
+  get isLoggedIn() {
+    return this.userId != null;
+  }
+
   login(userData) {
-    this.id = userData.id;
-    this.name = userData.name;
-    this.email = userData.email;
-    this.isLoggedIn = true;
-    this.lastLogin = new Date().toISOString();
+    const normalized =
+      userData?.userid != null ? fromApiRow(userData) : userData;
+    if (normalized) {
+      this.userId = normalized.userId ?? normalized.id ?? null;
+      this.id = this.userId;
+      this.name = normalized.name ?? this.name;
+      this.email = normalized.email ?? this.email;
+      this.createdAt = normalized.createdAt ?? this.createdAt;
+      this.updatedAt = normalized.updatedAt ?? this.updatedAt;
+      this.lastLogin = normalized.lastLogin ?? new Date().toISOString();
+      this.isAdmin = normalized.isAdmin ?? this.isAdmin;
+      this.timezone = normalized.timezone ?? this.timezone;
+      this.latitude = normalized.latitude ?? this.latitude;
+      this.longitude = normalized.longitude ?? this.longitude;
+      this.language = normalized.language ?? this.language;
+      this.eventConfigurationStart =
+        normalized.eventConfigurationStart ?? this.eventConfigurationStart;
+      this.eventConfigurationEnd =
+        normalized.eventConfigurationEnd ?? this.eventConfigurationEnd;
+      this.prayerConfigurationStart =
+        normalized.prayerConfigurationStart ?? this.prayerConfigurationStart;
+      this.prayerConfigurationEnd =
+        normalized.prayerConfigurationEnd ?? this.prayerConfigurationEnd;
+      this.calculationMethodId =
+        normalized.calculationMethodId ?? this.calculationMethodId;
+      this.hanafi = normalized.hanafi ?? this.hanafi;
+    }
   }
 
   logout() {
-    Object.assign(this, defaultUser);
+    Object.assign(this, new User(defaultUser));
   }
 
   updateProfile(updates) {
-    Object.keys(updates).forEach((key) => {
-      if (key in this && key !== "id" && key !== "isLoggedIn") {
-        this[key] = updates[key];
-      }
+    const allowed = [
+      "name",
+      "email",
+      "timezone",
+      "latitude",
+      "longitude",
+      "language",
+      "eventConfigurationStart",
+      "eventConfigurationEnd",
+      "prayerConfigurationStart",
+      "prayerConfigurationEnd",
+      "calculationMethodId",
+      "hanafi",
+    ];
+    allowed.forEach((key) => {
+      if (key in updates) this[key] = updates[key];
     });
   }
 
@@ -58,42 +146,43 @@ export class User {
     this.preferences = { ...this.preferences, ...preferences };
   }
 
-  addAddress(address) {
-    if (!this.addresses.includes(address)) {
-      this.addresses.push(address);
-    }
-  }
-
-  removeAddress(address) {
-    this.addresses = this.addresses.filter((addr) => addr !== address);
-  }
-
   toJSON() {
     return {
+      userId: this.userId,
       id: this.id,
       name: this.name,
       email: this.email,
-      isLoggedIn: this.isLoggedIn,
-      addresses: this.addresses,
-      timezone: this.timezone,
-      language: this.language,
-      preferences: this.preferences,
       createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
       lastLogin: this.lastLogin,
+      isAdmin: this.isAdmin,
+      timezone: this.timezone,
+      latitude: this.latitude,
+      longitude: this.longitude,
+      language: this.language,
+      eventConfigurationStart: this.eventConfigurationStart,
+      eventConfigurationEnd: this.eventConfigurationEnd,
+      prayerConfigurationStart: this.prayerConfigurationStart,
+      prayerConfigurationEnd: this.prayerConfigurationEnd,
+      calculationMethodId: this.calculationMethodId,
+      hanafi: this.hanafi,
+      preferences: this.preferences,
+      isLoggedIn: this.isLoggedIn,
     };
   }
 }
 
-export const createUser = (data = {}) => {
-  return new User(data);
-};
+export const createUser = (data = {}) => new User(data);
 
-export const createGuestUser = () => {
-  return new User(defaultUser);
-};
+export const createGuestUser = () => new User(defaultUser);
 
-export const isUserLoggedIn = (user) => {
-  return user && user.isLoggedIn === true;
+/** Session-based: user is logged in if they have a userId (from API/cookie). */
+export const isUserLoggedIn = (user) =>
+  user != null && (user.userId != null || user.id != null);
+
+export const userFromApiResponse = (response) => {
+  const raw = response?.user ?? response;
+  return raw ? new User(raw) : createGuestUser();
 };
 
 export const validateUserEmail = (email) => {

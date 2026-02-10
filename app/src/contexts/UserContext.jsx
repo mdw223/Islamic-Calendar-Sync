@@ -1,21 +1,54 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { createUser, defaultUser } from "../models/User";
+import APIClient from "../util/ApiClient";
 
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
 
-  const login = (userData) => {
+  // On mount (and page refresh), fetch current user from API (session cookie).
+  useEffect(() => {
+    let cancelled = false;
+    APIClient.getCurrentUser()
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.success && data?.user) {
+          console.log("user fetched", data.user);
+          setUser(createUser(data.user));
+        } else {
+          console.log("user not fetched", data);
+          setUser(createUser(defaultUser));
+        }
+      })
+      .catch((err) => {
+        console.warn("getCurrentUser failed:", err?.message ?? err); // TODO: remove consoles
+        if (!cancelled) setUser(createUser(defaultUser));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const login = useCallback((userData) => {
     const newUser = createUser(userData);
     newUser.login(userData);
     setUser(newUser);
-  };
+  }, []);
 
-  const logout = () => {
-    const newUser = createUser(defaultUser);
-    setUser(newUser);
-  };
+  const logout = useCallback(async () => {
+    try {
+      await APIClient.logout();
+    } finally {
+      setUser(createUser(defaultUser));
+    }
+  }, []);
 
   const updateUser = (updates) => {
     const updatedUser = createUser(user.toJSON());
@@ -29,18 +62,6 @@ export const UserProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
-  const addUserAddress = (address) => {
-    const updatedUser = createUser(user.toJSON());
-    updatedUser.addAddress(address);
-    setUser(updatedUser);
-  };
-
-  const removeUserAddress = (address) => {
-    const updatedUser = createUser(user.toJSON());
-    updatedUser.removeAddress(address);
-    setUser(updatedUser);
-  };
-
   return (
     <UserContext.Provider
       value={{
@@ -50,8 +71,6 @@ export const UserProvider = ({ children }) => {
         logout,
         updateUser,
         updateUserPreferences,
-        addUserAddress,
-        removeUserAddress,
       }}
     >
       {children}

@@ -1,5 +1,5 @@
 import React from "react";
-import { HashRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from "react-router";
 import { CssBaseline, Box } from "@mui/material";
 import { ThemeProviderWrapper } from "./contexts/ThemeContext";
 import { UserProvider } from "./contexts/UserContext";

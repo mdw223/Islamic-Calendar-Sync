@@ -8,18 +8,14 @@ import {
   IconButton,
   Box,
   Container,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
   Drawer,
   List,
   ListItem,
+  ListItemIcon,
   ListItemText,
   Divider,
   useTheme,
   useMediaQuery,
-  Tooltip,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
@@ -28,8 +24,6 @@ import {
   Sun,
   Moon,
   Leaf,
-  Settings,
-  LogOut,
   Menu as MenuIcon,
   X,
   Clock,
@@ -37,18 +31,21 @@ import {
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useAppTheme } from "../contexts/ThemeContext";
+import UserBadge from "./UserBadge";
 
 const Navbar = () => {
-  const { user, login, logout } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate("/");
+  };
   const { themeMode, setThemeMode } = useAppTheme();
-  const [anchorEl, setAnchorEl] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
-  const navigate = useNavigate();
 
-  const handleOpenUserMenu = (event) => setAnchorEl(event.currentTarget);
-  const handleCloseUserMenu = () => setAnchorEl(null);
   const toggleMobileDrawer = () => setMobileOpen(!mobileOpen);
 
   const navLinks = [
@@ -148,13 +145,11 @@ const Navbar = () => {
               </ToggleButtonGroup>
 
               {user.isLoggedIn ? (
-                <Tooltip title="Account settings">
-                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0, ml: 1 }}>
-                    <Avatar sx={{ bgcolor: "primary.main" }}>
-                      {user.name.charAt(0)}
-                    </Avatar>
-                  </IconButton>
-                </Tooltip>
+                <UserBadge
+                  user={user}
+                  onSettings={() => navigate("/settings")}
+                  onSignOut={handleSignOut}
+                />
               ) : (
                 <Box sx={{ ml: 2, display: "flex", gap: 1 }}>
                   <Button variant="outlined" component={RouterLink} to="/login">
@@ -172,36 +167,30 @@ const Navbar = () => {
             </Box>
           )}
 
-          {/* Mobile Menu Icon */}
+          {/* Mobile: menu icon and profile or sign-in */}
           {isMobile && (
-            <IconButton color="inherit" onClick={toggleMobileDrawer}>
-              <MenuIcon />
-            </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {user.isLoggedIn ? (
+                <UserBadge
+                  user={user}
+                  onSettings={() => navigate("/settings")}
+                  onSignOut={handleSignOut}
+                />
+              ) : (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  component={RouterLink}
+                  to="/login"
+                >
+                  Sign In
+                </Button>
+              )}
+              <IconButton color="inherit" onClick={toggleMobileDrawer}>
+                <MenuIcon />
+              </IconButton>
+            </Box>
           )}
-
-          {/* Profile Menu */}
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleCloseUserMenu}
-            onClick={handleCloseUserMenu}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-            PaperProps={{ elevation: 3, sx: { minWidth: 180, mt: 1.5 } }}
-          >
-            <MenuItem onClick={() => navigate("/settings")}>
-              <ListItemIcon>
-                <Settings size={18} />
-              </ListItemIcon>
-              Settings
-            </MenuItem>
-            <MenuItem onClick={() => window.location.reload()}>
-              <ListItemIcon>
-                <LogOut size={18} color="red" />
-              </ListItemIcon>
-              Sign Out
-            </MenuItem>
-          </Menu>
         </Toolbar>
       </Container>
 
