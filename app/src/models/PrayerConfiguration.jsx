@@ -11,7 +11,7 @@ export class PrayerConfiguration {
     this.prayerConfigurationStart = data.prayerConfigurationStart || Date.now();
     this.prayerConfigurationEnd =
       data.prayerConfigurationEnd || Date.now() + 7 * 24 * 60 * 60 * 1000;
-    this.calculationMethod = data.calculationMethod || null; // TODO: fetch from API instead ? https://api.aladhan.com/v1/methods
+    this.calculationMethod = data.calculationMethod || null; // TODO: fetch from API instead ? https://api.aladhan.com/v1/methods refer to user's calculationMethodId
     this.hanafi = data.hanafi || false;
   }
 

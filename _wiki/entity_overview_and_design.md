@@ -61,6 +61,10 @@ An Islamic calendar event or task that has start and end date, description with 
 
 The type of Islamic event like Sunnah Fasts, Ramadan, White Days, Eid, etc. (enum).
 
+### Log
+
+Server-side application logs (requests, responses, and errors) persisted in Postgres for troubleshooting and auditing. Sensitive fields (tokens, cookies, secrets, passwords) are redacted and request bodies/query strings are sanitized and truncated. Log contents are not returned to clients.
+
 ---
 
 ## 3. Entity Relationship Diagram
@@ -83,6 +87,8 @@ erDiagram
         int CalculationMethodId FK
         bit Hanafi
         varchar Salt
+        bit EmailUpdates
+        bit Notifications
     }
 
     LOCATION {
@@ -169,6 +175,25 @@ erDiagram
         varchar Name
     }
 
+    LOG {
+        int LogId PK
+        datetime Timestamp
+        varchar Level
+        varchar Message
+        varchar Logger
+        string RequestId
+        int UserId FK
+        varchar HttpMethod
+        varchar Path
+        int StatusCode
+        int DurationMs
+        varchar Ip
+        varchar UserAgent
+        varchar ErrorCode
+        varchar ErrorStack
+        string Meta
+    }
+
     USERS ||--o{ PROVIDER : "connects to"
     USERS ||--o{ LOCATION : "contains"
     PROVIDER }o--|| PROVIDER_TYPE : "is type"
@@ -178,6 +203,7 @@ erDiagram
     PRAYER }o--|| PRAYER_TYPE : "is type"
     USERS ||--o{ EVENT : "generates"
     EVENT }o--|| EVENT_TYPE : "is type"
+    USERS ||--o{ LOG : "produces"
 ```
 
 ---

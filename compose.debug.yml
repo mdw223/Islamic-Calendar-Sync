@@ -12,8 +12,8 @@ services:
       - ./logs:/app/logs
     depends_on:
       - database
-    command: node --inspect=0.0.0.0:9229 src/index.js
-    ports:
+    command: node --inspect=0.0.0.0:9229 src/index.js # added for debugging
+    ports: # added for debugging
       - "9229:9229"
 
   # Frontend React App

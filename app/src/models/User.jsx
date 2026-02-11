@@ -46,12 +46,8 @@ export const defaultUser = {
   prayerConfigurationEnd: null,
   calculationMethodId: null,
   hanafi: false,
-  preferences: {
-    // TODO: add preferences
-    theme: "light",
-    notifications: true,
-    emailUpdates: false,
-  },
+  notifications: true,
+  emailUpdates: false,
 };
 
 export class User {
@@ -76,11 +72,8 @@ export class User {
     this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
     this.calculationMethodId = normalized.calculationMethodId ?? null;
     this.hanafi = normalized.hanafi ?? false;
-    this.preferences = {
-      theme: normalized.preferences?.theme ?? "light",
-      notifications: normalized.preferences?.notifications ?? true,
-      emailUpdates: normalized.preferences?.emailUpdates ?? false,
-    };
+    this.notifications = normalized.preferences?.notifications ?? true,
+    this.emailUpdates = normalized.preferences?.emailUpdates ?? false,
   }
 
   /** Session-based: logged in when we have a user id (from API/cookie). */
@@ -142,10 +135,6 @@ export class User {
     });
   }
 
-  updatePreferences(preferences) {
-    this.preferences = { ...this.preferences, ...preferences };
-  }
-
   toJSON() {
     return {
       userId: this.userId,
@@ -166,7 +155,8 @@ export class User {
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
-      preferences: this.preferences,
+      emailUpdates: this.emailUpdates,
+      notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,
     };
   }

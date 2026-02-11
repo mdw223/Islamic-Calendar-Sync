@@ -22,16 +22,49 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
+let cachedLoggerPromise = null;
+async function getAppLogger() {
+  if (!cachedLoggerPromise) {
+    cachedLoggerPromise = import("../../middleware/Logger.js")
+      .then((m) => m.defaultLogger)
+      .catch(() => null);
+  }
+  return cachedLoggerPromise;
+}
+
+function isLogTableInsert(sqlText) {
+  return /^\s*insert\s+into\s+log\b/i.test(String(sqlText || ""));
+}
+
 // Query helper function
 const query = async (text, params) => {
   const start = Date.now();
+  const suppressLogging = isLogTableInsert(text);
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount }); // TODO: add logging
+
+    // Avoid noisy SQL logging by default. Enable timing logs explicitly.
+    if (!suppressLogging && process.env.DB_LOG_QUERIES === "true") {
+      const logger = await getAppLogger();
+      if (logger) {
+        logger.debug("db_query", { durationMs: duration, rowCount: res.rowCount });
+      } else {
+        console.log("Executed query", { durationMs: duration, rowCount: res.rowCount });
+      }
+    }
     return res;
   } catch (error) {
-    console.error('Query error', { text, error: error.message }); // TODO: add logging
+    if (!suppressLogging) {
+      const logger = await getAppLogger();
+      if (logger) {
+        logger.error("db_query_error", {
+          error: { message: error.message, code: error.code, stack: error.stack },
+        });
+      } else {
+        console.error("Query error", { error: error.message, code: error.code });
+      }
+    }
     throw error;
   }
 };

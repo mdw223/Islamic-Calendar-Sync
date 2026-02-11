@@ -24,7 +24,7 @@ This initializes a new Node.js project and creates a `package.json` file with de
 Install the required dependencies:
 
 ```bash
-npm install express@^4.18.2 cors@^2.8.5 dotenv@^16.3.1 pg@^8.11.3 jsonwebtoken passport passport-google-oidc express-session
+npm install express@^4.18.2 cors@^2.8.5 dotenv@^16.3.1 pg@^8.11.3 passport passport-google-oidc express-session cookie-parser
 ```
 
 **Dependencies explained:**
@@ -42,8 +42,10 @@ npm install --save-dev tsx@^4.6.2 jest@^29.6.4
 
 Install for logging:
 
+Uses [winston logging](https://github.com/winstonjs/winston)
+
 ```bash
-npm install express-request-logger winston cookie-parser
+npm install winston winston-transport
 ```
 
 ### App Setup (React/Vite)

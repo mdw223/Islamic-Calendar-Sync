@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS Calendar CASCADE;
 DROP TABLE IF EXISTS Provider CASCADE;
 DROP TABLE IF EXISTS ProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
+DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS Users CASCADE;
 
 -- Create CalculationMethod table
@@ -45,8 +46,36 @@ CREATE TABLE Users (
     CalculationMethodId INTEGER NULL,
     Hanafi BOOLEAN DEFAULT FALSE,
     Salt VARCHAR(255),
+    EmailUpdates BOOLEAN DEFAULT TRUE,
+    Notifications BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
 );
+
+-- Create Log table (server-side application logs; values are redacted/sanitized at write time)
+CREATE TABLE Log (
+    LogId BIGSERIAL PRIMARY KEY,
+    Timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    Level VARCHAR(20) NOT NULL,
+    Message TEXT NOT NULL,
+    Logger VARCHAR(100),
+    RequestId UUID,
+    UserId INTEGER NULL,
+    HttpMethod VARCHAR(10),
+    Path VARCHAR(500),
+    StatusCode INTEGER,
+    DurationMs INTEGER,
+    Ip INET,
+    UserAgent TEXT,
+    ErrorCode VARCHAR(100),
+    ErrorStack TEXT,
+    Meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_log_timestamp ON Log(Timestamp);
+CREATE INDEX idx_log_level ON Log(Level);
+CREATE INDEX idx_log_requestid ON Log(RequestId);
+CREATE INDEX idx_log_userid ON Log(UserId);
 
 -- Create Provider table
 CREATE TABLE Provider (
