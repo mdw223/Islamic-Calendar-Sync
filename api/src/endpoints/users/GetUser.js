@@ -7,11 +7,7 @@ import UserDAO from '../../model/db/dao/UserDOA.js';
  */
 export async function GetCurrentUser(req, res) {
     try {
-        console.log('[GetCurrentUser] Handler reached, userId:', req.user?.userid);
-        // req.user is already populated by AuthMiddleware, which calls UserDAO.findById
-        // But we'll fetch it again to ensure we have the latest data
-        const user = await UserDAO.findById(req.user.userid);
-
+        const user = req.user?.userid;
         if (!user) {
             return res.status(404).json({
                 success: false,

@@ -63,26 +63,26 @@ export default class HTTPClient {
     return handleResponse(response);
   }
 
-  // POST with authentication token
-  async postWithAuth(url, data, token) {
-    const response = await fetch(HTTPClient.baseURL + url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
-  }
+  // // POST with authentication token
+  // async postWithAuth(url, data, token) {
+  //   const response = await fetch(HTTPClient.baseURL + url, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify(data),
+  //   });
+  //   return handleResponse(response);
+  // }
 
-  // GET with authentication token
-  static async getWithAuth(url, token) {
-    const response = await fetch(this.baseURL + url, { 
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    return handleResponse(response);
-  }
+  // // GET with authentication token
+  // static async getWithAuth(url, token) {
+  //   const response = await fetch(this.baseURL + url, { 
+  //     headers: {
+  //       'Authorization': `Bearer ${token}`,
+  //     },
+  //   });
+  //   return handleResponse(response);
+  // }
 }

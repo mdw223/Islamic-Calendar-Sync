@@ -1,6 +1,4 @@
 import UserDAO from '../../model/db/dao/UserDOA.js';
-import jwt from 'jsonwebtoken';
-import { jwtSecret } from '../../config.js';
 
 /**
  * POST /users/send-code
@@ -41,7 +39,7 @@ export async function SendVerificationCode(req, res) {
 
 /**
  * POST /users/verify-code
- * Verify the code and log in the user by setting a JWT cookie.
+ * Verify the code and log in the user by establishing a session.
  */
 export async function VerifyCode(req, res) {
     try {
@@ -72,29 +70,23 @@ export async function VerifyCode(req, res) {
         // Update last login
         await UserDAO.updateLastLogin(user.userid);
 
-        // Issue JWT token (same pattern as Google OAuth)
-        const token = jwt.sign(
-            { userId: user.userid },
-            jwtSecret,
-            { expiresIn: '7d' }
-        );
-
-        // Set cookie
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
-
-        res.json({
-            success: true,
-            message: 'Code verified successfully',
-            user: {
-                userid: user.userid,
-                email: user.email,
-                name: user.name
+        req.login(user, (err) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to establish session',
+                    error: err.message
+                });
             }
+            res.json({
+                success: true,
+                message: 'Code verified successfully',
+                user: {
+                    userid: user.userid,
+                    email: user.email,
+                    name: user.name
+                }
+            });
         });
     } catch (error) {
         res.status(500).json({
@@ -107,26 +99,29 @@ export async function VerifyCode(req, res) {
 
 /**
  * POST /users/logout
- * Log out the current user by clearing the JWT cookie.
+ * Log out the current user by destroying the session and clearing the session cookie.
  */
 export async function Logout(req, res) {
-    try {
-        // Clear the token cookie
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-        });
+    const sessionCookieName = 'connect.sid';
+    const cookieOptions = {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+    };
 
+    req.logout((err) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to logout',
+                error: err.message
+            });
+        }
+        res.clearCookie(sessionCookieName, cookieOptions);
         res.json({
             success: true,
             message: 'Logged out successfully'
         });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to logout',
-            error: error.message
-        });
-    }
+    });
 }

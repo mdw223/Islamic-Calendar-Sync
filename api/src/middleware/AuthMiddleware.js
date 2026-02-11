@@ -1,48 +1,58 @@
-import jwt from "jsonwebtoken";
-import { jwtSecret } from "../config.js";
-import UserDAO from "../model/db/dao/UserDOA.js";
+// import jwt from "jsonwebtoken";
+// import { jwtSecret } from "../config.js";
+// import UserDAO from "../model/db/dao/UserDOA.js";
 
 export const SAME_USER = 'SAME_USER';
 export const ADMIN = 'ADMIN';
 export const ANY_USER = 'ANY_USER';
 
-const authenticateUser = async (req, res, next) => {
-  try {
-    // Step 1: Get cookie from request
-    const token = req.cookies?.token;
-    console.log('[Auth] GET /users/me request received, cookie present:', !!token);
+// const authenticateUser = async (req, res, next) => {
+//   try {
+//     // Step 1: Get cookie from request
+//     const token = req.cookies?.token;
+//     console.log('[Auth] GET /users/me request received, cookie present:', !!token);
 
-    if (!token) {
-      throw new Error('No token provided');
-    }
+//     if (!token) {
+//       throw new Error('No token provided');
+//     }
 
-    // Step 2: Verify JWT
-    const decoded = jwt.verify(token, jwtSecret);
+//     // Step 2: Verify JWT
+//     const decoded = jwt.verify(token, jwtSecret);
 
-    // Step 3: Extract user ID from JWT
-    const userId = decoded.userId;
+//     // Step 3: Extract user ID from JWT
+//     const userId = decoded.userId;
 
-    // Step 4: Use DAO to get user from database
-    const user = await UserDAO.findById(userId);
+//     // Step 4: Use DAO to get user from database
+//     const user = await UserDAO.findById(userId);
 
-    if (!user) {
-      throw new Error('User not found');
-    }
+//     if (!user) {
+//       throw new Error('User not found');
+//     }
 
-    // Step 5: Attach user to request object
-    req.user = user;
+//     // Step 5: Attach user to request object
+//     req.user = user;
 
-    // Step 6: Call next() to proceed to next middleware or route handler
-    next();
+//     // Step 6: Call next() to proceed to next middleware or route handler
+//     next();
 
-  } catch (error) {
-    console.log('[Auth] Authentication failed:', error.message);
-    res.status(401).json({
+//   } catch (error) {
+//     console.log('[Auth] Authentication failed:', error.message);
+//     res.status(401).json({
+
+
+/**
+ * Ensure the request is authenticated via Passport session.
+ * req.user is set by passport.session() / deserializeUser.
+ */
+const authenticateUser = (req, res, next) => {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.status(401).json({
       success: false,
       message: 'Authentication failed',
-      error: error.message
+      error: 'Not authenticated'
     });
   }
+  next();
 };
 
 export const Auth = (...allowedRoles) => {
@@ -59,12 +69,12 @@ export const Auth = (...allowedRoles) => {
             // Any authenticated user is allowed
             return next();
           }
-          
-          if (role === ADMIN && user.role === 'admin') {
+
+          if (role === ADMIN && user.isadmin === true) {
             // User is an admin
             return next();
           }
-          
+
           if (role === SAME_USER && user.userid === parseInt(requestedUserId)) {
             // User is accessing their own resource
             return next();

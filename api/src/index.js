@@ -5,6 +5,7 @@ import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
 import passport from "passport";
+import "./passport.js";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import { pool } from "./model/db/DBConnection.js";
@@ -13,8 +14,6 @@ const app = express();
 
 /** Run once on startup to verify DB is reachable; logs result and continues either way. */
 async function testDatabaseConnection() {
-  const safeConfig = { ...dbConfig, PASSWORD: dbConfig.PASSWORD ? "***" : "(empty)" };
-  console.log("DB config (startup check):", safeConfig);
   try {
     await pool.query("SELECT 1");
     console.log("Database connection OK");
@@ -41,11 +40,12 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 10 * 60 * 1000, // 10 min — only needed for OAuth redirect flow
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days — login session
     },
   }),
 );
 app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(requestLogger);
 

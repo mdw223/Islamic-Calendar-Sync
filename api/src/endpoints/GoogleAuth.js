@@ -1,8 +1,6 @@
 import express from "express";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import jwt from "jsonwebtoken";
-import { jwtSecret } from "../config.js";
 import GoogleAPIClient from "../model/GoogleApiClient.js";
 
 const router = express.Router();
@@ -39,8 +37,6 @@ passport.use(
   ),
 );
 
-// We are stateless (no server-side sessions), so no serialize/deserialize.
-
 /**
  * GET /auth/google/login
  *
@@ -67,17 +63,16 @@ router.get(
 /**
  * GET /auth/google/redirect
  *
- * Handle Google OAuth2 callback, store tokens, issue JWT, and redirect to the frontend.
- * 
+ * Handle Google OAuth2 callback, store tokens, establish session, and redirect to the frontend.
+ *
  * Flow:
  * 1. Passport middleware authenticates and calls verify callback (above)
  * 2. Verify callback stores tokens in req.googleTokens
- * 3. This handler stores tokens in database, issues app JWT, and redirects
+ * 3. This handler stores tokens in database, calls req.login(user) to establish session, then redirects
  */
 router.get(
   "/redirect",
   passport.authenticate("google", {
-    session: false,
     failureRedirect: "/login",
   }),
   async (req, res) => {
@@ -101,24 +96,18 @@ router.get(
         });
       }
 
-      // Issue our own JWT for app authentication (separate from Google tokens)
-      // This JWT identifies the user in our system and is used for protected routes
-      const token = jwt.sign({ userId: user.userid }, jwtSecret, {
-        expiresIn: "7d",
+      // Establish session (Passport serializes user into session)
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Error establishing session after Google OAuth:", err);
+          const frontendBase =
+            process.env.APP_BASE_URL || "http://localhost:5000";
+          return res.status(500).redirect(`${frontendBase}/login?error=oauth_failed`);
+        }
+        const frontendBase =
+          process.env.APP_BASE_URL || "http://localhost:5000";
+        res.redirect(frontendBase);
       });
-
-      // Set JWT as HTTP-only cookie for security
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      // Redirect to frontend
-      const frontendBase =
-        process.env.APP_BASE_URL || "http://localhost:5000";
-      res.redirect(frontendBase);
     } catch (error) {
       console.error("Error in Google OAuth redirect handler:", error);
       const frontendBase =
