@@ -241,7 +241,7 @@ curl http://localhost:5000/api/health
 curl http://localhost:5000/api/health/db
 ```
 
-The API only gets traffic when the path starts with /api: Nginx listens on port 5000 and forwards /api/* to the API (after stripping the /api prefix) and everything else to the React app. Calling localhost:5000/health/db goes to the app (so you see the React HTML), and localhost:3000 isn’t used because the API’s port isn’t published to the host. To hit the health/db endpoint, use http://localhost:5000/api/health/db.
+The API only gets traffic when the path starts with /api: Nginx listens on port 5000 and forwards /api/\* to the API (after stripping the /api prefix) and everything else to the React app. Calling localhost:5000/health/db goes to the app (so you see the React HTML), and localhost:3000 isn’t used because the API’s port isn’t published to the host. To hit the health/db endpoint, use http://localhost:5000/api/health/db.
 
 ```bash
 # Access container shell
@@ -281,6 +281,41 @@ project/
 │   └── nginx.conf
 └── Sql.Migrations/                # Database initialization scripts
 ```
+
+## Architecture
+
+This project uses Docker Compose with an Nginx reverse proxy. Understanding the architecture is crucial for configuring environment variables correctly.
+
+```
+┌────────────────────────────────────────────────────────┐
+│                    Host Machine                        │
+│                                                        │
+│  ┌──────────────┐    ┌──────────────┐                  │
+│  │   Frontend   │    │    Backend   │                  │
+│  │  (Vite)      │    │  (Express)   │                  │
+│  │  Port 80     │    │  Port 3000   │                  │
+│  │  (container) │    │  (container) │                  │
+│  └──────┬───────┘    └──────┬───────┘                  │
+│         │                   │                          │
+│         └──────────┬────────┘                          │
+│                   │                                    │
+│            ┌──────▼──────┐                             │
+│            │ Nginx Proxy │                             │
+│            │  Port 80    │                             │
+│            │ (container) │                             │
+│            └──────┬──────┘                             │
+│                   │                                    │
+│            ┌──────▼──────┐                             │
+│            │   Host      │                             │
+│            │ Port 5000   │                             │
+│            └─────────────┘                             │
+└────────────────────────────────────────────────────────┘
+```
+
+**Nginx Routing:**
+
+- `/api/*` → Backend (rewrites to remove `/api` prefix)
+- `/*` → Frontend
 
 ## Troubleshooting
 
