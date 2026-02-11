@@ -72,11 +72,11 @@ export class User {
     this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
     this.calculationMethodId = normalized.calculationMethodId ?? null;
     this.hanafi = normalized.hanafi ?? false;
-    this.notifications = normalized.preferences?.notifications ?? true,
-    this.emailUpdates = normalized.preferences?.emailUpdates ?? false,
+    this.notifications = normalized.preferences?.notifications ?? true;
+    this.emailUpdates = normalized.preferences?.emailUpdates ?? false;
   }
 
-  /** Session-based: logged in when we have a user id (from API/cookie). */
+  // Session-based: logged in when we have a user id (from API/cookie).
   get isLoggedIn() {
     return this.userId != null;
   }

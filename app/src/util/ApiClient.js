@@ -5,7 +5,7 @@ import HTTPClient from "./HttpClient";
 export default class APIClient {
   /**
    * Get the currently authenticated user from the backend.
-   * Relies on the browser sending authentication cookies (e.g. JWT).
+   * Relies on the browser sending the session cookie (e.g. connect.sid) via credentials: 'include'.
    */
   static async getCurrentUser() {
     return HTTPClient.get("/users/me");
@@ -32,7 +32,7 @@ export default class APIClient {
 
   /**
    * Verify the code and log in the user.
-   * Sets a JWT cookie on success.
+   * Establishes a server-side session and sets the session cookie on success.
    * @param {string} email - User's email address
    * @param {string} code - Verification code
    */
