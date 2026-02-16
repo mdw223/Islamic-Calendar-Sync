@@ -1,5 +1,5 @@
 import express from 'express';
-import healthRoutes from "./Health.js";
+import healthRoutes from "./health/Health.js";
 import { SendVerificationCode, VerifyCode, Logout } from "./users/LoginUser.js";
 import { GetCurrentUser, GetUserById } from "./users/GetUser.js";
 import Auth, {
@@ -7,7 +7,7 @@ import Auth, {
   ADMIN,
   ANY_USER,
 } from "../middleware/AuthMiddleware.js";
-import GoogleAuthRouter from "./GoogleAuth.js";
+import { googleLogin, googleRedirect } from "../passport.js";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.post("/users/verify-code", VerifyCode);
 router.post("/users/logout", Auth(ANY_USER), Logout);
 router.get("/users/:userId", Auth(SAME_USER, ADMIN), GetUserById);
 
-// Google OAuth2 routes handled by dedicated router
-router.use("/auth/google", GoogleAuthRouter);
+router.get("/auth/google/login", googleLogin);
+router.get("/auth/google/redirect", ...googleRedirect);
 
 export default router;
