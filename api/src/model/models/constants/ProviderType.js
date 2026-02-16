@@ -9,10 +9,3 @@ export const ProviderTypeId = Object.freeze({
   CALCOM: 4,
 });
 
-export const ProviderTypeName = Object.freeze({
-  [ProviderTypeId.GOOGLE]: "Google",
-  [ProviderTypeId.MICROSOFT]: "Microsoft",
-  [ProviderTypeId.APPLE]: "Apple",
-  [ProviderTypeId.CALCOM]: "Cal.com",
-});
-

@@ -2,10 +2,6 @@
 // import { jwtSecret } from "../config.js";
 // import UserDOA from "../model/db/doa/UserDOA.js";
 
-export const SAME_USER = 'SAME_USER';
-export const ADMIN = 'ADMIN';
-export const ANY_USER = 'ANY_USER';
-
 // const authenticateUser = async (req, res, next) => {
 //   try {
 //     // Step 1: Get cookie from request
@@ -39,6 +35,7 @@ export const ANY_USER = 'ANY_USER';
 //     console.log('[Auth] Authentication failed:', error.message);
 //     res.status(401).json({
 
+import AuthUser from '../model/models/constants/AuthUser';
 
 /**
  * Ensure the request is authenticated via Passport session.
@@ -55,32 +52,67 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
-export const Auth = (...allowedRoles) => {
-  return [
-    authenticateUser,
-    (req, res, next) => {
+export function AuthMiddleware(req, res, next) {
+  const user = req.user;
+  let userRoles = AuthUser.ANY_USER;
+  if (user) {
+    userRoles |= AuthUser.SUBSCRIBED_USER;
+    if (user.isAdmin) {
+      userRoles |= AuthUser.ADMIN;
+    }
+  }
+
+  req.userRoles = userRoles;
+  next(); // Allows the next middleware method to run
+}
+
+/**
+ * a factory that returns a middleware function that
+ * performs bitwise operation to verify user roles
+ * @param {*} allowedRoles 
+ * @returns 
+ */
+export function Auth(allowedRoles) {
+  return (req, res, next) => {
       try {
+        // Ensure AuthMiddleware has been called to set req.userRoles
+        if (req.userRoles === undefined) {
+          throw new Error('AuthMiddleware must be called before Auth');
+        }
+
         const user = req.user;
         const requestedUserId = req.params.userId;
+        let requestedRoles = req.userRoles;
 
-        // Check each allowed role
-        for (const role of allowedRoles) {
-          if (role === ANY_USER) {
-            // Any authenticated user is allowed
-            return next();
-          }
-
-          if (role === ADMIN && user.isadmin === true) {
-            // User is an admin
-            return next();
-          }
-
-          if (role === SAME_USER && user.userid === parseInt(requestedUserId)) {
-            // User is accessing their own resource
-            return next();
+        // Check if SAME_USER role should be granted
+        // This is checked dynamically based on whether user is accessing their own resource
+        if (user && requestedUserId) {
+          const currentUserId = user.userid;
+          const requestedUserIdNum = parseInt(requestedUserId);
+          if (!isNaN(requestedUserIdNum) && currentUserId === requestedUserIdNum) {
+            requestedRoles |= AuthUser.SAME_USER;
           }
         }
 
+        if (Array.isArray(allowedRoles)) {
+          for(const allowedRole of allowedRoles) {
+            // ANY_USER (0) always matches
+            if (allowedRole === AuthUser.ANY_USER) {
+              return next();
+            }
+            if ((requestedRoles & allowedRole) === allowedRole) {
+              return next();
+            }
+          }
+        } else {
+          // ANY_USER (0) always matches
+          if (allowedRoles === AuthUser.ANY_USER) {
+            return next();
+          }
+          if ((requestedRoles & allowedRoles) === allowedRoles) {
+            return next();
+          }
+        }
         // No matching role found
         throw new Error('Insufficient permissions');
 
@@ -92,7 +124,6 @@ export const Auth = (...allowedRoles) => {
         });
       }
     }
-  ];
 };
 
 export default Auth;

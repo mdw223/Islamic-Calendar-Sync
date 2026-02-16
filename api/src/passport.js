@@ -16,6 +16,7 @@ passport.serializeUser((user, cb) => {
   });
 });
 
+// deserializeUser is called by passport.session() to restore the user object from the session on each request
 passport.deserializeUser((sessionUser, cb) => {
   process.nextTick(async () => {
     try {
@@ -23,6 +24,7 @@ passport.deserializeUser((sessionUser, cb) => {
       if (!user) {
         return cb(null, null);
       }
+      // restore the user object to req.user
       cb(null, user);
     } catch (err) {
       cb(err);

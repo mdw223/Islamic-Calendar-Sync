@@ -4,6 +4,7 @@ import { appConfig, jwtSecret } from "./config.js";
 import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
+import { AuthMiddleware } from "./middleware/AuthMiddleware.js";
 import passport from "passport";
 import "./passport.js";
 import cookieParser from "cookie-parser";
@@ -28,10 +29,17 @@ app.use(
     },
   }),
 );
-app.use(passport.initialize());
+
+// passport.initialize() and passport.session() are required to use Passport.js
+app.use(passport.initialize()); // returns a middleware that initializes Passport on each request
+/**
+ * returns a middleware that restores the user object from the session on each request
+ * it reads the id from the session and uses the UserDOA to get the user object and sets it to req.user
+ */
 app.use(passport.session());
 
 app.use(requestLogger);
+app.use(AuthMiddleware); // Set req.userRoles for all requests
 
 app.use(routes);
 

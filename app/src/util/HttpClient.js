@@ -6,9 +6,7 @@ function handleResponse(response) {
 }
 
 export default class HTTPClient {
-  // Vite exposes env variables via import.meta.env (VITE_APP_API_URL).
-  // When empty (e.g. unset in Docker or dev), use '/api' so requests hit the API behind Nginx, not the SPA.
-  static baseURL = import.meta.env.VITE_APP_API_URL || '/api'; // OR so it works on page refresh
+  static baseURL = '/api'; // OR so it works on page refresh
 
   // GET request (credentials: include so session cookies are sent)
   static async get(url) {
