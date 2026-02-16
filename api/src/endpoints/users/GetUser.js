@@ -1,4 +1,4 @@
-import UserDAO from '../../model/db/dao/UserDOA.js';
+import UserDOA from '../../model/db/doa/UserDOA.js';
 import ProviderTypeId from '../../model/models/constants/ProviderType.js'
 
 /**
@@ -48,7 +48,7 @@ export async function GetUserById(req, res) {
             });
         }
 
-        const user = await UserDAO.findById(userId);
+        const user = await UserDOA.findById(userId);
 
         if (!user) {
             return res.status(404).json({
@@ -76,7 +76,7 @@ export async function GetUserById(req, res) {
 /**
    * Find or create a user and provider row based on a Google profile.
    * This is called from the Google Passport strategy, so it MUST NOT
-   * talk to the database directly – it delegates to DAOs.
+   * talk to the database directly – it delegates to DOAs.
    *
    * @param {Object} profile - Google user profile from OAuth (contains email, name, etc.)
    * @param {Object} tokens - OAuth tokens: { access_token, refresh_token?, expires_in, scope }
@@ -92,17 +92,17 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     }
 
     // Find or create user
-    let user = await UserDAO.getUserByEmail(email);
+    let user = await UserDOA.getUserByEmail(email);
 
     if (!user) {
-        user = await UserDAO.createUser({
+        user = await UserDOA.createUser({
             email,
             name,
         });
     }
 
     // Find or create provider row for this user and Google
-    let provider = await ProviderDAO.findByUserAndType(
+    let provider = await ProviderDOA.findByUserAndType(
         user.userid,
         ProviderTypeId.GOOGLE,
     );
@@ -114,7 +114,7 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
 
     if (!provider) {
         // Create new provider with initial tokens if available
-        provider = await ProviderDAO.createProvider({
+        provider = await ProviderDOA.createProvider({
             userId: user.userid,
             providerTypeId: ProviderTypeId.GOOGLE,
             email,
@@ -127,21 +127,21 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     } else if (tokens) {
         // Update existing provider with new tokens
         // Preserve existing refresh token if new one not provided (Google only gives refresh token on first consent)
-        await ProviderDAO.updateTokens(provider.providerid, {
+        await ProviderDOA.updateTokens(provider.providerid, {
             accessToken: tokens.access_token,
             refreshToken: tokens.refresh_token || provider.refreshtoken,
             expiresAt: expiresAt,
             scopes: tokens.scope || provider.scopes,
         });
         // Refresh provider data from database
-        provider = await ProviderDAO.findByUserAndType(
+        provider = await ProviderDOA.findByUserAndType(
             user.userid,
             ProviderTypeId.GOOGLE,
         );
     }
 
     // Update last login timestamp
-    await UserDAO.updateLastLogin(user.userid);
+    await UserDOA.updateLastLogin(user.userid);
 
     return { user, provider };
 }

@@ -4,7 +4,7 @@ import { query } from "../../db/DBConnection.js";
  * Data access layer for the USERS table.
  * Matches the schema in the wiki (UserId, Email, Name, CreatedAt, UpdatedAt, etc.).
  */
-export default class UserDAO {
+export default class UserDOA {
   /**
    * Get user by email address.
    * @param {string} email

@@ -1,9 +1,9 @@
 import { query } from "../../db/DBConnection.js";
 
 /**
- * DAO for the PROVIDER_TYPE table (ProviderTypeId, Name).
+ * DOA for the PROVIDER_TYPE table (ProviderTypeId, Name).
  */
-export default class ProviderTypeDAO {
+export default class ProviderTypeDOA {
   static async getById(providerTypeId) {
     const result = await query(
       "SELECT * FROM provider_type WHERE providertypeid = $1",

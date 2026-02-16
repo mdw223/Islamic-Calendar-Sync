@@ -1,6 +1,6 @@
 // import jwt from "jsonwebtoken";
 // import { jwtSecret } from "../config.js";
-// import UserDAO from "../model/db/dao/UserDOA.js";
+// import UserDOA from "../model/db/doa/UserDOA.js";
 
 export const SAME_USER = 'SAME_USER';
 export const ADMIN = 'ADMIN';
@@ -22,8 +22,8 @@ export const ANY_USER = 'ANY_USER';
 //     // Step 3: Extract user ID from JWT
 //     const userId = decoded.userId;
 
-//     // Step 4: Use DAO to get user from database
-//     const user = await UserDAO.findById(userId);
+//     // Step 4: Use DOA to get user from database
+//     const user = await UserDOA.findById(userId);
 
 //     if (!user) {
 //       throw new Error('User not found');

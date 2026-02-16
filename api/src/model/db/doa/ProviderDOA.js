@@ -4,7 +4,7 @@ import { query } from "../../db/DBConnection.js";
  * Data access layer for the PROVIDER table.
  * Matches the schema in the wiki (ProviderId, ProviderTypeId, Email, UserId, etc.).
  */
-export default class ProviderDAO {
+export default class ProviderDOA {
   static async findByUserAndType(userId, providerTypeId) {
     const result = await query(
       "SELECT * FROM provider WHERE userid = $1 AND providertypeid = $2",

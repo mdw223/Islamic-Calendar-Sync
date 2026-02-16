@@ -1,5 +1,5 @@
 import { appConfig } from '../../config.js';
-import UserDAO from '../../model/db/dao/UserDOA.js';
+import UserDOA from '../../model/db/doa/UserDOA.js';
 
 /**
  * POST /users/send-code
@@ -60,16 +60,16 @@ export async function VerifyCode(req, res) {
         // 3. If valid, proceed; if not, return error
 
         // For now, we'll just check if the user exists and create/login them
-        let user = await UserDAO.getUserByEmail(email);
+        let user = await UserDOA.getUserByEmail(email);
 
         if (!user) {
             // Extract name from email or use a default
             const name = email.split('@')[0];
-            user = await UserDAO.createUser({ email, name });
+            user = await UserDOA.createUser({ email, name });
         }
 
         // Update last login
-        await UserDAO.updateLastLogin(user.userid);
+        await UserDOA.updateLastLogin(user.userid);
 
         req.login(user, (err) => {
             if (err) {
