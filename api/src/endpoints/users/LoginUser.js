@@ -1,3 +1,4 @@
+import { appConfig } from '../../config.js';
 import UserDAO from '../../model/db/dao/UserDOA.js';
 
 /**
@@ -106,7 +107,7 @@ export async function Logout(req, res) {
     const cookieOptions = {
         path: '/',
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: appConfig.NODE_ENV,
         sameSite: 'lax',
     };
 

@@ -1,4 +1,4 @@
-import { dbConfig } from "../../config.js";
+import { dbConfig, logConfig } from "../../config.js";
 import pkg from "pg";
 const { Pool } = pkg;
 
@@ -45,7 +45,7 @@ const query = async (text, params) => {
     const duration = Date.now() - start;
 
     // Avoid noisy SQL logging by default. Enable timing logs explicitly.
-    if (!suppressLogging && process.env.DB_LOG_QUERIES === "true") {
+    if (!suppressLogging && logConfig.LOG_QUERIES) {
       const logger = await getAppLogger();
       if (logger) {
         logger.debug("db_query", { durationMs: duration, rowCount: res.rowCount });

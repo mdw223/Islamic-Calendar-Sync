@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import winston from "winston";
 import Transport from "winston-transport";
 import { query as dbQuery } from "../model/db/DBConnection.js";
+import { logConfig } from "../config.js";
 
 // TODO: use a service like BetterStack for logging when deploying to production
 
@@ -108,7 +109,7 @@ function safePath(req) {
 class PostgresTransport extends Transport {
   constructor(options = {}) {
     super(options);
-    this.enabled = options.enabled ?? process.env.LOG_TO_DB !== "false";
+    this.enabled = options.enabled ?? logConfig.LOG_QUERIES;
     this.flushIntervalMs = options.flushIntervalMs ?? 1000;
     this.batchSize = options.batchSize ?? 50;
     this.maxQueueSize = options.maxQueueSize ?? 2000;
@@ -242,12 +243,12 @@ const baseFormat = winston.format.combine(
 );
 
 export const defaultLogger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
+  level: logConfig.LEVEL,
   format: baseFormat,
   defaultMeta: { logger: "default" },
   transports: [
     new winston.transports.Console(),
-    new PostgresTransport({ level: process.env.LOG_LEVEL || "info" }),
+    new PostgresTransport({ level: logConfig.LEVEL }),
   ],
 });
 
