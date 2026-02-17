@@ -5,6 +5,7 @@ import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
 import { AuthMiddleware } from "./middleware/AuthMiddleware.js";
+import responseSanitizer from "./middleware/ResponseSanitizer.js";
 import passport from "passport";
 import "./passport.js";
 import cookieParser from "cookie-parser";
@@ -40,6 +41,7 @@ app.use(passport.session());
 
 app.use(requestLogger);
 app.use(AuthMiddleware); // Set req.userRoles for all requests
+app.use(responseSanitizer); // Strip redacted keys (salt, tokens, etc.) from res.json() bodies
 
 app.use(routes);
 
