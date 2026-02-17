@@ -13,6 +13,7 @@ const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
+  const [subscriptions, setSubscriptions] = useState([]);
 
   // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
   useEffect(() => {
@@ -31,15 +32,12 @@ export const UserProvider = ({ children }) => {
       .then((data) => {
         if (cancelled) return;
         if (data?.success && data?.user) {
-          console.log("user fetched", data.user);
           setUser(createUser(data.user));
         } else {
-          console.log("user not fetched", data);
           setUser(createUser(defaultUser));
         }
       })
       .catch((err) => {
-        console.warn("getCurrentUser failed:", err?.message ?? err); // TODO: remove consoles
         if (!cancelled) setUser(createUser(defaultUser));
       });
     return () => {
@@ -59,6 +57,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       clearToken();
       setUser(createUser(defaultUser));
+      setSubscriptions([]);
     }
   }, []);
 
@@ -83,6 +82,8 @@ export const UserProvider = ({ children }) => {
         logout,
         updateUser,
         updateUserPreferences,
+        subscriptions,
+        setSubscriptions,
       }}
     >
       {children}
