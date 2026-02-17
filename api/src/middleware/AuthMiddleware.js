@@ -87,7 +87,7 @@ export function Auth(allowedRoles) {
         // Check if SAME_USER role should be granted
         // This is checked dynamically based on whether user is accessing their own resource
         if (user && requestedUserId) {
-          const currentUserId = user.userid;
+          const currentUserId = user.userId;
           const requestedUserIdNum = parseInt(requestedUserId);
           if (!isNaN(requestedUserIdNum) && currentUserId === requestedUserIdNum) {
             requestedRoles |= AuthUser.SAME_USER;

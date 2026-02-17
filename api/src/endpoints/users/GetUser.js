@@ -1,5 +1,6 @@
 import UserDOA from '../../model/db/doa/UserDOA.js';
-import ProviderTypeId from '../../model/models/constants/ProviderType.js'
+import ProviderDOA from '../../model/db/doa/ProviderDOA.js';
+import ProviderTypeId from '../../model/models/constants/ProviderType.js';
 
 /**
  * GET /users/me
@@ -8,7 +9,7 @@ import ProviderTypeId from '../../model/models/constants/ProviderType.js'
  */
 export async function GetCurrentUser(req, res) {
     try {
-        const user = req.user?.userid;
+        const user = req.user;
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -103,7 +104,7 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
 
     // Find or create provider row for this user and Google
     let provider = await ProviderDOA.findByUserAndType(
-        user.userid,
+        user.userId,
         ProviderTypeId.GOOGLE,
     );
 
@@ -115,7 +116,7 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     if (!provider) {
         // Create new provider with initial tokens if available
         provider = await ProviderDOA.createProvider({
-            userId: user.userid,
+            userId: user.userId,
             providerTypeId: ProviderTypeId.GOOGLE,
             email,
             accessToken: tokens?.access_token || null,
@@ -127,21 +128,21 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     } else if (tokens) {
         // Update existing provider with new tokens
         // Preserve existing refresh token if new one not provided (Google only gives refresh token on first consent)
-        await ProviderDOA.updateTokens(provider.providerid, {
+        await ProviderDOA.updateTokens(provider.providerId, {
             accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token || provider.refreshtoken,
+            refreshToken: tokens.refresh_token || provider.refreshToken,
             expiresAt: expiresAt,
             scopes: tokens.scope || provider.scopes,
         });
         // Refresh provider data from database
         provider = await ProviderDOA.findByUserAndType(
-            user.userid,
+            user.userId,
             ProviderTypeId.GOOGLE,
         );
     }
 
     // Update last login timestamp
-    await UserDOA.updateLastLogin(user.userid);
+    await UserDOA.updateLastLogin(user.userId);
 
     return { user, provider };
 }

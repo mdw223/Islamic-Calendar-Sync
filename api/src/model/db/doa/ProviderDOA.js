@@ -1,18 +1,28 @@
 import { query } from "../../db/DBConnection.js";
+import { Provider } from "../../models/Provider.js";
 
 /**
  * Data access layer for the PROVIDER table.
- * Matches the schema in the wiki (ProviderId, ProviderTypeId, Email, UserId, etc.).
+ * Returns Provider objects (camelCase) via Provider.fromRow.
  */
 export default class ProviderDOA {
+  /**
+   * @param {number} userId
+   * @param {number} providerTypeId
+   * @returns {Promise<ReturnType<Provider.fromRow>|null>}
+   */
   static async findByUserAndType(userId, providerTypeId) {
     const result = await query(
       "SELECT * FROM provider WHERE userid = $1 AND providertypeid = $2",
       [userId, providerTypeId],
     );
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    return row ? Provider.fromRow(row) : null;
   }
 
+  /**
+   * @returns {Promise<ReturnType<Provider.fromRow>>}
+   */
   static async createProvider({
     userId,
     providerTypeId,
@@ -52,8 +62,7 @@ export default class ProviderDOA {
         isActive,
       ],
     );
-
-    return result.rows[0];
+    return Provider.fromRow(result.rows[0]);
   }
 
   static async updateTokens(providerId, {
@@ -83,4 +92,3 @@ export default class ProviderDOA {
     );
   }
 }
-

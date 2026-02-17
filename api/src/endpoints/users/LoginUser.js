@@ -69,7 +69,7 @@ export async function VerifyCode(req, res) {
         }
 
         // Update last login
-        await UserDOA.updateLastLogin(user.userid);
+        await UserDOA.updateLastLogin(user.userId);
 
         req.login(user, (err) => {
             if (err) {
@@ -83,7 +83,7 @@ export async function VerifyCode(req, res) {
                 success: true,
                 message: 'Code verified successfully',
                 user: {
-                    userid: user.userid,
+                    userId: user.userId,
                     email: user.email,
                     name: user.name
                 }

@@ -4,7 +4,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oidc";
 import GoogleAPIClient from "./model/GoogleApiClient.js";
 import { appConfig, googleAuthConfig } from "./config.js";
 import {findOrCreateUserFromGoogleProfile} from "./endpoints/users/GetUser.js"
-import {ProviderDOA} from './model/db/doa/ProviderDOA.js'
+import ProviderDOA from "./model/db/doa/ProviderDOA.js";
 
 /**
  * Passport session strategy: serialize/deserialize user to and from the session.
@@ -12,7 +12,7 @@ import {ProviderDOA} from './model/db/doa/ProviderDOA.js'
  */
 passport.serializeUser((user, cb) => {
   process.nextTick(() => {
-    cb(null, { id: user.userid });
+    cb(null, { id: user.userId });
   });
 });
 
@@ -107,7 +107,7 @@ const googleRedirectHandler = async (req, res) => {
         ? new Date(Date.now() + tokens.expires_in * 1000)
         : null;
 
-      await ProviderDOA.updateTokens(provider.providerid, {
+      await ProviderDOA.updateTokens(provider.providerId, {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || null, // May be null if user already granted access
         expiresAt: expiresAt,
