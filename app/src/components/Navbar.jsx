@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import {
   AppBar,
@@ -30,7 +30,7 @@ import {
   Star,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
-import { useAppTheme } from "../contexts/ThemeContext";
+import { ThemeContext } from "../contexts/ThemeContext";
 import UserBadge from "./UserBadge";
 
 const Navbar = () => {
@@ -41,7 +41,7 @@ const Navbar = () => {
     await logout();
     navigate("/");
   };
-  const { themeMode, setThemeMode } = useAppTheme();
+  const { themeMode, setThemeMode } = useContext(ThemeContext);
   const [mobileOpen, setMobileOpen] = useState(false);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Container,
   Box,
@@ -25,12 +25,12 @@ import {
   Globe,
   Star,
 } from "lucide-react";
-import { useAppTheme } from "../../../contexts/ThemeContext";
+import { ThemeContext } from "../../../contexts/ThemeContext";
 import { Link as RouterLink, useNavigate } from "react-router";
 
 const Home = () => {
   const muiTheme = useTheme();
-  const { themeMode } = useAppTheme();
+  const { themeMode } = useContext(ThemeContext);
 
   const features = [
     {
