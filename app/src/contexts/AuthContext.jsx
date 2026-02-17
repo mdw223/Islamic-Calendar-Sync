@@ -1,6 +1,7 @@
 import React, { useEffect, useContext } from "react";
 import { AuthContext } from "./Context";
 import APIClient from "../util/ApiClient";
+import { clearToken } from "../util/authToken";
 
 export default function AuthContextProvider({ children }) {
   const [user, setUser] = React.useState(null);
@@ -21,6 +22,7 @@ export default function AuthContextProvider({ children }) {
     try {
       await APIClient.logout();
     } finally {
+      clearToken();
       setUser(null);
     }
   }, []);

@@ -7,14 +7,25 @@ import React, {
 } from "react";
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
+import { setToken, clearToken } from "../util/authToken";
 
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
 
-  // On mount (and page refresh), fetch current user from API (session cookie).
+  // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
   useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const token = params.get("token");
+      if (token) {
+        setToken(decodeURIComponent(token));
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+
     let cancelled = false;
     APIClient.getCurrentUser()
       .then((data) => {
@@ -46,6 +57,7 @@ export const UserProvider = ({ children }) => {
     try {
       await APIClient.logout();
     } finally {
+      clearToken();
       setUser(createUser(defaultUser));
     }
   }, []);

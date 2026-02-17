@@ -1,48 +1,11 @@
-// import jwt from "jsonwebtoken";
-// import { jwtSecret } from "../config.js";
-// import UserDOA from "../model/db/doa/UserDOA.js";
-
-// const authenticateUser = async (req, res, next) => {
-//   try {
-//     // Step 1: Get cookie from request
-//     const token = req.cookies?.token;
-//     console.log('[Auth] GET /users/me request received, cookie present:', !!token);
-
-//     if (!token) {
-//       throw new Error('No token provided');
-//     }
-
-//     // Step 2: Verify JWT
-//     const decoded = jwt.verify(token, jwtSecret);
-
-//     // Step 3: Extract user ID from JWT
-//     const userId = decoded.userId;
-
-//     // Step 4: Use DOA to get user from database
-//     const user = await UserDOA.findById(userId);
-
-//     if (!user) {
-//       throw new Error('User not found');
-//     }
-
-//     // Step 5: Attach user to request object
-//     req.user = user;
-
-//     // Step 6: Call next() to proceed to next middleware or route handler
-//     next();
-
-//   } catch (error) {
-//     console.log('[Auth] Authentication failed:', error.message);
-//     res.status(401).json({
-
 import AuthUser from '../model/models/constants/AuthUser';
 
 /**
- * Ensure the request is authenticated via Passport session.
- * req.user is set by passport.session() / deserializeUser.
+ * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
+ * Ensure the request is authenticated (has valid JWT). req.user is set by optionalJwtAuth when a valid Bearer token is present.
  */
-const authenticateUser = (req, res, next) => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) {
+export function AuthenticateUser(req, res, next) {
+  if (!req.user) {
     return res.status(401).json({
       success: false,
       message: 'Authentication failed',

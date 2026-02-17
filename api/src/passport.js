@@ -1,36 +1,56 @@
 import passport from "passport";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import GoogleAPIClient from "./model/GoogleApiClient.js";
-import { appConfig, googleAuthConfig } from "./config.js";
-import {findOrCreateUserFromGoogleProfile} from "./endpoints/users/GetUser.js"
+import { appConfig, googleAuthConfig, jwtConfig } from "./config.js";
+import { findOrCreateUserFromGoogleProfile } from "./endpoints/users/GetUser.js";
 import ProviderDOA from "./model/db/doa/ProviderDOA.js";
+import jwt from "jsonwebtoken";
 
 /**
- * Passport session strategy: serialize/deserialize user to and from the session.
- * Minimal serialization: store only user id; load full user from DB on each request.
+ * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
+ * Payload: { sub: userId }, exp set to jwtConfig.EXPIRY_DAYS from now.
  */
-passport.serializeUser((user, cb) => {
-  process.nextTick(() => {
-    cb(null, { id: user.userId });
+export function signToken(user) {
+  const payload = { sub: user.userId };
+  return jwt.sign(payload, jwtConfig.SECRET, {
+    algorithm: jwtConfig.ALGORITHM,
+    expiresIn: jwtConfig.EXPIRY_DAYS + "d",
   });
-});
+}
 
-// deserializeUser is called by passport.session() to restore the user object from the session on each request
-passport.deserializeUser((sessionUser, cb) => {
-  process.nextTick(async () => {
-    try {
-      const user = await UserDOA.findById(sessionUser.id);
-      if (!user) {
-        return cb(null, null);
+// JWT strategy: extract token from Authorization: Bearer <token>, verify, load user, set req.user
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: jwtConfig.SECRET,
+      algorithms: [jwtConfig.ALGORITHM],
+    },
+    async (payload, done) => {
+      try {
+        const user = await UserDOA.findById(payload.sub);
+        if (!user) return done(null, false);
+        return done(null, user);
+      } catch (err) {
+        return done(err, false);
       }
-      // restore the user object to req.user
-      cb(null, user);
-    } catch (err) {
-      cb(err);
-    }
-  });
-});
+    },
+  ),
+);
+
+/**
+ * Optional JWT auth middleware: if Authorization Bearer token is present and valid,
+ * sets req.user; otherwise leaves req.user undefined. Never sends 401 (so public and
+ * protected routes can share the same pipeline).
+ */
+export function optionalJwtAuth(req, res, next) {
+  passport.authenticate("jwt", { session: false }, (err, user) => {
+    if (err) return next(err);
+    req.user = user ?? undefined;
+    next();
+  })(req, res, next);
+}
 
 // Configure the Google strategy for use by Passport.
 // passport-openidconnect passes tokens only when the verify callback has 8+ parameters.
@@ -45,7 +65,6 @@ passport.use(
     },
     async (req, issuer, profile, context, idToken, accessToken, refreshToken, params, verified) => {
       try {
-        // Build tokens object expected by findOrCreateUserFromGoogleProfile and redirect handler
         const tokens = {
           access_token: accessToken,
           refresh_token: refreshToken || undefined,
@@ -68,11 +87,6 @@ passport.use(
  * GET /auth/google/login
  *
  * Redirect the user to Google for authentication.
- * 
- * Key parameters:
- * - scope: Requested permissions (profile, email, calendar access)
- * - accessType: "offline" REQUIRED to receive refresh tokens
- * - prompt: "consent" Forces consent screen to ensure refresh token is provided
  */
 export const googleLogin = passport.authenticate("google", {
   scope: [
@@ -80,28 +94,22 @@ export const googleLogin = passport.authenticate("google", {
     "email",
     "https://www.googleapis.com/auth/calendar",
   ],
-  accessType: "offline", // Required to get refresh tokens
-  prompt: "consent", // Forces consent screen to ensure refresh token is provided
+  accessType: "offline",
+  prompt: "consent",
 });
 
 /**
  * GET /auth/google/redirect
  *
- * Handle Google OAuth2 callback, store tokens, establish session, and redirect to the frontend.
- *
- * Flow:
- * 1. Passport middleware authenticates and calls verify callback (above)
- * 2. Verify callback stores tokens in req.googleTokens
- * 3. This handler stores tokens in database, calls req.login(user) to establish session, then redirects
+ * Handle Google OAuth2 callback, store tokens, issue JWT, and redirect to frontend with token.
+ * Frontend should read token from URL (e.g. hash fragment) and store it, then send as Authorization: Bearer.
  */
 const googleRedirectHandler = async (req, res) => {
   try {
     const user = req.user;
-    const tokens = req.googleTokens; // OAuth tokens from verify callback
+    const tokens = req.googleTokens;
     const provider = req.googleProvider;
 
-    // Store/update Google OAuth tokens in the PROVIDER table
-    // These tokens are used later to call Google Calendar API
     if (tokens && provider) {
       const expiresAt = tokens.expires_in
         ? new Date(Date.now() + tokens.expires_in * 1000)
@@ -109,23 +117,16 @@ const googleRedirectHandler = async (req, res) => {
 
       await ProviderDOA.updateTokens(provider.providerId, {
         accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || null, // May be null if user already granted access
+        refreshToken: tokens.refresh_token || null,
         expiresAt: expiresAt,
         scopes: tokens.scope || null,
       });
     }
 
-    // Establish session (Passport serializes user into session)
-    req.login(user, (err) => {
-      const frontendBase = appConfig.BASE_URL;
-      if (err) {
-        console.error("Error establishing session after Google OAuth:", err);
-        return res
-          .status(500)
-          .redirect(`${frontendBase}/login?error=oauth_failed`);
-      }
-      res.redirect(frontendBase);
-    });
+    const token = signToken(user);
+    const frontendBase = appConfig.BASE_URL;
+    // Redirect with token in hash so frontend can read and store it (e.g. in memory or localStorage)
+    res.redirect(`${frontendBase}#token=${encodeURIComponent(token)}`);
   } catch (error) {
     console.error("Error in Google OAuth redirect handler:", error);
     const frontendBase = appConfig.BASE_URL;
@@ -138,6 +139,7 @@ const googleRedirectHandler = async (req, res) => {
 export const googleRedirect = [
   passport.authenticate("google", {
     failureRedirect: "/login",
+    session: false,
   }),
   googleRedirectHandler,
 ];

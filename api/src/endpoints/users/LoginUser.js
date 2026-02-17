@@ -1,5 +1,5 @@
-import { appConfig } from '../../config.js';
 import UserDOA from '../../model/db/doa/UserDOA.js';
+import { signToken } from '../../passport.js';
 
 /**
  * POST /users/send-code
@@ -40,7 +40,7 @@ export async function SendVerificationCode(req, res) {
 
 /**
  * POST /users/verify-code
- * Verify the code and log in the user by establishing a session.
+ * Verify the code and log in the user. Returns a JWT; client must store it and send as Authorization: Bearer <token>.
  */
 export async function VerifyCode(req, res) {
     try {
@@ -63,31 +63,22 @@ export async function VerifyCode(req, res) {
         let user = await UserDOA.getUserByEmail(email);
 
         if (!user) {
-            // Extract name from email or use a default
             const name = email.split('@')[0];
             user = await UserDOA.createUser({ email, name });
         }
 
-        // Update last login
         await UserDOA.updateLastLogin(user.userId);
 
-        req.login(user, (err) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Failed to establish session',
-                    error: err.message
-                });
+        const token = signToken(user);
+        res.json({
+            success: true,
+            message: 'Code verified successfully',
+            token,
+            user: {
+                userId: user.userId,
+                email: user.email,
+                name: user.name
             }
-            res.json({
-                success: true,
-                message: 'Code verified successfully',
-                user: {
-                    userId: user.userId,
-                    email: user.email,
-                    name: user.name
-                }
-            });
         });
     } catch (error) {
         res.status(500).json({
@@ -100,29 +91,11 @@ export async function VerifyCode(req, res) {
 
 /**
  * POST /users/logout
- * Log out the current user by destroying the session and clearing the session cookie.
+ * Acknowledge logout. With JWT auth there is no server-side session; the client must discard the token.
  */
 export async function Logout(req, res) {
-    const sessionCookieName = 'connect.sid';
-    const cookieOptions = {
-        path: '/',
-        httpOnly: true,
-        secure: appConfig.NODE_ENV,
-        sameSite: 'lax',
-    };
-
-    req.logout((err) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to logout',
-                error: err.message
-            });
-        }
-        res.clearCookie(sessionCookieName, cookieOptions);
-        res.json({
-            success: true,
-            message: 'Logged out successfully'
-        });
+    res.json({
+        success: true,
+        message: 'Logged out successfully'
     });
 }

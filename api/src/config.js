@@ -7,11 +7,12 @@ export const appConfig = {
   BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000"
 };
 
-// Used for signing/verifying JWT cookies (auth). Set JWT_SECRET or SESSION_SECRET in production.
-export const jwtSecret =
-  process.env.JWT_SECRET ||
-   process.env.SESSION_SECRET || 
-   "change-me-in-production"; // TODO: Use JWT
+// JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.
+export const jwtConfig = {
+  EXPIRY_DAYS: process.env.JWT_EXPIRY_DAYS || 7,
+  SECRET: process.env.JWT_SECRET || "change-me-in-production",
+  ALGORITHM: process.env.JWT_ALGORITHM || "HS256"
+};
 
 export const dbConfig = {
   HOST: process.env.DB_HOST || 'database',
