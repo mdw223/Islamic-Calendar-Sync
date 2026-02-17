@@ -33,4 +33,9 @@ export const googleAuthConfig = {
   CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL
 };
 
+// Session (required by passport-openidconnect for Google OAuth state). Set SESSION_SECRET in production.
+export const sessionConfig = {
+  SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-production",
+};
+
 

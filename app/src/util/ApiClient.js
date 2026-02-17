@@ -16,9 +16,7 @@ export default class APIClient {
    * Always targets /api/auth/google/login (required when behind a proxy that strips /api).
    */
   static getGoogleLoginUrl() {
-    const base = (HTTPClient.baseURL || "").replace(/\/+$/, "");
-    const apiBase = base.endsWith("/api") ? base : `${base}/api`;
-    return `${apiBase}/auth/google/login`;
+    return `${HTTPClient.baseURL}/auth/google/login`;
   }
 
   /**

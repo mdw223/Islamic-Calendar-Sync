@@ -1,4 +1,4 @@
-import AuthUser from '../model/models/constants/AuthUser';
+import AuthUser from "../model/models/constants/AuthUser.js";
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.

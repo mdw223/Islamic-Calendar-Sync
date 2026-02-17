@@ -1,6 +1,6 @@
 import UserDOA from '../../model/db/doa/UserDOA.js';
 import ProviderDOA from '../../model/db/doa/ProviderDOA.js';
-import ProviderTypeId from '../../model/models/constants/ProviderType.js';
+import { ProviderTypeId } from '../../model/models/constants/ProviderType.js';
 
 /**
  * GET /users/me

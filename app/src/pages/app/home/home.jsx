@@ -121,7 +121,7 @@ const Home = () => {
               to="/login"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
-              Get Started Free
+              Get Started
             </Button>
             <Button
               variant="outlined"
