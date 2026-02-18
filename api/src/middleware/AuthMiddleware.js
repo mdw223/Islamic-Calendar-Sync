@@ -22,7 +22,7 @@ export function AuthMiddleware(req, res, next) {
   let requestedRoles = req.userRoles;
 
   let userRoles = AuthUser.ANY;
-  if (user) { // TODO: update
+  if (user) {
     userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
@@ -67,7 +67,7 @@ export function Auth(allowedRoles) {
         throw new Error('Insufficient permissions');
 
       } catch (error) {
-        res.status(403).json({ // TODO: add better logging
+        res.status(403).json({
           success: false,
           message: 'Authorization failed',
           error: error.message
