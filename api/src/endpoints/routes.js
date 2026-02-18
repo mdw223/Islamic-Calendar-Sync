@@ -1,10 +1,11 @@
 import express from 'express';
 import healthRoutes from "./health/Health.js";
 import { SendVerificationCode, VerifyCode, Logout } from "./users/LoginUser.js";
-import { GetCurrentUser, GetUserById } from "./users/GetUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
-import AuthUser from "../model/models/constants/AuthUser.js";
 import { googleLogin, googleRedirect } from "../passport.js";
+import { AuthUser } from '../constants.js';
+import GetCurrentUser from './users/GetCurrentUser.js';
+import GetUserById from './users/GetUserById.js';
 
 const router = express.Router();
 

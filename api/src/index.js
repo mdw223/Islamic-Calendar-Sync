@@ -31,7 +31,6 @@ app.use(passport.initialize());
 app.use(optionalJwtAuth);
 
 app.use(requestLogger);
-app.use(AuthMiddleware); // Set req.userRoles for all requests
 app.use(responseSanitizer); // Strip redacted keys (salt, tokens, etc.) from res.json() bodies
 
 app.use(routes);

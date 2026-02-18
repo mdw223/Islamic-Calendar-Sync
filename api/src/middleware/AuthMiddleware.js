@@ -1,4 +1,4 @@
-import AuthUser from "../model/models/constants/AuthUser.js";
+import { AuthUser } from "../constants.js";
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
@@ -16,10 +16,14 @@ export function AuthenticateUser(req, res, next) {
 };
 
 export function AuthMiddleware(req, res, next) {
+
   const user = req.user;
-  let userRoles = AuthUser.ANY_USER;
-  if (user) {
-    userRoles |= AuthUser.SUBSCRIBED_USER;
+  const requestedUserId = req.params.userId;
+  let requestedRoles = req.userRoles;
+
+  let userRoles = AuthUser.ANY;
+  if (user) { // TODO: update
+    userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
     }
@@ -37,25 +41,8 @@ export function AuthMiddleware(req, res, next) {
  */
 export function Auth(allowedRoles) {
   return (req, res, next) => {
-      try {
-        // Ensure AuthMiddleware has been called to set req.userRoles
-        if (req.userRoles === undefined) {
-          throw new Error('AuthMiddleware must be called before Auth');
-        }
-
-        const user = req.user;
-        const requestedUserId = req.params.userId;
-        let requestedRoles = req.userRoles;
-
-        // Check if SAME_USER role should be granted
-        // This is checked dynamically based on whether user is accessing their own resource
-        if (user && requestedUserId) {
-          const currentUserId = user.userId;
-          const requestedUserIdNum = parseInt(requestedUserId);
-          if (!isNaN(requestedUserIdNum) && currentUserId === requestedUserIdNum) {
-            requestedRoles |= AuthUser.SAME_USER;
-          }
-        }
+      AuthMiddleware(req, res, () => { // computes the scopes first
+        try {
 
         if (Array.isArray(allowedRoles)) {
           for(const allowedRole of allowedRoles) {
@@ -86,6 +73,7 @@ export function Auth(allowedRoles) {
           error: error.message
         });
       }
+      })
     }
 };
 
