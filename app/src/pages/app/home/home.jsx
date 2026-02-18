@@ -118,7 +118,7 @@ const Home = () => {
               variant="contained"
               size="large"
               component={RouterLink}
-              to="/login"
+              to="/auth/login"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
               Get Started
@@ -127,7 +127,7 @@ const Home = () => {
               variant="outlined"
               size="large"
               component={RouterLink}
-              to="/login"
+              to="/auth/login"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
               Learn More

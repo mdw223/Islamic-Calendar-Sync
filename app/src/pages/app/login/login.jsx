@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import {
-  Container,
   Box,
   Typography,
   Paper,
@@ -78,20 +77,11 @@ const LoginPage = () => {
   };
 
   return (
-    <Container
-      maxWidth="xs"
-      sx={{
-        py: 10,
-        display: "flex",
-        alignItems: "center",
-        minHeight: "calc(100vh - 160px)",
-      }}
+    <Paper
+      elevation={12}
+      sx={{ p: 4, borderRadius: 5, width: "100%", textAlign: "center" }}
     >
-      <Paper
-        elevation={12}
-        sx={{ p: 4, borderRadius: 5, width: "100%", textAlign: "center" }}
-      >
-        <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }}>
           <Box
             sx={{
               width: 64,
@@ -266,8 +256,7 @@ const LoginPage = () => {
             </Button>
           </Stack>
         )}
-      </Paper>
-    </Container>
+    </Paper>
   );
 };
 

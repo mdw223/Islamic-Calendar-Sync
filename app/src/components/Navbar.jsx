@@ -152,13 +152,13 @@ const Navbar = () => {
                 />
               ) : (
                 <Box sx={{ ml: 2, display: "flex", gap: 1 }}>
-                  <Button variant="outlined" component={RouterLink} to="/login">
+                  <Button variant="outlined" component={RouterLink} to="/auth/login">
                     Sign In
                   </Button>
                   <Button
                     variant="contained"
                     component={RouterLink}
-                    to="/login"
+                    to="/auth/login"
                   >
                     Get Started
                   </Button>
@@ -181,7 +181,7 @@ const Navbar = () => {
                   variant="outlined"
                   size="small"
                   component={RouterLink}
-                  to="/login"
+                  to="/auth/login"
                 >
                   Sign In
                 </Button>
