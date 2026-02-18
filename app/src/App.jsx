@@ -16,18 +16,7 @@ import Login from "./pages/app/login/Login";
 import Register from "./pages/app/register/Register";
 import Dashboard from "./pages/app/dashboard/Dashboard";
 import Settings from "./pages/app/settings/Settings";
-
-const RootLayout = () => (
-  <Box
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      minHeight: "100vh",
-    }}
-  >
-    <Outlet />
-  </Box>
-);
+import RootLayout from "./layouts/RootLayout";
 
 const router = createBrowserRouter([
   {
@@ -57,7 +46,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-const App = () => {
+export default App = () => {
   return (
     <ThemeProviderWrapper>
       <UserProvider>
@@ -67,5 +56,3 @@ const App = () => {
     </ThemeProviderWrapper>
   );
 };
-
-export default App;
