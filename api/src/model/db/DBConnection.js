@@ -13,13 +13,28 @@ const pgConfig = {
 const pool = new Pool(pgConfig);
 
 // Test the connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+pool.on("connect", () => {
+  getAppLogger().then((l) =>
+    l?.info("Connected to PostgreSQL database", {
+      context: "db",
+      component: "DBConnection",
+    })
+  );
 });
 
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+pool.on("error", (err) => {
+  getAppLogger().then((l) => {
+    if (l) {
+      l.error("Unexpected error on idle client", {
+        context: "db",
+        component: "DBConnection",
+        error: err,
+      });
+    } else {
+      console.error("Unexpected error on idle client", err);
+    }
+    process.exit(-1);
+  });
 });
 
 let cachedLoggerPromise = null;
@@ -48,9 +63,17 @@ const query = async (text, params) => {
     if (!suppressLogging && logConfig.LOG_QUERIES) {
       const logger = await getAppLogger();
       if (logger) {
-        logger.debug("db_query", { durationMs: duration, rowCount: res.rowCount });
+        logger.debug("db_query", {
+          context: "db",
+          component: "DBConnection",
+          durationMs: duration,
+          rowCount: res.rowCount,
+        });
       } else {
-        console.log("Executed query", { durationMs: duration, rowCount: res.rowCount });
+        console.log("Executed query", {
+          durationMs: duration,
+          rowCount: res.rowCount,
+        });
       }
     }
     return res;
@@ -59,10 +82,19 @@ const query = async (text, params) => {
       const logger = await getAppLogger();
       if (logger) {
         logger.error("db_query_error", {
-          error: { message: error.message, code: error.code, stack: error.stack },
+          context: "db",
+          component: "DBConnection",
+          error: {
+            message: error.message,
+            code: error.code,
+            stack: error.stack,
+          },
         });
       } else {
-        console.error("Query error", { error: error.message, code: error.code });
+        console.error("Query error", {
+          error: error.message,
+          code: error.code,
+        });
       }
     }
     throw error;
@@ -77,7 +109,16 @@ const getConnection = async () => {
   
   // Set a timeout of 5 seconds, after which we will log this connection's last query
   const timeout = setTimeout(() => {
-    console.error('A connection has been checked out for more than 5 seconds!');
+    getAppLogger().then((l) => {
+      if (l) {
+        l.warn("Connection checked out for more than 5 seconds", {
+          context: "db",
+          component: "DBConnection",
+        });
+      } else {
+        console.error("A connection has been checked out for more than 5 seconds!");
+      }
+    });
   }, 5000);
   
   // Monkey patch the query method to keep track of the last query executed
@@ -98,9 +139,25 @@ const getConnection = async () => {
 
 // Graceful shutdown
 const shutdown = async () => {
-  console.log("Closing database pool...");
+  const logger = await getAppLogger();
+  if (logger) {
+    logger.info("Closing database pool...", {
+      context: "db",
+      component: "DBConnection",
+    });
+  } else {
+    console.log("Closing database pool...");
+  }
   await pool.end();
-  console.log("Database pool closed");
+  const loggerAfter = await getAppLogger();
+  if (loggerAfter) {
+    loggerAfter.info("Database pool closed", {
+      context: "db",
+      component: "DBConnection",
+    });
+  } else {
+    console.log("Database pool closed");
+  }
 };
 
 process.on("SIGINT", shutdown);

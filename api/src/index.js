@@ -1,4 +1,4 @@
-import requestLogger from "./middleware/Logger.js";
+import requestLogger, { defaultLogger } from "./middleware/Logger.js";
 import express from "express";
 import { appConfig, sessionConfig } from "./config.js";
 import routes from "./endpoints/Routes.js";
@@ -41,7 +41,10 @@ app.use(ErrorHandlerMiddleware);
 
 // start server
 app.listen(appConfig.PORT, "0.0.0.0", () => {
-  console.log(`🚀 API server running on port ${appConfig.PORT}`);
-  console.log(`📊 Environment: ${appConfig.NODE_ENV}`);
-  console.log(`🔗 Health check: http://localhost:${appConfig.PORT}/health`);
+  defaultLogger.info("API server running", {
+    context: "startup",
+    port: appConfig.PORT,
+    env: appConfig.NODE_ENV,
+    healthUrl: `http://localhost:${appConfig.PORT}/health`,
+  });
 });

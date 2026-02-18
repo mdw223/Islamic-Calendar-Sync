@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
 import { appConfig, googleAuthConfig, jwtConfig } from "./config.js";
@@ -128,7 +129,15 @@ const googleRedirectHandler = async (req, res) => {
     // Redirect with token in hash so frontend can read and store it (e.g. in memory or localStorage)
     res.redirect(`${frontendBase}#token=${encodeURIComponent(token)}`);
   } catch (error) {
-    console.error("Error in Google OAuth redirect handler:", error);
+    defaultLogger.error("Error in Google OAuth redirect handler", {
+      requestId: req?.requestId,
+      userId: extractUserId(req),
+      method: req?.method,
+      path: req?.originalUrl?.split("?")[0] ?? req?.url,
+      ip: req?.ip,
+      userAgent: req?.get?.("user-agent"),
+      error,
+    });
     const frontendBase = appConfig.BASE_URL;
     res
       .status(500)

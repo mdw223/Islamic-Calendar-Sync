@@ -1,4 +1,5 @@
 import express from 'express';
+import { defaultLogger, extractUserId } from '../../middleware/Logger.js';
 import { pool } from '../../model/db/DBConnection.js';
 
 const router = express.Router();
@@ -16,7 +17,13 @@ router.get("/db", async (req, res) => {
       await pool.query("SELECT 1");
       res.json({ status: "OK", database: "connected" });
     } catch (err) {
-      console.error('Database connection error');
+      defaultLogger.error("Database connection error", {
+        requestId: req?.requestId,
+        userId: extractUserId(req),
+        method: req?.method,
+        path: req?.originalUrl?.split("?")[0] ?? req?.url,
+        error: err,
+      });
       res.status(503).json({
         status: "ERROR",
         database: "disconnected",
