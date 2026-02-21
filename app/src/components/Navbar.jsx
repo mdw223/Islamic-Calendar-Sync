@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import {
   AppBar,
@@ -30,7 +30,7 @@ import {
   Star,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
-import { useAppTheme } from "../contexts/ThemeContext";
+import { ThemeContext } from "../contexts/ThemeContext";
 import UserBadge from "./UserBadge";
 
 const Navbar = () => {
@@ -41,7 +41,7 @@ const Navbar = () => {
     await logout();
     navigate("/");
   };
-  const { themeMode, setThemeMode } = useAppTheme();
+  const { themeMode, setThemeMode } = useContext(ThemeContext);
   const [mobileOpen, setMobileOpen] = useState(false);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
@@ -152,13 +152,13 @@ const Navbar = () => {
                 />
               ) : (
                 <Box sx={{ ml: 2, display: "flex", gap: 1 }}>
-                  <Button variant="outlined" component={RouterLink} to="/login">
+                  <Button variant="outlined" component={RouterLink} to="/auth/login">
                     Sign In
                   </Button>
                   <Button
                     variant="contained"
                     component={RouterLink}
-                    to="/login"
+                    to="/auth/login"
                   >
                     Get Started
                   </Button>
@@ -181,7 +181,7 @@ const Navbar = () => {
                   variant="outlined"
                   size="small"
                   component={RouterLink}
-                  to="/login"
+                  to="/auth/login"
                 >
                   Sign In
                 </Button>

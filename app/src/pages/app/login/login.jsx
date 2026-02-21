@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import {
-  Container,
   Box,
   Typography,
   Paper,
@@ -21,6 +20,7 @@ import GoogleIcon from "../../../assets/google.svg";
 import CalIcon from "../../../assets/cal-com.svg";
 import { useUser } from "../../../contexts/UserContext";
 import APIClient from "../../../util/ApiClient";
+import { setToken } from "../../../util/authToken";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -65,8 +65,8 @@ const LoginPage = () => {
     setError("");
 
     try {
-      await APIClient.verifyCode(email, code);
-      const data = await APIClient.getCurrentUser();
+      const data = await APIClient.verifyCode(email, code);
+      if (data?.token) setToken(data.token);
       if (data?.success && data?.user) login(data.user);
       navigate("/");
     } catch (err) {
@@ -77,20 +77,11 @@ const LoginPage = () => {
   };
 
   return (
-    <Container
-      maxWidth="xs"
-      sx={{
-        py: 10,
-        display: "flex",
-        alignItems: "center",
-        minHeight: "calc(100vh - 160px)",
-      }}
+    <Paper
+      elevation={12}
+      sx={{ p: 4, borderRadius: 5, width: "100%", textAlign: "center" }}
     >
-      <Paper
-        elevation={12}
-        sx={{ p: 4, borderRadius: 5, width: "100%", textAlign: "center" }}
-      >
-        <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }}>
           <Box
             sx={{
               width: 64,
@@ -265,8 +256,7 @@ const LoginPage = () => {
             </Button>
           </Stack>
         )}
-      </Paper>
-    </Container>
+    </Paper>
   );
 };
 

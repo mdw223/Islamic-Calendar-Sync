@@ -1,188 +1,223 @@
 # Setup Guide
 
+This guide helps you get the Islamic Calendar Sync API and React app running locally. It assumes you have the repository (clone or download); for prerequisites and first-time setup, follow the sections in order.
+
+---
+
+## Quick start
+
+1. **Prerequisites** — Install [Node.js](https://nodejs.org/) (LTS), [PostgreSQL](https://www.postgresql.org/download/), and optionally [Docker](https://www.docker.com/products/docker-desktop/) and [pgAdmin](https://www.pgadmin.org/).
+2. **Clone the repo** (or unpack the source):
+   ```bash
+   git clone <repository-url>
+   cd IslamicCalendarSync
+   ```
+3. **Install dependencies**
+   - API:
+     ```bash
+     cd api
+     npm install
+     cd ..
+     ```
+   - App:
+     ```bash
+     cd app
+     npm install
+     cd ..
+     ```
+4. **Configure environment** — Copy or create `.env` in the project root (or locations below). Set at least: `POSTGRES_*`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `APP_BASE_URL`. See [Environment variables](#environment-variables).
+5. **Database** — Create the database (e.g. `ics_development`) and run any migrations or seed scripts the project provides. Use pgAdmin or `psql` to connect (default port 5432).
+6. **Run**
+   - Start the API: `cd api && npm start` (listens on `API_PORT`, default 3000).
+   - Start the app: `cd app && npm run dev` (Vite dev server).
+   - If you use Docker/nginx as in the repo, start those so the app is served and the API is proxied (e.g. `http://localhost:5000`).
+
+---
+
 ## Prerequisites
 
-Download and install the following:
+Install the following (links are for download or official docs):
 
-- **PostgreSQL**: [https://www.enterprisedb.com/downloads/postgres-postgresql-downloads](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)
-- **Docker**: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
-- **pgAdmin**: [https://www.pgadmin.org/](https://www.pgadmin.org/) is optional, a free, official PostgreSQL GUI tool for PostgreSQL database in Docker
+| Prerequisite   | Purpose                          | Download / doc |
+|----------------|----------------------------------|----------------|
+| **Node.js**    | Run API and build frontend       | [nodejs.org](https://nodejs.org/) (LTS) |
+| **PostgreSQL** | Database for the API             | [PostgreSQL downloads](https://www.postgresql.org/download/) or [EnterpriseDB](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads) |
+| **Docker**     | Optional: run DB or full stack  | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
+| **pgAdmin**    | Optional: GUI for PostgreSQL     | [pgAdmin](https://www.pgadmin.org/) |
+
+Use a Node version that matches the project (e.g. Node 18+). Check with `node -v`.
+
+---
 
 ## Installation
 
-### API Setup
+### Option A: Using this repository (recommended)
 
-Navigate to the API directory and initialize the project:
+The repo already contains `api/package.json` and `app/package.json`. You only need to install dependencies.
+
+**API**
 
 ```bash
 cd api
-npm init -y
-```
-
-This initializes a new Node.js project and creates a `package.json` file with default settings. The `-y` flag accepts all prompts automatically.
-
-Install the required dependencies:
-
-```bash
-npm install express@^4.18.2 cors@^2.8.5 dotenv@^16.3.1 pg@^8.11.3 passport passport-google-oidc express-session cookie-parser
-```
-
-**Dependencies explained:**
-
-- `express` - Web framework for Node.js that handles HTTP requests, routes, and middleware
-- `cors` - Enables Cross-Origin Resource Sharing, allowing the frontend to call backend APIs
-- `dotenv` - Loads environment variables from `.env` files into the application
-- `pg` - PostgreSQL client for Node.js to connect to the database
-
-Install development dependencies:
-
-```bash
-npm install --save-dev tsx@^4.6.2 jest@^29.6.4
-```
-
-Install for logging:
-
-Uses [winston logging](https://github.com/winstonjs/winston)
-
-```bash
-npm install winston winston-transport
-```
-
-### App Setup (React/Vite)
-
-Navigate to the app directory and create a new Vite project:
-
-```bash
-cd ../app
-npm create vite@latest . -- --template react
-```
-
-This creates a Vite project using the React template.
-
-Install dependencies:
-
-```bash
 npm install
-npm install react-dom
-npm install react-router
 ```
 
-The second command explicitly installs React DOM for rendering React components.
-
-Installs additional dependencies:
-
-[Link to Icons Library](https://lucide.dev/)
+**App**
 
 ```bash
-npm install lucide-react @mui/material @emotion/react @emotion/styled
-npm install @fontsource/roboto
-npm install eslint-plugin-import --save-dev
+cd app
+npm install
 ```
 
-### Database Setup
+No need to run `npm init -y` or `npm create vite`; the projects are already set up.
 
-In pgAdmin, register a new server with the following details:
+### Option B: Install packages from scratch (reference)
 
-- **Name**: any name you prefer
-- **Host name**: localhost
-- **Port**: 5432
-- **Maintenance database**: ics_development
-- **Username**: postgres_user
-- **Password**: your PostgreSQL password in `.env` file
+If you were creating the API or app from scratch, you would install the following. **When using the repo, `npm install` in `api/` and `app/` is enough** — the lists below match the current `package.json` files and are for reference only.
 
-## Environment Variables
-
-### Frontend (React/Vite)
-
-**Location:** `.env` file in `app/` directory or root
-
-**IMPORTANT:** Vite requires environment variables to be prefixed with `VITE_` to be exposed to the browser!
+**API (Express) — production dependencies**
 
 ```bash
-# Backend API URL
-# Option 1: Full URL (recommended for production)
-VITE_APP_API_URL=http://localhost:5000/api
-
-# Option 2: Relative path (works if frontend and backend are same origin)
-VITE_APP_API_URL=/api
+cd api
+npm install cookie-parser express jsonwebtoken morgan passport passport-google-oidc passport-jwt pg winston winston-transport
 ```
 
-**How it works:**
-
-- `HTTPClient.baseURL` uses `import.meta.env.VITE_APP_API_URL` (Vite's way of accessing env vars)
-- When frontend calls `APIClient.getCurrentUser()`, it makes: `VITE_APP_API_URL + "/users/me"`
-- Example: `http://localhost:5000/api/users/me` → Nginx → Backend receives `/users/me`
-
-**Why `VITE_` prefix?**
-
-- Vite only exposes environment variables prefixed with `VITE_` to the client-side code for security
-- Variables without the prefix are not available in the browser
-- Use `import.meta.env.VITE_APP_API_URL` instead of `process.env.APP_API_URL` in browser code
-
-### Backend (Express/Node.js)
-
-**Location:** `.env` file in root directory
+**API — dev dependencies**
 
 ```bash
-# Frontend base URL (where OAuth redirects go)
+npm install --save-dev jest
+```
+
+**App (React/Vite) — production dependencies**
+
+```bash
+cd app
+npm install @emotion/react @emotion/styled @fontsource/roboto @mui/material lucide-react react react-dom react-router
+```
+
+**App — dev dependencies** (usually already in `package.json`)
+
+```bash
+npm install --save-dev eslint eslint-plugin-import @vitejs/plugin-react vite @eslint/js globals
+```
+
+---
+
+## Package reference (current)
+
+Use this to verify your install or to understand what each part of the stack uses.
+
+### API (`api/package.json`)
+
+| Package               | Version (approx) | Purpose |
+|-----------------------|------------------|--------|
+| cookie-parser         | ^1.4.7           | Parse `Cookie` header |
+| express               | ^4.22.1          | Web framework |
+| jsonwebtoken          | ^9.0.2           | Sign and verify JWTs |
+| morgan                | ^1.10.0          | HTTP request logging |
+| passport              | ^0.7.0           | Authentication middleware |
+| passport-google-oidc  | ^0.1.0           | Google OAuth2 strategy |
+| passport-jwt           | ^4.0.1           | JWT strategy for API auth |
+| pg                    | ^8.17.1          | PostgreSQL client |
+| winston               | ^3.19.0          | Logging |
+| winston-transport     | ^4.9.0           | Winston transport |
+| **Dev:** jest         | ^29.7.0          | Tests |
+
+The API uses **JWT for authentication** (no `express-session`). Auth is documented in [jwt_implementation.md](jwt_implementation.md) and [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md).
+
+### App (`app/package.json`)
+
+| Package          | Version (approx) | Purpose |
+|------------------|------------------|--------|
+| @emotion/react   | ^11.14.0         | CSS-in-JS (MUI) |
+| @emotion/styled  | ^11.14.1         | Styled components (MUI) |
+| @fontsource/roboto | ^5.2.9         | Roboto font for MUI |
+| @mui/material    | ^7.3.7           | UI components |
+| lucide-react     | ^0.563.0         | Icons |
+| react            | ^19.2.0          | UI library |
+| react-dom        | ^19.2.3          | React DOM renderer |
+| react-router     | ^7.13.0          | Routing |
+| **Dev:** vite, eslint, etc. | — | Build and lint |
+
+---
+
+## Database setup
+
+1. Install and start PostgreSQL (locally or in Docker).
+2. Create a database (e.g. `ics_development`) and a user with access.
+3. In pgAdmin (or another client), register the server:
+   - **Host:** `localhost` (or Docker host)
+   - **Port:** 5432
+   - **Maintenance database:** `ics_development` (or `postgres`)
+   - **Username / password:** match your `.env` (e.g. `POSTGRES_USER`, `POSTGRES_PASSWORD`).
+
+Run any migrations or seed scripts the project provides so the schema exists before starting the API.
+
+---
+
+## Environment variables
+
+### Generating secrets
+
+**JWT_SECRET** (and any other secret keys) should be long and random:
+
+- **Node:**  
+  `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- **OpenSSL:**  
+  `openssl rand -hex 32`
+
+Copy the output into `.env` as `JWT_SECRET=<value>`. Do not commit `.env` or real secrets to the repo. In production, use environment variables or a secrets manager instead of a `.env` file.
+
+### Backend (Express) — root `.env` or `api/.env`
+
+```bash
+# Frontend base URL (OAuth redirect target)
 APP_BASE_URL=http://localhost:5000
 
-# Google OAuth Callback URL (full URL from Google's perspective)
-# This is what Google will redirect to after authentication
+# Google OAuth
 GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/redirect
-
-# Google OAuth Credentials
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 
-# JWT Secret
-JWT_SECRET=your-secret-key
+# JWT (required for auth)
+JWT_SECRET=your-secret-key-change-in-production
 
-# Database Configuration
-DB_HOST=database  # Docker service name
-POSTGRES_USER=your-db-user
+# Database
+DB_HOST=localhost
+POSTGRES_USER=postgres_user
 POSTGRES_PASSWORD=your-db-password
 POSTGRES_DB=ics_development
 DB_PORT=5432
 
-# API Port (internal, not exposed)
+# API
 API_PORT=3000
-
-# Node Environment
 NODE_ENV=development
 
 # Logging
-DB_LOG_QUERIES=true
 LOG_LEVEL=info
-
-# Authentication
-SESSION_SECRET=change-me-in-production
-JWT_SECRET=change-me-in-production
+DB_LOG_QUERIES=true
 ```
 
-**Important Notes:**
+**Notes**
 
-1. **`GOOGLE_CALLBACK_URL`**:
-   - Must match exactly what you configure in Google Cloud Console
-   - From Google's perspective: `http://localhost:5000/api/auth/google/redirect`
-   - Backend receives: `/auth/google/redirect` (after nginx rewrite)
-   - The code uses `process.env.GOOGLE_CALLBACK_URL || "/auth/google/redirect"` as fallback
+- **JWT_SECRET** — Used to sign and verify JWTs. Use a long, random value in production. The code also accepts `SESSION_SECRET` as a fallback name.
+- **GOOGLE_CALLBACK_URL** — Must match the value configured in Google Cloud Console (e.g. `http://localhost:5000/api/auth/google/redirect`).
+- **DB_HOST** — Use `localhost` when PostgreSQL runs on the host; use the service name (e.g. `database`) when the API runs in Docker and the DB is another container.
 
-2. **`APP_BASE_URL`**:
-   - Used for redirecting users after OAuth completes
-   - Should be the frontend URL: `http://localhost:5000`
-   - Default fallback: `http://localhost:5000` (updated from `localhost:5173`)
+---
 
-## Port Reference
+## Port reference
 
-| Service           | Container Port | Host Port | Access URL              |
-| ----------------- | -------------- | --------- | ----------------------- |
-| Frontend (Vite)   | 80             | -         | Via Nginx               |
-| Backend (Express) | 3000           | -         | Via Nginx               |
-| Nginx Proxy       | 80             | 5000      | `http://localhost:5000` |
-| Database          | 5432           | 5432      | `localhost:5432`        |
+| Service            | Port (typical) | Notes                    |
+|--------------------|----------------|--------------------------|
+| API (Express)      | 3000           | Internal; set via `API_PORT` |
+| App (Vite dev)     | 5173           | When running `npm run dev` in `app/` |
+| Nginx proxy (if used) | 5000        | e.g. `http://localhost:5000` |
+| PostgreSQL         | 5432           | Default DB port          |
 
-## Configuration Examples
+---
+
+## Configuration examples
 
 ### Production
 
@@ -195,83 +230,36 @@ JWT_SECRET=your-production-jwt-secret
 NODE_ENV=production
 ```
 
-## Google Cloud Console Configuration
+---
 
-**Authorized Redirect URIs:**
+## Google Cloud Console
 
-- Development: `http://localhost:5000/api/auth/google/redirect`
-- Production: `https://yourdomain.com/api/auth/google/redirect`
+For Google OAuth login:
 
-**Authorized JavaScript Origins:**
+1. Create an OAuth 2.0 Client ID (Web application).
+2. **Authorized redirect URIs:**  
+   - Dev: `http://localhost:5000/api/auth/google/redirect`  
+   - Prod: `https://yourdomain.com/api/auth/google/redirect`
+3. **Authorized JavaScript origins:**  
+   - Dev: `http://localhost:5000`  
+   - Prod: `https://yourdomain.com`
 
-- Development: `http://localhost:5000`
-- Production: `https://yourdomain.com`
+See [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md) for full details.
 
-## Common Issues
+---
 
-### Issue 1: `APP_API_URL='/api/'` (Relative Path)
+## Common issues
 
-**Problem:** Relative paths work, but you need to ensure:
+### OAuth callback URL mismatch
 
-- Frontend and backend are on the same origin (same protocol, domain, port)
-- With nginx proxy, this works because both are served from `localhost:5000`
-- **CRITICAL:** Must use `VITE_` prefix: `VITE_APP_API_URL` not `APP_API_URL`
+- Set `GOOGLE_CALLBACK_URL` to the **full** URL (e.g. `http://localhost:5000/api/auth/google/redirect`).
+- Ensure it matches **exactly** in Google Cloud Console (Authorized redirect URIs).
 
-**Solution:**
+### Database connection refused
 
-- Use relative path: `VITE_APP_API_URL=/api`
-- OR use full URL: `VITE_APP_API_URL=http://localhost:5000/api`
-- Access in code: `import.meta.env.VITE_APP_API_URL` (not `process.env`)
+- If the API runs on the host: use `DB_HOST=localhost`.
+- If the API runs in Docker and the DB is in another container: use the DB service name for `DB_HOST` and ensure the DB port is reachable.
 
-### Issue 2: `process is not defined` Error
+### Relative API URL (`/api`)
 
-**Problem:** `Uncaught ReferenceError: process is not defined` in browser console
-
-**Cause:**
-
-- `process.env` is a Node.js feature, not available in the browser
-- Vite uses `import.meta.env` for client-side environment variables
-- Variables must be prefixed with `VITE_` to be exposed to the browser
-
-**Solution:**
-
-1. Update your `.env` file to use `VITE_` prefix:
-
-   ```bash
-   VITE_APP_API_URL=/api
-   # or
-   VITE_APP_API_URL=http://localhost:5000/api
-   ```
-
-2. Access in code using `import.meta.env`:
-
-   ```javascript
-   // ❌ Wrong (doesn't work in browser)
-   const url = process.env.APP_API_URL;
-
-   // ✅ Correct (Vite way)
-   const url = import.meta.env.VITE_APP_API_URL;
-   ```
-
-3. `HttpClient.js` has been updated to use `import.meta.env.VITE_APP_API_URL`
-
-**Note:** After updating `.env`, restart your Vite dev server or rebuild your Docker container.
-
-### Issue 3: Hardcoded Ports
-
-**Problem:** Code had hardcoded `localhost:5173` (Vite default)
-
-**Solution:**
-
-- Updated to use `process.env.APP_BASE_URL || "http://localhost:5000"` (backend only)
-- Always use environment variables, never hardcode ports
-
-### Issue 4: OAuth Callback URL Mismatch
-
-**Problem:** Google redirects fail because callback URL doesn't match
-
-**Solution:**
-
-- Set `GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/redirect`
-- Ensure this matches exactly in Google Cloud Console
-- Backend code uses this or falls back to `/auth/google/redirect`
+- Relative paths work when frontend and backend are same origin (e.g. both behind nginx at `localhost:5000`).

@@ -1,18 +1,22 @@
 /**
- * Enum-like mapping for ProviderType identifiers.
- * Backed by the PROVIDER_TYPE table (ProviderTypeId, Name).
+ * ProviderType entity. Maps PROVIDER_TYPE table (ProviderTypeId, Name).
+ * For the ID enum (GOOGLE, MICROSOFT, etc.) see constants/ProviderType.js.
  */
-export const ProviderTypeId = Object.freeze({
-  GOOGLE: 1,
-  MICROSOFT: 2,
-  APPLE: 3,
-  CALCOM: 4,
-});
+export class ProviderType {
+  constructor() {
+    this.providerTypeId = null;
+    this.name = null;
+  }
 
-export const ProviderTypeName = Object.freeze({
-  [ProviderTypeId.GOOGLE]: "Google",
-  [ProviderTypeId.MICROSOFT]: "Microsoft",
-  [ProviderTypeId.APPLE]: "Apple",
-  [ProviderTypeId.CALCOM]: "Cal.com",
-});
-
+  /**
+   * @param {Record<string, any> | null} row - Raw pg row (snake_case keys)
+   * @returns {ProviderType | null}
+   */
+  static fromRow(row) {
+    if (row == null) return null;
+    const providerType = new ProviderType();
+    providerType.providerTypeId = row.providertypeid;
+    providerType.name = row.name;
+    return providerType;
+  }
+}

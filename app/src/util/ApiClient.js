@@ -5,7 +5,7 @@ import HTTPClient from "./HttpClient";
 export default class APIClient {
   /**
    * Get the currently authenticated user from the backend.
-   * Relies on the browser sending the session cookie (e.g. connect.sid) via credentials: 'include'.
+   * Sends stored JWT as Authorization: Bearer <token> when present.
    */
   static async getCurrentUser() {
     return HTTPClient.get("/users/me");
@@ -16,9 +16,7 @@ export default class APIClient {
    * Always targets /api/auth/google/login (required when behind a proxy that strips /api).
    */
   static getGoogleLoginUrl() {
-    const base = (HTTPClient.baseURL || "").replace(/\/+$/, "");
-    const apiBase = base.endsWith("/api") ? base : `${base}/api`;
-    return `${apiBase}/auth/google/login`;
+    return `${HTTPClient.baseURL}/auth/google/login`;
   }
 
   /**
@@ -32,7 +30,7 @@ export default class APIClient {
 
   /**
    * Verify the code and log in the user.
-   * Establishes a server-side session and sets the session cookie on success.
+   * Returns { token, user }; store the token and send as Authorization: Bearer on subsequent requests.
    * @param {string} email - User's email address
    * @param {string} code - Verification code
    */
@@ -41,8 +39,7 @@ export default class APIClient {
   }
 
   /**
-   * Log out the current user. Clears the session cookie on the server.
-   * Call this before clearing local auth state.
+   * Log out the current user. Call this then clear the stored token on the client.
    */
   static async logout() {
     return HTTPClient.post("/users/logout");

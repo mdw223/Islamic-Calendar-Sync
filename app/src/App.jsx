@@ -1,46 +1,58 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  Navigate,
+} from "react-router";
 import { CssBaseline, Box } from "@mui/material";
 import { ThemeProviderWrapper } from "./contexts/ThemeContext";
 import { UserProvider } from "./contexts/UserContext";
 import NotFoundPage from "./pages/NotFoundPage";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import MainLayout from "./layouts/MainLayout";
+import AuthLayout from "./layouts/AuthLayout";
 import Home from "./pages/app/home/Home";
-// import CalendarPage from "./pages/calendar-page";
-// import SettingsPage from "./pages/settings-page";
 import Login from "./pages/app/login/Login";
+import Register from "./pages/app/register/Register";
+import Dashboard from "./pages/app/dashboard/Dashboard";
+import Settings from "./pages/app/settings/Settings";
+import RootLayout from "./layouts/RootLayout";
 
-const App = () => {
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      {
+        path: "",
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <Home /> },
+          { path: "dashboard", element: <Dashboard /> },
+          { path: "settings", element: <Settings /> },
+        ],
+      },
+      {
+        path: "auth",
+        element: <AuthLayout />,
+        children: [
+          { path: "login", element: <Login /> },
+          { path: "register", element: <Register /> },
+        ],
+      },
+      { path: "login", element: <Navigate to="/auth/login" replace /> },
+      { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+]);
+
+export default App = () => {
   return (
     <ThemeProviderWrapper>
       <UserProvider>
         <CssBaseline />
-        <Router>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "100vh",
-            }}
-          >
-            <Navbar />
-            <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path={"*"} element={<NotFoundPage />} />
-                {/* <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                 */}
-              </Routes>
-            </Box>
-            <Footer />
-          </Box>
-        </Router>
+        <RouterProvider router={router} />
       </UserProvider>
     </ThemeProviderWrapper>
   );
 };
-
-export default App;

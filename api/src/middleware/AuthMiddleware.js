@@ -1,51 +1,11 @@
-// import jwt from "jsonwebtoken";
-// import { jwtSecret } from "../config.js";
-// import UserDAO from "../model/db/dao/UserDOA.js";
-
-export const SAME_USER = 'SAME_USER';
-export const ADMIN = 'ADMIN';
-export const ANY_USER = 'ANY_USER';
-
-// const authenticateUser = async (req, res, next) => {
-//   try {
-//     // Step 1: Get cookie from request
-//     const token = req.cookies?.token;
-//     console.log('[Auth] GET /users/me request received, cookie present:', !!token);
-
-//     if (!token) {
-//       throw new Error('No token provided');
-//     }
-
-//     // Step 2: Verify JWT
-//     const decoded = jwt.verify(token, jwtSecret);
-
-//     // Step 3: Extract user ID from JWT
-//     const userId = decoded.userId;
-
-//     // Step 4: Use DAO to get user from database
-//     const user = await UserDAO.findById(userId);
-
-//     if (!user) {
-//       throw new Error('User not found');
-//     }
-
-//     // Step 5: Attach user to request object
-//     req.user = user;
-
-//     // Step 6: Call next() to proceed to next middleware or route handler
-//     next();
-
-//   } catch (error) {
-//     console.log('[Auth] Authentication failed:', error.message);
-//     res.status(401).json({
-
+import { AuthUser } from "../constants.js";
 
 /**
- * Ensure the request is authenticated via Passport session.
- * req.user is set by passport.session() / deserializeUser.
+ * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
+ * Ensure the request is authenticated (has valid JWT). req.user is set by optionalJwtAuth when a valid Bearer token is present.
  */
-const authenticateUser = (req, res, next) => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) {
+export function AuthenticateUser(req, res, next) {
+  if (!req.user) {
     return res.status(401).json({
       success: false,
       message: 'Authentication failed',
@@ -55,44 +15,66 @@ const authenticateUser = (req, res, next) => {
   next();
 };
 
-export const Auth = (...allowedRoles) => {
-  return [
-    authenticateUser,
-    (req, res, next) => {
-      try {
-        const user = req.user;
-        const requestedUserId = req.params.userId;
+export function AuthMiddleware(req, res, next) {
 
-        // Check each allowed role
-        for (const role of allowedRoles) {
-          if (role === ANY_USER) {
-            // Any authenticated user is allowed
+  const user = req.user;
+  const requestedUserId = req.params.userId;
+  let requestedRoles = req.userRoles;
+
+  let userRoles = AuthUser.ANY;
+  if (user) {
+    userRoles |= AuthUser.VALID_USER;
+    if (user.isAdmin) {
+      userRoles |= AuthUser.ADMIN;
+    }
+  }
+
+  req.userRoles = userRoles;
+  next(); // Allows the next middleware method to run
+}
+
+/**
+ * a factory that returns a middleware function that
+ * performs bitwise operation to verify user roles
+ * @param {*} allowedRoles 
+ * @returns 
+ */
+export function Auth(allowedRoles) {
+  return (req, res, next) => {
+      AuthMiddleware(req, res, () => { // computes the scopes first
+        try {
+
+        if (Array.isArray(allowedRoles)) {
+          for(const allowedRole of allowedRoles) {
+            // ANY_USER (0) always matches
+            if (allowedRole === AuthUser.ANY_USER) {
+              return next();
+            }
+            if ((requestedRoles & allowedRole) === allowedRole) {
+              return next();
+            }
+          }
+        } else {
+          // ANY_USER (0) always matches
+          if (allowedRoles === AuthUser.ANY_USER) {
             return next();
           }
-
-          if (role === ADMIN && user.isadmin === true) {
-            // User is an admin
-            return next();
-          }
-
-          if (role === SAME_USER && user.userid === parseInt(requestedUserId)) {
-            // User is accessing their own resource
+          if ((requestedRoles & allowedRoles) === allowedRoles) {
             return next();
           }
         }
-
         // No matching role found
         throw new Error('Insufficient permissions');
 
       } catch (error) {
-        res.status(403).json({ // TODO: add better logging
+        res.status(403).json({
           success: false,
           message: 'Authorization failed',
           error: error.message
         });
       }
+      })
     }
-  ];
 };
 
 export default Auth;

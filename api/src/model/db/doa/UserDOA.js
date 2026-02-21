@@ -1,41 +1,43 @@
 import { query } from "../../db/DBConnection.js";
+import { User } from "../../models/User.js";
 
 /**
  * Data access layer for the USERS table.
- * Matches the schema in the wiki (UserId, Email, Name, CreatedAt, UpdatedAt, etc.).
+ * Returns User objects (camelCase) via User.fromRow.
  */
-export default class UserDAO {
+export default class UserDOA {
   /**
    * Get user by email address.
    * @param {string} email
-   * @returns {Promise<Object|null>}
+   * @returns {Promise<ReturnType<User.fromRow>|null>}
    */
   static async getUserByEmail(email) {
     const result = await query(
       "SELECT * FROM users WHERE email = $1",
       [email],
     );
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    return row ? User.fromRow(row) : null;
   }
 
   /**
    * Get user by ID.
    * @param {number} userId
-   * @returns {Promise<Object|null>}
+   * @returns {Promise<ReturnType<User.fromRow>|null>}
    */
   static async findById(userId) {
     const result = await query(
       "SELECT * FROM users WHERE userid = $1",
       [userId],
     );
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    return row ? User.fromRow(row) : null;
   }
 
   /**
    * Create a new user with minimal fields (Email, Name).
-   * Other columns will use database defaults.
    * @param {{ email: string, name: string }} userData
-   * @returns {Promise<Object>}
+   * @returns {Promise<ReturnType<User.fromRow>>}
    */
   static async createUser({ email, name }) {
     const result = await query(
@@ -44,14 +46,14 @@ export default class UserDAO {
        RETURNING *`,
       [email, name],
     );
-    return result.rows[0];
+    return User.fromRow(result.rows[0]);
   }
 
   /**
-   * Generic update for arbitrary user fields.
+   * Generic update for arbitrary user fields (keys in snake_case for DB).
    * @param {number} userId
    * @param {Record<string, any>} fields
-   * @returns {Promise<Object|null>}
+   * @returns {Promise<ReturnType<User.fromRow>|null>}
    */
   static async updateUser(userId, fields) {
     const keys = Object.keys(fields);
@@ -74,8 +76,6 @@ export default class UserDAO {
 
     return this.findById(userId);
   }
-
-  // Convenience helpers for the key columns in the wiki schema
 
   static async updateLastLogin(userId, lastLogin = new Date()) {
     return this.updateUser(userId, { lastlogin: lastLogin });
