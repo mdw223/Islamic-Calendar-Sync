@@ -19,6 +19,8 @@ function authHeaders(extra = {}) {
 export default class HTTPClient {
   static baseURL = '/api'; // OR so it works on page refresh
 
+  // methods are static bec: no instance state/constructor
+  
   // GET request (sends Authorization: Bearer when token is stored)
   static async get(url) {
     return fetch(this.baseURL + url, {
@@ -41,7 +43,7 @@ export default class HTTPClient {
   }
 
   // PUT request
-  async put(url, data) {
+  static async put(url, data) {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'PUT',
       credentials: 'include',
@@ -54,7 +56,7 @@ export default class HTTPClient {
   }
 
   // PATCH request
-  async patch(url, data) {
+  static async patch(url, data) {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'PATCH',
       credentials: 'include',
@@ -67,7 +69,7 @@ export default class HTTPClient {
   }
 
   // DELETE request
-  async delete(url) {
+  static async delete(url) {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'DELETE',
       credentials: 'include',

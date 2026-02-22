@@ -9,7 +9,6 @@ export function AuthenticateUser(req, res, next) {
     return res.status(401).json({
       success: false,
       message: 'Authentication failed',
-      error: 'Not authenticated'
     });
   }
   next();
@@ -70,7 +69,6 @@ export function Auth(allowedRoles) {
         res.status(403).json({
           success: false,
           message: 'Authorization failed',
-          error: error.message
         });
       }
       })

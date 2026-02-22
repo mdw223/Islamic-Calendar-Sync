@@ -44,4 +44,47 @@ export default class APIClient {
   static async logout() {
     return HTTPClient.post("/users/logout");
   }
+
+  // ── Providers ──────────────────────────────────────────────────────────────
+
+  /**
+   * Get all calendar providers linked to the current user.
+   */
+  static async getProviders() {
+    return HTTPClient.get("/providers");
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Get all events for the current user.
+   */
+  static async getEvents() {
+    return HTTPClient.get("/events");
+  }
+
+  /**
+   * Create a new event.
+   * @param {{ name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }} eventData
+   */
+  static async createEvent(eventData) {
+    return HTTPClient.post("/events", eventData);
+  }
+
+  /**
+   * Update an existing event by its ID.
+   * @param {number} eventId
+   * @param {{ name?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isCustom?, isTask? }} updates
+   */
+  static async updateEvent(eventId, updates) {
+    return HTTPClient.put(`/events/${eventId}`, updates);
+  }
+
+  /**
+   * Delete an event by its ID.
+   * @param {number} eventId
+   */
+  static async deleteEvent(eventId) {
+    return HTTPClient.delete(`/events/${eventId}`);
+  }
 }

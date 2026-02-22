@@ -27,7 +27,6 @@ export default async function GetCurrentUser(req, res) {
         res.status(500).json({
             success: false,
             message: 'Failed to get current user',
-            error: error.message
         });
     }
 }

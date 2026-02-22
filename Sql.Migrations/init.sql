@@ -133,29 +133,30 @@ CREATE TABLE Provider (
 --     FOREIGN KEY (PrayerTypeId) REFERENCES PrayerType(PrayerTypeId) ON DELETE RESTRICT
 -- );
 
--- -- Create EventType table
--- CREATE TABLE EventType (
---     EventTypeId SERIAL PRIMARY KEY,
---     Name VARCHAR(100) NOT NULL
--- );
+-- Create EventType table
+CREATE TABLE EventType (
+    EventTypeId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL
+);
 
--- -- Create Event table
--- CREATE TABLE Event (
---     EventId SERIAL PRIMARY KEY,
---     Name VARCHAR(255) NOT NULL,
---     StartDate TIMESTAMP NOT NULL,
---     EndDate TIMESTAMP NOT NULL,
---     IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
---     Description TEXT,
---     Hide BOOLEAN NOT NULL DEFAULT FALSE,
---     EventTypeId INTEGER NOT NULL,
---     IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
---     IsTask BOOLEAN NOT NULL DEFAULT FALSE,
---     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (EventConfigurationId) REFERENCES EventConfiguration(EventConfigurationId) ON DELETE CASCADE,
---     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
--- );
+-- Create Event table
+CREATE TABLE Event (
+    EventId SERIAL PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    StartDate TIMESTAMP NOT NULL,
+    EndDate TIMESTAMP NOT NULL,
+    IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
+    Description TEXT,
+    Hide BOOLEAN NOT NULL DEFAULT FALSE,
+    EventTypeId INTEGER NOT NULL,
+    IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
+    IsTask BOOLEAN NOT NULL DEFAULT FALSE,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UserId INTEGER NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE,
+    FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
+);
 
 -- -- Create indexes for better query performance
 -- CREATE INDEX idx_provider_userid ON Provider(UserId);
@@ -196,15 +197,15 @@ INSERT INTO ProviderType (Name) VALUES
     ('Apple Calendar'),
     ('Cal.com');
 
--- -- Insert default calculation methods
--- INSERT INTO CalculationMethod (Name) VALUES 
---     ('Muslim World League'),
---     ('Islamic Society of North America'),
---     ('Egyptian General Authority of Survey'),
---     ('Umm Al-Qura University, Makkah'),
---     ('University of Islamic Sciences, Karachi'),
---     ('Institute of Geophysics, University of Tehran'),
---     ('Shia Ithna-Ashari');
+-- Insert default calculation methods
+INSERT INTO CalculationMethod (Name) VALUES 
+    ('Muslim World League'),
+    ('Islamic Society of North America'),
+    ('Egyptian General Authority of Survey'),
+    ('Umm Al-Qura University, Makkah'),
+    ('University of Islamic Sciences, Karachi'),
+    ('Institute of Geophysics, University of Tehran'),
+    ('Shia Ithna-Ashari');
 
 -- -- Insert default prayer types
 -- INSERT INTO PrayerType (Name) VALUES 
@@ -216,9 +217,9 @@ INSERT INTO ProviderType (Name) VALUES
 --     ('Isha'),
 --     ('Custom');
 
--- -- Insert default event types
--- INSERT INTO EventType (Name) VALUES 
---     ('Ramadan'),
---     ('Eid'),
---     ('Jumah'),
---     ('Custom');
+-- Insert default event types
+INSERT INTO EventType (Name) VALUES 
+    ('Ramadan'),
+    ('Eid'),
+    ('Jumah'),
+    ('Custom');

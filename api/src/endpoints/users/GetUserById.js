@@ -34,7 +34,6 @@ export default async function GetUserById(req, res) {
         res.status(500).json({
             success: false,
             message: 'Failed to get user',
-            error: error.message
         });
     }
 }

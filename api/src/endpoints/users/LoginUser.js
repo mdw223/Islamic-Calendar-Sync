@@ -33,7 +33,6 @@ export async function SendVerificationCode(req, res) {
         res.status(500).json({
             success: false,
             message: 'Failed to send verification code',
-            error: error.message
         });
     }
 }
@@ -84,7 +83,6 @@ export async function VerifyCode(req, res) {
         res.status(500).json({
             success: false,
             message: 'Failed to verify code',
-            error: error.message
         });
     }
 }
