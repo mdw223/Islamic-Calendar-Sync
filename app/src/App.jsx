@@ -19,6 +19,7 @@ import Dashboard from "./pages/app/dashboard/Dashboard";
 import Settings from "./pages/app/settings/Settings";
 import CalendarPage from "./pages/app/calendar/Calendar";
 import RootLayout from "./layouts/RootLayout";
+import CalendarLayout from "./layouts/CalendarLayout";
 
 const router = createBrowserRouter([
   {
@@ -44,14 +45,14 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: "calendar",
-        element: <CalendarLayout />,
-        children: [
-          { index: true, element: <CalendarPage /> },
-          { path: "prayers", element: <PrayersPage /> },
-          { path: "events", element: <EventsPage /> },
-        ],
-      }
+        // path: "calendar",
+        // element: <CalendarLayout />,
+        // children: [
+        //   { index: true, element: <CalendarPage /> },
+        // { path: "prayers", element: <PrayersPage /> },
+        // { path: "events", element: <EventsPage /> },
+        // ],
+      },
       { path: "login", element: <Navigate to="/auth/login" replace /> },
       { path: "*", element: <NotFoundPage /> },
     ],
