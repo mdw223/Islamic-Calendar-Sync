@@ -10,6 +10,7 @@ import GetProviders from './providers/GetProviders.js';
 import GetEvents from './events/GetEvents.js';
 import GetEventById from './events/GetEventById.js';
 import CreateEvent from './events/CreateEvent.js';
+import BulkCreateEvents from './events/BulkCreateEvents.js';
 import UpdateEvent from './events/UpdateEvent.js';
 import DeleteEvent from './events/DeleteEvent.js';
 
@@ -31,6 +32,7 @@ router.get("/providers", Auth(AuthUser.ANY_USER), GetProviders);
 
 // Events routes
 router.get("/events", Auth(AuthUser.ANY_USER), GetEvents);
+router.post("/events/batch", Auth(AuthUser.VALID_USER), BulkCreateEvents);
 router.get("/events/:eventId", Auth(AuthUser.ANY_USER), GetEventById);
 router.post("/events", Auth(AuthUser.ANY_USER), CreateEvent);
 router.put("/events/:eventId", Auth(AuthUser.ANY_USER), UpdateEvent);

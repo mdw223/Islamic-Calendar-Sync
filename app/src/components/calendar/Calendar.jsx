@@ -3,12 +3,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus as AddIcon,
+  RefreshCw as RefreshIcon,
+  Upload as SyncIcon,
 } from "lucide-react";
 import {
   Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   LinearProgress,
@@ -19,8 +26,11 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
+import { useUser } from "../../contexts/UserContext";
+import APIClient from "../../util/ApiClient";
 import EventModal from "./EventModal";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -630,7 +640,21 @@ function DayView({ date, events, onSlotClick, onEventClick }) {
  * DayView based on `currentView` from CalendarContext.
  */
 export default function Calendar() {
-  const { events, currentView, changeView, loading, error } = useCalendar();
+  const {
+    events,
+    currentView,
+    changeView,
+    loading,
+    error,
+    syncToBackend,
+    refreshFromBackend,
+    isSyncing,
+    isRefreshing,
+    ensureIslamicEventsForYear,
+  } = useCalendar();
+
+  const { user } = useUser();
+  const navigate = useNavigate();
   const today = new Date();
 
   // `cursor` tracks the date the user has navigated to; navigation buttons
@@ -641,6 +665,19 @@ export default function Calendar() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInitialDate, setModalInitialDate] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
+
+  // Controls the "sign in to sync" dialog shown to unauthenticated users.
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  // ── Year-change detection ─────────────────────────────────────────────────
+  // When the user navigates to a different Gregorian year, ensure Islamic
+  // events for that year have been generated in localStorage.
+  useEffect(() => {
+    ensureIslamicEventsForYear(cursor.getFullYear());
+    // ensureIslamicEventsForYear is stable (defined outside renders) so it
+    // doesn't need to be listed as a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursor.getFullYear()]);
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
@@ -836,7 +873,111 @@ export default function Calendar() {
         >
           Add Event
         </Button>
+
+        {/* ── Sync button ─────────────────────────────────────────────────
+            Always visible. Authenticated users trigger a batch sync to the
+            backend. Unauthenticated users see a login prompt instead. */}
+        <Tooltip
+          title={
+            user.isLoggedIn
+              ? "Sync Islamic events to your account"
+              : "Sign in to sync your calendar"
+          }
+        >
+          <span>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={
+                isSyncing ? (
+                  <CircularProgress size={14} />
+                ) : (
+                  <SyncIcon size={14} />
+                )
+              }
+              disabled={isSyncing}
+              onClick={() => {
+                if (user.isLoggedIn) {
+                  syncToBackend();
+                } else {
+                  setLoginDialogOpen(true);
+                }
+              }}
+              sx={{ ml: 0.5 }}
+            >
+              Sync
+            </Button>
+          </span>
+        </Tooltip>
+
+        {/* ── Refresh button ───────────────────────────────────────────────
+            Only useful when authenticated (requires a backend session).
+            Hidden for guests since they have no server-side data to pull. */}
+        {user.isLoggedIn && (
+          <Tooltip title="Refresh events from your account">
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={
+                  isRefreshing ? (
+                    <CircularProgress size={14} />
+                  ) : (
+                    <RefreshIcon size={14} />
+                  )
+                }
+                disabled={isRefreshing}
+                onClick={refreshFromBackend}
+                sx={{ ml: 0.5 }}
+              >
+                Refresh
+              </Button>
+            </span>
+          </Tooltip>
+        )}
       </Paper>
+
+      {/* ── Login prompt dialog ────────────────────────────────────────────
+          Shown when an unauthenticated user clicks Sync. Offers Google OAuth
+          as the quickest path and a link to the full login page. */}
+      <Dialog
+        open={loginDialogOpen}
+        onClose={() => setLoginDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Sign in to sync your calendar</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Create a free account to sync your Islamic calendar events across
+            devices and keep them backed up securely.
+          </Typography>
+          {/* Quick Google OAuth entry point */}
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={() => {
+              window.location.href = APIClient.getGoogleLoginUrl();
+            }}
+            sx={{ mb: 1 }}
+          >
+            Continue with Google
+          </Button>
+          <Button
+            variant="text"
+            fullWidth
+            onClick={() => {
+              setLoginDialogOpen(false);
+              navigate("/login");
+            }}
+          >
+            Sign in with Email
+          </Button>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLoginDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Non-blocking loading indicator */}
       {loading && <LinearProgress />}

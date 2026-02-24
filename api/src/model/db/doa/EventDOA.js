@@ -1,4 +1,4 @@
-import { query } from "../../db/DBConnection.js";
+import { query, getConnection } from "../../db/DBConnection.js";
 import { Event } from "../../models/Event.js";
 
 /**
@@ -119,5 +119,106 @@ export default class EventDOA {
       [eventId, userId],
     );
     return result.rowCount > 0;
+  }
+
+  /**
+   * Batch upsert events for a user inside a single transaction.
+   *
+   * For events that carry an `islamicEventKey`, the INSERT uses an ON CONFLICT
+   * clause targeting the partial unique index on (UserId, IslamicEventKey).
+   * This means re-syncing the same Islamic event from the frontend is safe —
+   * the backend will simply update the existing row instead of duplicating it.
+   *
+   * For events without an `islamicEventKey`, a plain INSERT is performed.
+   *
+   * All events are processed inside a single database transaction so that the
+   * batch either fully succeeds or fully rolls back.
+   *
+   * @param {Array<{ name: string, startDate: string, endDate: string,
+   *   isAllDay?: boolean, description?: string, hide?: boolean,
+   *   eventTypeId: number, isCustom?: boolean, isTask?: boolean,
+   *   islamicEventKey?: string }>} eventsData
+   * @param {number} userId
+   * @returns {Promise<Event[]>} The persisted events, each with its integer eventId.
+   */
+  static async bulkUpsert(eventsData, userId) {
+    const client = await getConnection();
+    try {
+      await client.query("BEGIN");
+
+      const results = [];
+      for (const data of eventsData) {
+        const {
+          name,
+          startDate,
+          endDate,
+          isAllDay = false,
+          description = null,
+          hide = false,
+          eventTypeId,
+          isCustom = false,
+          isTask = false,
+          islamicEventKey = null,
+        } = data;
+
+        let result;
+
+        if (islamicEventKey) {
+          // Upsert: if a row for this (userId, islamicEventKey) already exists,
+          // update all mutable fields. The EXCLUDED pseudo-table references the
+          // values that were rejected by the conflict check.
+          result = await client.query(
+            `INSERT INTO event (
+               userid, name, startdate, enddate, isallday,
+               description, hide, eventtypeid, iscustom, istask,
+               islamiceventkey, createdat, updatedat
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+             ON CONFLICT (userid, islamiceventkey)
+               WHERE islamiceventkey IS NOT NULL
+             DO UPDATE SET
+               name        = EXCLUDED.name,
+               startdate   = EXCLUDED.startdate,
+               enddate     = EXCLUDED.enddate,
+               isallday    = EXCLUDED.isallday,
+               description = EXCLUDED.description,
+               hide        = EXCLUDED.hide,
+               eventtypeid = EXCLUDED.eventtypeid,
+               iscustom    = EXCLUDED.iscustom,
+               istask      = EXCLUDED.istask,
+               updatedat   = NOW()
+             RETURNING *`,
+            [userId, name, startDate, endDate, isAllDay, description, hide,
+             eventTypeId, isCustom, isTask, islamicEventKey],
+          );
+        } else {
+          // Plain insert for regular user-created events.
+          result = await client.query(
+            `INSERT INTO event (
+               userid, name, startdate, enddate, isallday,
+               description, hide, eventtypeid, iscustom, istask,
+               createdat, updatedat
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+             RETURNING *`,
+            [userId, name, startDate, endDate, isAllDay, description, hide,
+             eventTypeId, isCustom, isTask],
+          );
+        }
+
+        if (result.rows[0]) {
+          results.push(Event.fromRow(result.rows[0]));
+        }
+      }
+
+      await client.query("COMMIT");
+      return results;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      // Always release the connection back to the pool regardless of outcome.
+      client.release();
+    }
   }
 }

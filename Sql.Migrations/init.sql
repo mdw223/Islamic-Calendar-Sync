@@ -151,12 +151,24 @@ CREATE TABLE Event (
     EventTypeId INTEGER NOT NULL,
     IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
     IsTask BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Stable string key for Islamic calendar events (e.g. "ramadan_begins_1447").
+    -- When present, used for upsert deduplication: the partial unique index below
+    -- prevents a user from syncing the same Islamic event twice.
+    IslamicEventKey VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UserId INTEGER NOT NULL,
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
 );
+
+-- Partial unique index: only enforces uniqueness when IslamicEventKey is not NULL.
+-- PostgreSQL treats NULLs as not equal in regular UNIQUE constraints, so two rows
+-- with IslamicEventKey = NULL would not conflict — which is correct for user-created
+-- events. The partial index targets only Islamic calendar events.
+CREATE UNIQUE INDEX idx_event_islamic_key
+    ON Event (UserId, IslamicEventKey)
+    WHERE IslamicEventKey IS NOT NULL;
 
 -- -- Create indexes for better query performance
 -- CREATE INDEX idx_provider_userid ON Provider(UserId);

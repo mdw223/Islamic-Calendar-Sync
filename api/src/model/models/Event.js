@@ -14,6 +14,10 @@ export class Event {
     this.eventTypeId = null;
     this.isCustom = null;
     this.isTask = null;
+    // Stable string key that links this DB row back to a specific Islamic
+    // calendar event definition + Hijri year (e.g. "ramadan_begins_1447").
+    // Null for ordinary user-created events.
+    this.islamicEventKey = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -36,6 +40,8 @@ export class Event {
     event.eventTypeId = body.eventTypeId ?? null;
     event.isCustom = body.isCustom ?? false;
     event.isTask = body.isTask ?? false;
+    // Optional — present only for Islamic-calendar events from the frontend.
+    event.islamicEventKey = body.islamicEventKey ?? null;
     return event;
   }
 
@@ -56,6 +62,7 @@ export class Event {
     event.eventTypeId = row.eventtypeid;
     event.isCustom = row.iscustom;
     event.isTask = row.istask;
+    event.islamicEventKey = row.islamiceventkey ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
