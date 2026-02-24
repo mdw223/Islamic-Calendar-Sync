@@ -2,7 +2,7 @@ import { query } from "../../db/DBConnection.js";
 import { User } from "../../models/User.js";
 
 /**
- * Data access layer for the USERS table.
+ * Data access layer for the USER table.
  * Returns User objects (camelCase) via User.fromRow.
  */
 export default class UserDOA {
@@ -13,7 +13,7 @@ export default class UserDOA {
    */
   static async getUserByEmail(email) {
     const result = await query(
-      "SELECT * FROM users WHERE email = $1",
+      `SELECT * FROM "User" WHERE email = $1`,
       [email],
     );
     const row = result.rows[0];
@@ -27,7 +27,7 @@ export default class UserDOA {
    */
   static async findById(userId) {
     const result = await query(
-      "SELECT * FROM users WHERE userid = $1",
+      `SELECT * FROM "User" WHERE userid = $1`,
       [userId],
     );
     const row = result.rows[0];
@@ -41,7 +41,7 @@ export default class UserDOA {
    */
   static async createUser({ email, name }) {
     const result = await query(
-      `INSERT INTO users (email, name, createdat, updatedat)
+      `INSERT INTO "User" (email, name, createdat, updatedat)
        VALUES ($1, $2, NOW(), NOW())
        RETURNING *`,
       [email, name],
@@ -68,7 +68,7 @@ export default class UserDOA {
     const values = keys.map((k) => fields[k]);
 
     await query(
-      `UPDATE users
+      `UPDATE "User"
        SET ${setClauses.join(", ")}, updatedat = NOW()
        WHERE userid = $1`,
       [userId, ...values],

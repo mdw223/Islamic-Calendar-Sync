@@ -151,6 +151,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             required
             fullWidth
             autoFocus
+            inputProps={{ maxLength: 1024 }}
           />
 
           <FormControlLabel

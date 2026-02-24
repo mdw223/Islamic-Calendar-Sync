@@ -1,6 +1,6 @@
 /**
  * User model. Maps DB rows (snake_case) to camelCase via fromRow.
- * Matches wiki USERS entity (UserId, Email, Name, CreatedAt, etc.).
+ * Matches wiki USER entity (UserId, Email, Name, CreatedAt, etc.).
  */
 export class User {
   constructor() {

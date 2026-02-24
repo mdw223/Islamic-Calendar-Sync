@@ -3,13 +3,7 @@ import CalendarComponent from "../../../components/calendar/Calendar";
 
 export default function CalendarPage() {
   return (
-    <Box
-      sx={{
-        height: "calc(100vh - 64px)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <Box sx={{ marginLeft: 2, marginRight: 2, marginTop: 2, marginBottom: 2 }}>
       <CalendarComponent />
     </Box>
   );

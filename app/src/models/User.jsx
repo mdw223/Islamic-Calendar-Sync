@@ -1,5 +1,5 @@
 /**
- * User model aligned with DB schema (Users table).
+ * User model aligned with DB schema (User table).
  * API returns lowercase column names (e.g. userid, createdat); we map to camelCase.
  * "Logged in" is session-based (cookie): no isLoggedIn in DB; use user.userId != null or user.isLoggedIn getter.
  */
@@ -115,7 +115,8 @@ export class User {
     Object.assign(this, new User(defaultUser));
   }
 
-  updatePreferences(preferences) { // TODO USE THESE
+  updatePreferences(preferences) {
+    // TODO USE THESE
     if (preferences && typeof preferences.notifications !== "undefined")
       this.notifications = preferences.notifications;
     if (preferences && typeof preferences.emailUpdates !== "undefined")

@@ -50,8 +50,8 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Calendar", path: "/calendar", icon: <Calendar size={18} /> },
-    { name: "Prayers", path: "/calendar", icon: <Clock size={18} /> },
-    { name: "Events", path: "/calendar", icon: <Star size={18} /> },
+    { name: "Prayers", path: "/prayers", icon: <Clock size={18} /> },
+    { name: "Events", path: "/events", icon: <Star size={18} /> },
   ];
 
   const handleThemeToggle = (event, newTheme) => {
@@ -152,7 +152,11 @@ const Navbar = () => {
                 />
               ) : (
                 <Box sx={{ ml: 2, display: "flex", gap: 1 }}>
-                  <Button variant="outlined" component={RouterLink} to="/auth/login">
+                  <Button
+                    variant="outlined"
+                    component={RouterLink}
+                    to="/auth/login"
+                  >
                     Sign In
                   </Button>
                   <Button

@@ -22,11 +22,11 @@ Islamic Calendar Sync is designed to help users generate and customize prayer ti
 
 ## 2. Core Entities
 
-### Users
+### User
 
 Can login via email or OAuth, configure settings, generate personal Islamic calendar events and prayer times to their calendar provider.
 Users contain an event configuration such as the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
-Users contains settings such as the language and geographic settings to determine prayer time accuracy. Always asks the user to put current location and language to check if they want to change it.
+Users contain location and language settings (`Timezone`, `Latitude`, `Longitude`, `Language`) stored directly on the user record to determine prayer time accuracy. Always asks the user to confirm their current location and language.
 Users contain a prayer configuration for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
 
 ### Provider
@@ -69,141 +69,140 @@ Server-side application logs (requests, responses, and errors) persisted in Post
 
 ## 3. Entity Relationship Diagram
 
+> **Note:** `Calendar`, `Prayer`, and `PrayerType` are defined but currently commented out in `init.sql` — they are planned for a future implementation phase.
+
 ```mermaid
 erDiagram
-    USERS {
+    User {
         int UserId PK
-        string Email UK
-        string Name
-        datetime CreatedAt
-        datetime UpdatedAt
-        datetime LastLogin
-        bit IsAdmin
-        varchar Language
-        datetime EventConfigurationStart
-        datetime EventConfigurationEnd
-        datetime PrayerConfigurationStart
-        datetime PrayerConfigurationEnd
-        int CalculationMethodId FK
-        bit Hanafi
-        varchar Salt
-        bit EmailUpdates
-        bit Notifications
-    }
-
-    LOCATION {
-        int LocationId PK
+        varchar Name
+        varchar Email UK
+        timestamp CreatedAt
+        timestamp UpdatedAt
+        timestamp LastLogin
+        boolean IsAdmin
+        varchar Timezone
         varchar Latitude
         varchar Longitude
-        varchar Timezone
-        int UserId FK
-    }
-
-    PROVIDER {
-        int ProviderId PK
-        int ProviderTypeId FK
-        varchar Email
-        int UserId FK
-        datetime CreatedAt
-        datetime UpdatedAt
-        datetime ExpiresAt
-        varchar AccessToken
-        varchar Scopes
+        varchar Language
+        timestamp EventConfigurationStart
+        timestamp EventConfigurationEnd
+        timestamp PrayerConfigurationStart
+        timestamp PrayerConfigurationEnd
+        int CalculationMethodId FK
+        boolean Hanafi
         varchar Salt
-        varchar RefreshToken
-        bit IsActive
+        boolean EmailUpdates
+        boolean Notifications
     }
 
-    PROVIDER_TYPE {
-        int ProviderTypeId PK
-        varchar Name
-    }
-
-    CALENDAR {
-        int CalendarId PK
-        varchar Name
-        varchar IdentifierId
-        int ProviderId FK
-        datetime CreatedAt
-        datetime UpdatedAt
-        varchar Color
-        varchar Url
-    }
-
-    CALCULATION_METHOD {
-        int CalculationMethodId PK
-        varchar Name
-    }
-
-    PRAYER {
-        int PrayerId PK
-        varchar Name
-        datetime StartTime
-        datetime EndTime
-        int Duration
-        int TimeOffset
-        int PrayerTypeId FK
-        varchar Description
-        bit Hide
-        bit IsCustom
-        datetime CreatedAt
-        datetime UpdatedAt
-    }
-
-    PRAYER_TYPE {
-        int PrayerTypeId PK
-        varchar Name
-    }
-
-    EVENT {
-        int EventId PK
-        varchar Name
-        datetime StartDate
-        datetime EndDate
-        bit IsAllDay
-        varchar Description
-        bit Hide
-        int EventTypeId FK
-        bit IsCustom
-        bit IsTask
-        datetime CreatedAt
-        datetime UpdatedAt
-    }
-
-    EVENT_TYPE {
-        int EventTypeId PK
-        varchar Name
-    }
-
-    LOG {
-        int LogId PK
-        datetime Timestamp
+    Log {
+        bigint LogId PK
+        timestamptz Timestamp
         varchar Level
-        varchar Message
+        text Message
         varchar Logger
-        string RequestId
+        uuid RequestId
         int UserId FK
         varchar HttpMethod
         varchar Path
         int StatusCode
         int DurationMs
-        varchar Ip
-        varchar UserAgent
+        inet Ip
+        text UserAgent
         varchar ErrorCode
-        varchar ErrorStack
-        string Meta
+        text ErrorStack
+        jsonb Meta
     }
 
-    USERS ||--o{ PROVIDER : "connects to"
-    USERS ||--o{ LOCATION : "contains"
-    PROVIDER }o--|| PROVIDER_TYPE : "is type"
-    PROVIDER ||--o{ CALENDAR : "contains"
-    USERS }o--|| CALCULATION_METHOD : "uses"
-    USERS ||--o{ PRAYER : "generates"
-    PRAYER }o--|| PRAYER_TYPE : "is type"
-    USERS ||--o{ EVENT : "generates"
-    EVENT }o--|| EVENT_TYPE : "is type"
-    USERS ||--o{ LOG : "produces"
+    CalculationMethod {
+        int CalculationMethodId PK
+        varchar Name
+    }
+
+    ProviderType {
+        int ProviderTypeId PK
+        varchar Name
+    }
+
+    Provider {
+        int ProviderId PK
+        int ProviderTypeId FK
+        varchar Name
+        varchar Email
+        int UserId FK
+        varchar AccessToken
+        varchar RefreshToken
+        timestamp CreatedAt
+        timestamp UpdatedAt
+        timestamp ExpiresAt
+        varchar Scopes
+        varchar Salt
+        boolean IsActive
+    }
+
+    EventType {
+        int EventTypeId PK
+        varchar Name
+    }
+
+    Event {
+        int EventId PK
+        varchar Name
+        timestamp StartDate
+        timestamp EndDate
+        boolean IsAllDay
+        text Description
+        boolean Hide
+        int EventTypeId FK
+        boolean IsCustom
+        boolean IsTask
+        timestamp CreatedAt
+        timestamp UpdatedAt
+        int UserId FK
+    }
+
+    %% Commented out in init.sql — planned for future implementation
+    Calendar {
+        int CalendarId PK
+        varchar Name
+        varchar IdentifierId
+        int ProviderId FK
+        timestamp CreatedAt
+        timestamp UpdatedAt
+        varchar Color
+        varchar Url
+    }
+
+    PrayerType {
+        int PrayerTypeId PK
+        varchar Name
+    }
+
+    Prayer {
+        int PrayerId PK
+        varchar Name
+        timestamp StartTime
+        timestamp EndTime
+        int Duration
+        int TimeOffset
+        int PrayerTypeId FK
+        text Description
+        boolean Hide
+        boolean IsCustom
+        timestamp CreatedAt
+        timestamp UpdatedAt
+    }
+
+    User ||--o{ Provider : "connects to"
+    Provider }o--|| ProviderType : "is type"
+    User }o--|| CalculationMethod : "uses"
+    User ||--o{ Event : "generates"
+    Event }o--|| EventType : "is type"
+    User ||--o{ Log : "produces"
+    Provider ||--o{ Calendar : "contains"
+    User ||--o{ Prayer : "generates"
+    Prayer }o--|| PrayerType : "is type"
 ```
 
 ---

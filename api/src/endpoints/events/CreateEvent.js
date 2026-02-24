@@ -16,6 +16,13 @@ export default async function CreateEvent(req, res) {
             });
         }
 
+        if (eventData.name.length > 1024) {
+            return res.status(400).json({
+                success: false,
+                message: 'Event name must be 1024 characters or fewer.',
+            });
+        }
+
         const event = await EventDOA.createEvent({ ...eventData, userId: req.user.userId });
 
         res.status(201).json({

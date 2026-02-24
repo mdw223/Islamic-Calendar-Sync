@@ -43,6 +43,15 @@ const router = createBrowserRouter([
           { path: "register", element: <Register /> },
         ],
       },
+      {
+        path: "calendar",
+        element: <CalendarLayout />,
+        children: [
+          { index: true, element: <CalendarPage /> },
+          { path: "prayers", element: <PrayersPage /> },
+          { path: "events", element: <EventsPage /> },
+        ],
+      }
       { path: "login", element: <Navigate to="/auth/login" replace /> },
       { path: "*", element: <NotFoundPage /> },
     ],

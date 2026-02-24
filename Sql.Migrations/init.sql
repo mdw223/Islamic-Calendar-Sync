@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS Provider CASCADE;
 DROP TABLE IF EXISTS ProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
-DROP TABLE IF EXISTS Users CASCADE;
+DROP TABLE IF EXISTS User_ CASCADE;
 
 -- Create CalculationMethod table
 CREATE TABLE CalculationMethod (
@@ -27,7 +27,7 @@ CREATE TABLE ProviderType (
 );
 
 -- Create Users table
-CREATE TABLE Users (
+CREATE TABLE "User" (
     UserId SERIAL PRIMARY KEY,
     Name VARCHAR(100) NULL,
     Email VARCHAR(255) NULL UNIQUE,
@@ -69,7 +69,7 @@ CREATE TABLE Log (
     ErrorCode VARCHAR(100),
     ErrorStack TEXT,
     Meta JSONB NOT NULL DEFAULT '{}'::jsonb,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE SET NULL
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_log_timestamp ON Log(Timestamp);
@@ -93,7 +93,7 @@ CREATE TABLE Provider (
     Salt VARCHAR(255),
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
 -- -- Create Calendar table
@@ -142,7 +142,7 @@ CREATE TABLE EventType (
 -- Create Event table
 CREATE TABLE Event (
     EventId SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
+    Name VARCHAR(1024) NOT NULL,
     StartDate TIMESTAMP NOT NULL,
     EndDate TIMESTAMP NOT NULL,
     IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
@@ -154,7 +154,7 @@ CREATE TABLE Event (
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UserId INTEGER NOT NULL,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
 );
 
@@ -175,7 +175,7 @@ CREATE TABLE Event (
 -- $$ LANGUAGE plpgsql;
 
 -- -- Create triggers to automatically update UpdatedAt on relevant tables
--- CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON Users
+-- CREATE TRIGGER update_user_updated_at BEFORE UPDATE ON User
 --     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- CREATE TRIGGER update_provider_updated_at BEFORE UPDATE ON Provider
