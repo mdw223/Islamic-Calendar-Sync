@@ -18,13 +18,15 @@ export function AuthMiddleware(req, res, next) {
 
   const user = req.user;
   const requestedUserId = req.params.userId;
-  let requestedRoles = req.userRoles;
 
   let userRoles = AuthUser.ANY;
   if (user) {
     userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
+    }
+    if (requestedUserId && user.userId == requestedUserId) {
+      userRoles |= AuthUser.SAME_USER;
     }
   }
 
@@ -45,20 +47,20 @@ export function Auth(allowedRoles) {
 
         if (Array.isArray(allowedRoles)) {
           for(const allowedRole of allowedRoles) {
-            // ANY_USER (0) always matches
-            if (allowedRole === AuthUser.ANY_USER) {
+            // ANY (0) always matches
+            if (allowedRole === AuthUser.ANY) {
               return next();
             }
-            if ((requestedRoles & allowedRole) === allowedRole) {
+            if ((req.userRoles & allowedRole) === allowedRole) {
               return next();
             }
           }
         } else {
-          // ANY_USER (0) always matches
-          if (allowedRoles === AuthUser.ANY_USER) {
+          // ANY (0) always matches
+          if (allowedRoles === AuthUser.ANY) {
             return next();
           }
-          if ((requestedRoles & allowedRoles) === allowedRoles) {
+          if ((req.userRoles & allowedRoles) === allowedRoles) {
             return next();
           }
         }

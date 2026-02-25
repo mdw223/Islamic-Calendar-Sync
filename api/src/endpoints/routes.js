@@ -18,24 +18,24 @@ const router = express.Router();
 
 // Health check routes
 router.use("/health", healthRoutes);
-router.get("/users/me", Auth(AuthUser.ANY_USER), GetCurrentUser);
+router.get("/users/me", Auth(AuthUser.ANY), GetCurrentUser);
 router.post("/users/send-code", SendVerificationCode);
 router.post("/users/verify-code", VerifyCode);
-router.post("/users/logout", Auth(AuthUser.ANY_USER), Logout);
+router.post("/users/logout", Auth(AuthUser.ANY), Logout);
 router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUserById);
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
 
 // Providers routes
-router.get("/providers", Auth(AuthUser.ANY_USER), GetProviders);
+router.get("/providers", Auth(AuthUser.ANY), GetProviders);
 
 // Events routes
-router.get("/events", Auth(AuthUser.ANY_USER), GetEvents);
+router.get("/events", Auth(AuthUser.ANY), GetEvents);
 router.post("/events/batch", Auth(AuthUser.VALID_USER), BulkCreateEvents);
-router.get("/events/:eventId", Auth(AuthUser.ANY_USER), GetEventById);
-router.post("/events", Auth(AuthUser.ANY_USER), CreateEvent);
-router.put("/events/:eventId", Auth(AuthUser.ANY_USER), UpdateEvent);
-router.delete("/events/:eventId", Auth(AuthUser.ANY_USER), DeleteEvent);
+router.get("/events/:eventId", Auth(AuthUser.ANY), GetEventById);
+router.post("/events", Auth(AuthUser.ANY), CreateEvent);
+router.put("/events/:eventId", Auth(AuthUser.ANY), UpdateEvent);
+router.delete("/events/:eventId", Auth(AuthUser.ANY), DeleteEvent);
 
 export default router;

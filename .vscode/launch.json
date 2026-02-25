@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Docker: Attach to API",
+      "name": "Docker: Attach to API running compose.debug.yml",
       "type": "node",
       "request": "attach",
       "address": "localhost",
