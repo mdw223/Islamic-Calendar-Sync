@@ -71,20 +71,6 @@
       "isHidden": false
     },
     {
-      "id": "ramadan_begins",
-      "titleAr": "بداية رمضان",
-      "titleEn": "Ramadan Begins",
-      "description": "todo...",
-      "hijriMonth": 9,
-      "hijriDay": 1,
-      "durationDays": 1,
-      "isAllDay": true,
-      "eventTypeId": 1,
-      "repeatsEachMonth": false,
-      "category": "annual",
-      "isHidden": false
-    },
-    {
       "id": "last_10_nights",
       "titleAr": "بداية العشر الأواخر من رمضان",
       "titleEn": "Last 10 Nights of Ramadan Begin",

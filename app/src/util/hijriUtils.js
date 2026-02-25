@@ -10,6 +10,9 @@
  * used elsewhere in the Calendar component.
  */
 
+import { EventTypeId } from "../constants";
+import { createEvent } from "../models/Event";
+
 // ---------------------------------------------------------------------------
 // Hijri formatter — numeric variant so we get integers back instead of names.
 // "en-u-ca-islamic-umalqura" is the Umm al-Qura calendar used in Saudi Arabia
@@ -79,17 +82,9 @@ export function getHijriMonthRangeLabel(year, month) {
  * Generate calendar event objects for every enabled Islamic event definition
  * that falls within the specified Gregorian year.
  *
- * How it works:
- *   1. We iterate over every calendar day in `gregorianYear`.
- *   2. For each day we compute its Hijri date via Intl.DateTimeFormat.
- *   3. We test each definition: does this Hijri date match the definition's
- *      trigger day (and month, unless `repeatsEachMonth` is true)?
- *   4. If matched and not already generated (tracked via a Set), we build a
- *      calendar-event-shaped object.
- *
  * ID scheme (important for sync deduplication):
  *   - `islamicDefinitionId`: the stable string id from islamicEvents.json
- *                             (e.g. "ramadan_begins"). Year-independent.
+ *                             (e.g. "month_start_ramadan"). Year-independent.
  *   - `islamicEventKey`:      year+Hijri-context string used as the backend
  *                             upsert key per (userId, islamicEventKey).
  *                             Annual events:   "<id>_<hijriYear>"       e.g. "ramadan_begins_1447"
@@ -138,11 +133,11 @@ export function generateIslamicEventsForYear(
 
     const hijri = getHijriNumericParts(date);
 
+    // for each definition: does this Hijri date match the definition's trigger day (and month, unless `repeatsEachMonth` is true)?
     for (const def of definitions) {
       // Skip events the user has hidden.
       if (def.isHidden) continue;
 
-      // --- Match logic -------------------------------------------------------
       // The trigger day must equal the definition's hijriDay.
       const dayMatches = hijri.day === def.hijriDay;
 
@@ -152,7 +147,6 @@ export function generateIslamicEventsForYear(
         def.repeatsEachMonth === true || hijri.month === def.hijriMonth;
 
       if (!dayMatches || !monthMatches) continue;
-      // -----------------------------------------------------------------------
 
       // Build the deduplication key.
       // Monthly repeating events include the Hijri month so that, e.g.,
@@ -174,33 +168,36 @@ export function generateIslamicEventsForYear(
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + (def.durationDays ?? 1) - 1);
       endDate.setHours(23, 59, 59, 999);
-      // -----------------------------------------------------------------------
 
-      events.push({
-        // Local string ID — becomes an integer after a successful backend sync.
-        eventId: `islamic_${islamicEventKey}`,
+      // createEvent() validates every field and throws on bad data, so
+      // malformed definitions or date-math bugs are caught immediately.
+      events.push(
+        createEvent({
+          // Local string ID — becomes an integer after a successful backend sync.
+          eventId: `islamic_${islamicEventKey}`,
 
-        // These two fields are carried through localStorage and sent to the
-        // backend so it can perform upsert deduplication.
-        islamicDefinitionId: def.id,
-        islamicEventKey,
+          // These two fields are carried through localStorage and sent to the
+          // backend so it can perform upsert deduplication.
+          islamicDefinitionId: def.id,
+          islamicEventKey,
 
-        // Calendar display fields — bilingual name keeps both scripts visible.
-        name: `${def.titleAr} | ${def.titleEn}`,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        isAllDay: def.isAllDay ?? true,
-        description: def.description ?? null,
+          // Calendar display fields — bilingual name keeps both scripts visible.
+          name: `${def.titleAr} | ${def.titleEn}`,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          isAllDay: def.isAllDay ?? true,
+          description: def.description ?? null,
 
-        // Backend FK fields (safe to reference even before sync because
-        // localStorage has no FK enforcement).
-        eventTypeId: def.eventTypeId ?? 4,
+          // Backend FK fields (safe to reference even before sync because
+          // localStorage has no FK enforcement).
+          eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
 
-        // Flags — Islamic events are never tasks and start un-hidden.
-        isCustom: false,
-        isTask: false,
-        hide: false,
-      });
+          // Flags — Islamic events are never tasks and start un-hidden.
+          isCustom: false,
+          isTask: false,
+          hide: false,
+        })
+      );
     }
   }
 

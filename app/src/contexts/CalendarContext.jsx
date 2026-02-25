@@ -58,9 +58,7 @@ export function CalendarProvider({ children }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ── Islamic event definitions with isHidden flags ───────────────────────
-  // Merged from the bundled JSON defaults and any persisted user preferences.
-  // New definitions added to the JSON file are picked up automatically.
+  // New Islamic event definitions added to the JSON file are picked up automatically.
   const [islamicEventDefs, setIslamicEventDefs] = useState(() => {
     const stored = readLS(ISLAMIC_DEFS_KEY, null);
     if (stored) {
