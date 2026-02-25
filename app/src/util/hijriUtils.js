@@ -20,6 +20,14 @@ const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
   { day: "numeric", month: "numeric", year: "numeric" }
 );
 
+// Reused across every Hijri conversion call — instantiated once to avoid
+// repeated construction overhead inside render loops.
+export const HIJRI_FORMATTER = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
 /**
  * Convert a Gregorian Date to its Hijri numeric components.
  *
@@ -34,6 +42,37 @@ export function getHijriNumericParts(date) {
     month: parseInt(parts.find((p) => p.type === "month")?.value ?? "0", 10),
     year: parseInt(parts.find((p) => p.type === "year")?.value ?? "0", 10),
   };
+}
+
+/**
+ * Converts a Gregorian Date to its Hijri equivalent using the Umm al-Qura
+ * calendar via the browser's built-in Intl API.
+ */
+export function getHijriParts(date) {
+  const parts = HIJRI_FORMATTER.formatToParts(date);
+  return {
+    day: parts.find((p) => p.type === "day")?.value ?? "",
+    month: parts.find((p) => p.type === "month")?.value ?? "",
+    year: parts.find((p) => p.type === "year")?.value ?? "",
+  };
+}
+
+/**
+ * Returns a human-readable label describing which Hijri month(s) overlap with
+ * a given Gregorian month.
+ */
+export function getHijriMonthRangeLabel(year, month) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const first = getHijriParts(new Date(year, month, 1));
+  const last = getHijriParts(new Date(year, month, daysInMonth));
+
+  if (first.month === last.month) {
+    return `${first.month} ${first.year} AH`;
+  }
+  if (first.year !== last.year) {
+    return `${first.month} ${first.year} – ${last.month} ${last.year} AH`;
+  }
+  return `${first.month} – ${last.month} ${last.year} AH`;
 }
 
 /**
