@@ -61,7 +61,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           startDate: toDatetimeLocal(event.startDate),
           endDate: toDatetimeLocal(event.endDate),
           isAllDay: event.isAllDay ?? false,
-          eventTypeId: event.eventTypeId ?? 4,
+          eventTypeId: event.eventTypeId ?? EventTypeId.CUSTOM,
           isCustom: event.isCustom ?? false,
           isTask: event.isTask ?? false,
           description: event.description ?? "",

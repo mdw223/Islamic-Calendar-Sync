@@ -82,6 +82,10 @@ export function getHijriMonthRangeLabel(year, month) {
  * Generate calendar event objects for every enabled Islamic event definition
  * that falls within the specified Gregorian year.
  *
+ * Performance: builds a definition lookup map keyed by (hijriDay, hijriMonth)
+ * so the inner loop is O(1) per day instead of O(definitions). Intl calls
+ * are made once per calendar day (~365) instead of once per day×definition.
+ *
  * ID scheme (important for sync deduplication):
  *   - `islamicDefinitionId`: the stable string id from islamicEvents.json
  *                             (e.g. "month_start_ramadan"). Year-independent.
@@ -110,62 +114,87 @@ export function getHijriMonthRangeLabel(year, month) {
  * @returns {Array<Object>} Array of event-shaped plain objects ready to be
  *   merged into CalendarContext's events state / localStorage.
  */
-export function generateIslamicEventsForYear(
-  gregorianYear,
-  definitions,
-) {
+export function generateIslamicEventsForYear(gregorianYear, definitions) {
   const events = [];
-
-  // Track which islamicEventKeys have already been emitted so that we never
-  // produce two entries for the same semantic event (prevents duplicates when
-  // the same Hijri date appears twice within a single Gregorian year).
   const seen = new Set();
 
-  // Iterate every day of the Gregorian year.
-  // Using day-of-year counting avoids month arithmetic and naturally handles
-  // leap years (day 366 simply returns a Date in the next year, which we break on).
-  for (let dayOfYear = 1; dayOfYear <= 366; dayOfYear++) {
-    // Build a Date at midnight local time for this day of the year.
-    const date = new Date(gregorianYear, 0, dayOfYear);
+  // ── Build lookup maps so the inner loop is a hash hit, not a scan ──────
+  // Key: "day_month" → array of definitions that trigger on that Hijri date.
+  // Separate list for repeatsEachMonth definitions (matched on any month).
+  const byDayMonth = new Map();
+  const byDayOnly = [];
 
-    // Stop once we've crossed into the next Gregorian year (handles leap years).
+  for (const def of definitions) {
+    if (def.isHidden) continue;
+
+    if (def.repeatsEachMonth === true) {
+      byDayOnly.push(def);
+    } else {
+      const key = `${def.hijriDay}_${def.hijriMonth}`;
+      if (!byDayMonth.has(key)) byDayMonth.set(key, []);
+      byDayMonth.get(key).push(def);
+    }
+  }
+
+  // Early exit: nothing to generate if every definition is hidden.
+  if (byDayMonth.size === 0 && byDayOnly.length === 0) return events;
+
+  // ── Pre-compute Hijri parts for every day of the year in one pass ──────
+  // This makes exactly 365–366 Intl.formatToParts calls total (down from
+  // 365 × definitions in the previous implementation).
+  const isLeap =
+    (gregorianYear % 4 === 0 && gregorianYear % 100 !== 0) ||
+    gregorianYear % 400 === 0;
+  const daysInYear = isLeap ? 366 : 365;
+
+  const dayData = new Array(daysInYear);
+  for (let i = 0; i < daysInYear; i++) {
+    const date = new Date(gregorianYear, 0, i + 1);
     if (date.getFullYear() !== gregorianYear) break;
 
-    const hijri = getHijriNumericParts(date);
+    const parts = HIJRI_NUMERIC_FORMATTER.formatToParts(date);
+    dayData[i] = {
+      date,
+      hijriDay: parseInt(parts.find((p) => p.type === "day")?.value ?? "0", 10),
+      hijriMonth: parseInt(parts.find((p) => p.type === "month")?.value ?? "0", 10),
+      hijriYear: parseInt(parts.find((p) => p.type === "year")?.value ?? "0", 10),
+    };
+  }
 
-    // for each definition: does this Hijri date match the definition's trigger day (and month, unless `repeatsEachMonth` is true)?
-    for (const def of definitions) {
-      // Skip events the user has hidden.
-      if (def.isHidden) continue;
+  // ── Match days to definitions via lookup ───────────────────────────────
+  for (let i = 0; i < dayData.length; i++) {
+    const d = dayData[i];
+    if (!d) break;
 
-      // The trigger day must equal the definition's hijriDay.
-      const dayMatches = hijri.day === def.hijriDay;
+    // Collect candidate definitions for this Hijri date.
+    const key = `${d.hijriDay}_${d.hijriMonth}`;
+    const exactMatches = byDayMonth.get(key);
+    const monthlyMatches =
+      byDayOnly.length > 0
+        ? byDayOnly.filter((def) => def.hijriDay === d.hijriDay)
+        : undefined;
 
-      // For `repeatsEachMonth: true` (White Days), any Hijri month is valid.
-      // For all other definitions, the Hijri month must match exactly.
-      const monthMatches =
-        def.repeatsEachMonth === true || hijri.month === def.hijriMonth;
+    // Skip this day entirely if nothing matches — avoids object creation.
+    if (!exactMatches && (!monthlyMatches || monthlyMatches.length === 0)) {
+      continue;
+    }
 
-      if (!dayMatches || !monthMatches) continue;
+    const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
 
+    for (const def of candidates) {
       // Build the deduplication key.
-      // Monthly repeating events include the Hijri month so that, e.g.,
-      // Safar white days and Ramadan white days get distinct keys.
       const islamicEventKey = def.repeatsEachMonth
-        ? `${def.id}_${hijri.month}_${hijri.year}`
-        : `${def.id}_${hijri.year}`;
+        ? `${def.id}_${d.hijriMonth}_${d.hijriYear}`
+        : `${def.id}_${d.hijriYear}`;
 
-      // Skip if we already emitted this event in this run.
       if (seen.has(islamicEventKey)) continue;
       seen.add(islamicEventKey);
 
-      // --- Build the date range ---------------------------------------------
-      // startDate: midnight on the trigger day (ISO string).
-      const startDate = new Date(date);
+      // --- Build the date range -------------------------------------------
+      const startDate = new Date(d.date);
       startDate.setHours(0, 0, 0, 0);
 
-      // endDate: last millisecond of the final day of the event.
-      const endDate = new Date(date);
+      const endDate = new Date(d.date);
       endDate.setDate(endDate.getDate() + (def.durationDays ?? 1) - 1);
       endDate.setHours(23, 59, 59, 999);
 
@@ -173,30 +202,19 @@ export function generateIslamicEventsForYear(
       // malformed definitions or date-math bugs are caught immediately.
       events.push(
         createEvent({
-          // Local string ID — becomes an integer after a successful backend sync.
           eventId: `islamic_${islamicEventKey}`,
-
-          // These two fields are carried through localStorage and sent to the
-          // backend so it can perform upsert deduplication.
           islamicDefinitionId: def.id,
           islamicEventKey,
-
-          // Calendar display fields — bilingual name keeps both scripts visible.
           name: `${def.titleAr} | ${def.titleEn}`,
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           isAllDay: def.isAllDay ?? true,
           description: def.description ?? null,
-
-          // Backend FK fields (safe to reference even before sync because
-          // localStorage has no FK enforcement).
           eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
-
-          // Flags — Islamic events are never tasks and start un-hidden.
           isCustom: false,
           isTask: false,
           hide: false,
-        })
+        }),
       );
     }
   }
