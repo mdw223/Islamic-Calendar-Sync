@@ -22,6 +22,7 @@
 import {
   Box,
   Checkbox,
+  Collapse,
   Divider,
   FormControlLabel,
   IconButton,
@@ -31,7 +32,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ChevronLeft, ChevronRight, Moon } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Moon } from "lucide-react";
 import { useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { ALL_DEFINITIONS } from "../../constants";
@@ -49,6 +50,15 @@ export default function IslamicEventsPanel() {
 
   // Local collapse state — open by default.
   const [open, setOpen] = useState(true);
+
+  // Section collapse state — all expanded by default.
+  const [sections, setSections] = useState({
+    annual: true,
+    monthly: true,
+    monthStart: true,
+  });
+  const toggleSection = (key) =>
+    setSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // A definition is "checked" when its isHidden flag is false/undefined.
   const isChecked = (id) => {
@@ -172,52 +182,111 @@ export default function IslamicEventsPanel() {
         <List dense disablePadding>
           {/* Annual events */}
           <ListSubheader
-            sx={{ lineHeight: "28px", fontSize: "0.7rem", fontWeight: 700 }}
+            sx={{
+              lineHeight: "28px",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            onClick={() => toggleSection("annual")}
           >
             Annual Events
-          </ListSubheader>
-          {ANNUAL_DEFS.map((def) => (
-            <EventDefinitionRow
-              key={def.id}
-              definition={def}
-              checked={isChecked(def.id)}
-              onChange={handleToggle}
+            <ChevronDown
+              size={14}
+              style={{
+                marginLeft: "auto",
+                transition: "transform 0.2s",
+                transform: sections.annual ? "rotate(0deg)" : "rotate(-90deg)",
+              }}
             />
-          ))}
+          </ListSubheader>
+          <Collapse in={sections.annual}>
+            {ANNUAL_DEFS.map((def) => (
+              <EventDefinitionRow
+                key={def.id}
+                definition={def}
+                checked={isChecked(def.id)}
+                onChange={handleToggle}
+              />
+            ))}
+          </Collapse>
 
           <Divider sx={{ my: 0.5 }} />
 
           {/* Monthly (White Days) */}
           <ListSubheader
-            sx={{ lineHeight: "28px", fontSize: "0.7rem", fontWeight: 700 }}
+            sx={{
+              lineHeight: "28px",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            onClick={() => toggleSection("monthly")}
           >
             Monthly
-          </ListSubheader>
-          {MONTHLY_DEFS.map((def) => (
-            <EventDefinitionRow
-              key={def.id}
-              definition={def}
-              checked={isChecked(def.id)}
-              onChange={handleToggle}
+            <ChevronDown
+              size={14}
+              style={{
+                marginLeft: "auto",
+                transition: "transform 0.2s",
+                transform: sections.monthly ? "rotate(0deg)" : "rotate(-90deg)",
+              }}
             />
-          ))}
+          </ListSubheader>
+          <Collapse in={sections.monthly}>
+            {MONTHLY_DEFS.map((def) => (
+              <EventDefinitionRow
+                key={def.id}
+                definition={def}
+                checked={isChecked(def.id)}
+                onChange={handleToggle}
+              />
+            ))}
+          </Collapse>
 
           <Divider sx={{ my: 0.5 }} />
 
           {/* Month starts */}
           <ListSubheader
-            sx={{ lineHeight: "28px", fontSize: "0.7rem", fontWeight: 700 }}
+            sx={{
+              lineHeight: "28px",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            onClick={() => toggleSection("monthStart")}
           >
             Month Starts
-          </ListSubheader>
-          {MONTH_START_DEFS.map((def) => (
-            <EventDefinitionRow
-              key={def.id}
-              definition={def}
-              checked={isChecked(def.id)}
-              onChange={handleToggle}
+            <ChevronDown
+              size={14}
+              style={{
+                marginLeft: "auto",
+                transition: "transform 0.2s",
+                transform: sections.monthStart
+                  ? "rotate(0deg)"
+                  : "rotate(-90deg)",
+              }}
             />
-          ))}
+          </ListSubheader>
+          <Collapse in={sections.monthStart}>
+            {MONTH_START_DEFS.map((def) => (
+              <EventDefinitionRow
+                key={def.id}
+                definition={def}
+                checked={isChecked(def.id)}
+                onChange={handleToggle}
+              />
+            ))}
+          </Collapse>
         </List>
       </Box>
     </Paper>
