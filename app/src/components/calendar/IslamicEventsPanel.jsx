@@ -44,7 +44,7 @@ const ALL_DEFINITIONS = islamicEventsData.events;
 const ANNUAL_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "annual");
 const MONTHLY_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "monthly");
 const MONTH_START_DEFS = ALL_DEFINITIONS.filter(
-  (d) => d.category === "monthStart"
+  (d) => d.category === "monthStart",
 );
 
 // Width of the panel when expanded.

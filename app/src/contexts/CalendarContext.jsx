@@ -25,21 +25,15 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import APIClient from "../util/ApiClient";
-import islamicEventsData from "../data/islamicEvents.json";
 import { generateIslamicEventsForYear } from "../util/hijriUtils";
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const VIEW_STORAGE_KEY = "calendarView";
-const VALID_VIEWS = ["month", "week", "day"];
-
-const EVENTS_KEY = "calendarEvents";
-const GENERATED_YEARS_KEY = "calendarGeneratedYears";
-const DISABLED_ISLAMIC_KEY = "islamicEventsDisabled";
-
-const ALL_DEFINITIONS = islamicEventsData.events;
+import {
+  VIEW_STORAGE_KEY,
+  VALID_VIEWS,
+  EVENTS_KEY,
+  GENERATED_YEARS_KEY,
+  ISLAMIC_DEFS_KEY,
+  ALL_DEFINITIONS,
+} from "../constants";
 
 // ---------------------------------------------------------------------------
 // localStorage helpers — all reads/writes are wrapped so that JSON parse
@@ -59,7 +53,12 @@ function writeLS(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // localStorage may be unavailable in private browsing or when full.
+    console.error(
+      "localStorage may be unavailable in private browsing or when full. Error writing to localStorage for key: ",
+      key,
+      ". Error: ",
+      error,
+    );
   }
 }
 
@@ -94,11 +93,23 @@ export function CalendarProvider({ children }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ── Disabled Islamic event definition IDs ───────────────────────────────
-  // An empty array means all definitions are enabled (the default).
-  const [disabledIslamicEvents, setDisabledIslamicEvents] = useState(() =>
-    readLS(DISABLED_ISLAMIC_KEY, [])
-  );
+  // ── Islamic event definitions with isHidden flags ───────────────────────
+  // Merged from the bundled JSON defaults and any persisted user preferences.
+  // New definitions added to the JSON file are picked up automatically.
+  const [islamicEventDefs, setIslamicEventDefs] = useState(() => {
+    const stored = readLS(ISLAMIC_DEFS_KEY, null);
+    if (stored) {
+      // Merge: keep stored isHidden preferences, but pick up any new defs
+      // from the bundled JSON that the user hasn't seen yet.
+      const storedById = Object.fromEntries(stored.map((d) => [d.id, d]));
+      return ALL_DEFINITIONS.map((def) =>
+        storedById[def.id]
+          ? { ...def, isHidden: storedById[def.id].isHidden }
+          : { ...def },
+      );
+    }
+    return ALL_DEFINITIONS.map((d) => ({ ...d }));
+  });
 
   // ── Ref to always-current events (avoids stale closures in callbacks) ───
   // We keep a ref in sync with the `events` state so that async operations
@@ -118,7 +129,7 @@ export function CalendarProvider({ children }) {
         if (!cancelled) setProviders(data?.providers ?? []);
       })
       .catch(() => {
-        // Providers are a nice-to-have; ignore failures silently.
+        // Will be in network error anyways
       });
 
     // Ensure Islamic events for the current year are present in localStorage.
@@ -127,7 +138,6 @@ export function CalendarProvider({ children }) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Helpers ─────────────────────────────────────────────────────────────
@@ -141,6 +151,14 @@ export function CalendarProvider({ children }) {
     setEvents(nextEvents);
     eventsRef.current = nextEvents;
     writeLS(EVENTS_KEY, nextEvents);
+  }
+
+  /**
+   * Persist `nextDefs` to both React state and localStorage.
+   */
+  function saveDefs(nextDefs) {
+    setIslamicEventDefs(nextDefs);
+    writeLS(ISLAMIC_DEFS_KEY, nextDefs);
   }
 
   // ── Public API ───────────────────────────────────────────────────────────
@@ -162,6 +180,9 @@ export function CalendarProvider({ children }) {
    * ~70 event objects that are merged into localStorage.  Already-present
    * events are identified by their `eventId` string and are never duplicated.
    *
+   * Uses the current `islamicEventDefs` state — definitions with
+   * `isHidden: true` are automatically skipped by the generator.
+   *
    * @param {number} year - Gregorian year to ensure coverage for.
    */
   function ensureIslamicEventsForYear(year) {
@@ -169,24 +190,29 @@ export function CalendarProvider({ children }) {
 
     if (generatedYears.includes(year)) return; // already done
 
-    const currentDisabled = readLS(DISABLED_ISLAMIC_KEY, []);
-    const newEvents = generateIslamicEventsForYear(
-      year,
-      ALL_DEFINITIONS,
-      currentDisabled
-    );
+    const currentDefs = readLS(ISLAMIC_DEFS_KEY, null) ?? ALL_DEFINITIONS;
+    const newEvents = generateIslamicEventsForYear(year, currentDefs);
 
     if (newEvents.length === 0) {
-      // Even if nothing was generated (all disabled), mark the year so we
+      // Even if nothing was generated (all hidden), mark the year so we
       // don't re-enter this function on every navigation.
       writeLS(GENERATED_YEARS_KEY, [...generatedYears, year]);
       return;
     }
 
-    // Merge: only add events whose eventId is not already in localStorage.
+    // Merge: skip events that already exist in localStorage (by eventId or
+    // islamicEventKey, since synced events have an integer eventId that won't
+    // match the generated string ID).
     const existing = readLS(EVENTS_KEY, []);
     const existingIds = new Set(existing.map((e) => String(e.eventId)));
-    const toAdd = newEvents.filter((e) => !existingIds.has(String(e.eventId)));
+    const existingKeys = new Set(
+      existing.map((e) => e.islamicEventKey).filter(Boolean),
+    );
+    const toAdd = newEvents.filter(
+      (e) =>
+        !existingIds.has(String(e.eventId)) &&
+        !existingKeys.has(e.islamicEventKey),
+    );
 
     const merged = [...existing, ...toAdd];
     saveEvents(merged);
@@ -194,67 +220,52 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Toggle a single Islamic event definition on or off.
+   * Toggle a single Islamic event definition's `isHidden` flag.
    *
-   * When `enabled` is true:
-   *   - Remove the definition ID from `disabledIslamicEvents`.
-   *   - Re-generate events for all Gregorian years that have already been
-   *     processed (so the newly-enabled event appears in past/future views).
+   * When showing (isHidden → false):
+   *   - Flip the flag and persist the definitions list.
+   *   - Re-generate events for all already-processed Gregorian years so the
+   *     newly-shown event appears in past/future views.
    *
-   * When `enabled` is false:
-   *   - Add the definition ID to `disabledIslamicEvents`.
-   *   - Remove all events whose `islamicDefinitionId` matches from localStorage.
+   * When hiding (isHidden → true):
+   *   - Flip the flag and persist the definitions list.
+   *   - Remove all generated events whose `islamicDefinitionId` matches.
    *
    * @param {string} definitionId - The `id` field from islamicEvents.json.
-   * @param {boolean} enabled
    */
-  function toggleIslamicEvent(definitionId, enabled) {
-    const currentDisabled = readLS(DISABLED_ISLAMIC_KEY, []);
+  function toggleIslamicEvent(definitionId) {
+    const currentDefs = readLS(ISLAMIC_DEFS_KEY, null) ?? ALL_DEFINITIONS;
+    const target = currentDefs.find((d) => d.id === definitionId);
+    if (!target) return;
 
-    if (enabled) {
-      // Re-enable: remove from the disabled list.
-      const nextDisabled = currentDisabled.filter((id) => id !== definitionId);
-      setDisabledIslamicEvents(nextDisabled);
-      writeLS(DISABLED_ISLAMIC_KEY, nextDisabled);
+    const wasHidden = target.isHidden;
 
-      // Re-generate for all already-processed years so the event shows up
-      // without the user having to navigate away and back.
+    // Flip the bit and persist.
+    const nextDefs = currentDefs.map((d) =>
+      d.id === definitionId ? { ...d, isHidden: !d.isHidden } : d,
+    );
+    saveDefs(nextDefs);
+
+    if (wasHidden) {
+      // Was hidden → now visible: re-generate for all processed years.
       const generatedYears = readLS(GENERATED_YEARS_KEY, []);
 
-      // Temporarily mark these years as un-generated so ensureIslamicEventsForYear
-      // will run the generator again for each of them.
-      writeLS(GENERATED_YEARS_KEY, []);
-
       for (const year of generatedYears) {
-        // Inline generation so we use the updated disabled list.
-        const newEvents = generateIslamicEventsForYear(
-          year,
-          ALL_DEFINITIONS,
-          nextDisabled
-        );
+        const newEvents = generateIslamicEventsForYear(year, nextDefs);
         const existing = readLS(EVENTS_KEY, []);
         const existingIds = new Set(existing.map((e) => String(e.eventId)));
         const toAdd = newEvents.filter(
-          (e) => !existingIds.has(String(e.eventId))
+          (e) => !existingIds.has(String(e.eventId)),
         );
         if (toAdd.length > 0) {
-          const merged = [...existing, ...toAdd];
-          saveEvents(merged);
+          saveEvents([...existing, ...toAdd]);
         }
       }
-
-      // Restore the generated-years list.
-      writeLS(GENERATED_YEARS_KEY, generatedYears);
     } else {
-      // Disable: add to the disabled list.
-      const nextDisabled = [...new Set([...currentDisabled, definitionId])];
-      setDisabledIslamicEvents(nextDisabled);
-      writeLS(DISABLED_ISLAMIC_KEY, nextDisabled);
-
-      // Remove all instances of this definition from the events list.
+      // Was visible → now hidden: remove all instances from events.
       const existing = readLS(EVENTS_KEY, []);
       const filtered = existing.filter(
-        (e) => e.islamicDefinitionId !== definitionId
+        (e) => e.islamicDefinitionId !== definitionId,
       );
       saveEvents(filtered);
     }
@@ -305,7 +316,7 @@ export function CalendarProvider({ children }) {
       const res = await APIClient.updateEvent(eventId, updates);
       const updated = res?.event ?? res;
       const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e
+        e.eventId === eventId ? updated : e,
       );
       saveEvents(next);
       return updated;
@@ -316,7 +327,7 @@ export function CalendarProvider({ children }) {
         ...updates,
       };
       const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e
+        e.eventId === eventId ? updated : e,
       );
       saveEvents(next);
       return updated;
@@ -353,7 +364,7 @@ export function CalendarProvider({ children }) {
   async function syncToBackend() {
     // Collect events that have a string eventId (never been synced).
     const unsynced = eventsRef.current.filter(
-      (e) => typeof e.eventId === "string" && e.islamicEventKey
+      (e) => typeof e.eventId === "string" && e.islamicEventKey,
     );
 
     if (unsynced.length === 0) return;
@@ -361,12 +372,7 @@ export function CalendarProvider({ children }) {
     setIsSyncing(true);
     setError(null);
     try {
-      // Strip local-only fields the backend doesn't need.
-      const payload = unsynced.map(
-        ({ islamicDefinitionId, ...rest }) => rest // eslint-disable-line no-unused-vars
-      );
-
-      const res = await APIClient.bulkCreateEvents(payload);
+      const res = await APIClient.bulkCreateEvents(unsynced);
       const synced = res?.events ?? [];
 
       // Build a lookup from islamicEventKey → backend integer eventId so we
@@ -418,7 +424,7 @@ export function CalendarProvider({ children }) {
 
       // Keep local-only events (string IDs) that the backend doesn't know about.
       const localOnly = eventsRef.current.filter(
-        (e) => typeof e.eventId === "string"
+        (e) => typeof e.eventId === "string",
       );
 
       // Preserve local-side fields that the backend strips (islamicDefinitionId).
@@ -430,7 +436,9 @@ export function CalendarProvider({ children }) {
       const merged = [
         // Backend events enriched with any locally-stored extra fields.
         ...backendEvents.map((be) => {
-          const local = be.islamicEventKey ? localByKey[be.islamicEventKey] : null;
+          const local = be.islamicEventKey
+            ? localByKey[be.islamicEventKey]
+            : null;
           return local ? { ...local, ...be } : be;
         }),
         // Local-only events that the backend has no record of yet.
@@ -462,8 +470,8 @@ export function CalendarProvider({ children }) {
         updateEvent,
         removeEvent,
 
-        // Islamic event management
-        disabledIslamicEvents,
+        // Islamic event definitions (with isHidden flags)
+        islamicEventDefs,
         toggleIslamicEvent,
         ensureIslamicEventsForYear,
 

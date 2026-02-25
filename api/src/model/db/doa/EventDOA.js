@@ -52,16 +52,17 @@ export default class EventDOA {
     eventTypeId,
     isCustom = false,
     isTask = false,
+    islamicDefinitionId = null,
   }) {
     const result = await query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
          description, hide, eventtypeid, iscustom, istask,
-         createdat, updatedat
+         islamicdefinitionid, createdat, updatedat
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
        RETURNING *`,
-      [userId, name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask],
+      [userId, name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask, islamicDefinitionId],
     );
     return Event.fromRow(result.rows[0]);
   }
@@ -85,6 +86,7 @@ export default class EventDOA {
       eventTypeId: "eventtypeid",
       isCustom: "iscustom",
       isTask: "istask",
+      islamicDefinitionId: "islamicdefinitionid",
     };
 
     const entries = Object.entries(fields).filter(([k]) => columnMap[k] !== undefined);
@@ -159,6 +161,7 @@ export default class EventDOA {
           isCustom = false,
           isTask = false,
           islamicEventKey = null,
+          islamicDefinitionId = null,
         } = data;
 
         let result;
@@ -171,25 +174,26 @@ export default class EventDOA {
             `INSERT INTO event (
                userid, name, startdate, enddate, isallday,
                description, hide, eventtypeid, iscustom, istask,
-               islamiceventkey, createdat, updatedat
+               islamiceventkey, islamicdefinitionid, createdat, updatedat
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
              ON CONFLICT (userid, islamiceventkey)
                WHERE islamiceventkey IS NOT NULL
              DO UPDATE SET
-               name        = EXCLUDED.name,
-               startdate   = EXCLUDED.startdate,
-               enddate     = EXCLUDED.enddate,
-               isallday    = EXCLUDED.isallday,
-               description = EXCLUDED.description,
-               hide        = EXCLUDED.hide,
-               eventtypeid = EXCLUDED.eventtypeid,
-               iscustom    = EXCLUDED.iscustom,
-               istask      = EXCLUDED.istask,
-               updatedat   = NOW()
+               name                = EXCLUDED.name,
+               startdate           = EXCLUDED.startdate,
+               enddate             = EXCLUDED.enddate,
+               isallday            = EXCLUDED.isallday,
+               description         = EXCLUDED.description,
+               hide                = EXCLUDED.hide,
+               eventtypeid         = EXCLUDED.eventtypeid,
+               iscustom            = EXCLUDED.iscustom,
+               istask              = EXCLUDED.istask,
+               islamicdefinitionid = EXCLUDED.islamicdefinitionid,
+               updatedat           = NOW()
              RETURNING *`,
             [userId, name, startDate, endDate, isAllDay, description, hide,
-             eventTypeId, isCustom, isTask, islamicEventKey],
+             eventTypeId, isCustom, isTask, islamicEventKey, islamicDefinitionId],
           );
         } else {
           // Plain insert for regular user-created events.
@@ -197,12 +201,12 @@ export default class EventDOA {
             `INSERT INTO event (
                userid, name, startdate, enddate, isallday,
                description, hide, eventtypeid, iscustom, istask,
-               createdat, updatedat
+               islamicdefinitionid, createdat, updatedat
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
              RETURNING *`,
             [userId, name, startDate, endDate, isAllDay, description, hide,
-             eventTypeId, isCustom, isTask],
+             eventTypeId, isCustom, isTask, islamicDefinitionId],
           );
         }
 

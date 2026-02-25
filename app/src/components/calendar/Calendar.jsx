@@ -10,10 +10,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   LinearProgress,
   Paper,
@@ -23,14 +19,13 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
-import APIClient from "../../util/ApiClient";
 import EventModal from "./EventModal";
 import MonthView from "./MonthView";
 import WeekView from "./WeekView";
 import DayView from "./DayView";
+import LoginPromptModal from "../LoginPromptModal";
 import { toDateKey, startOfWeek, useToolbarLabel } from "./CalendarHelpers.jsx";
 
 /**
@@ -54,7 +49,6 @@ export default function Calendar() {
   } = useCalendar();
 
   const { user } = useUser();
-  const navigate = useNavigate();
   const today = new Date();
 
   const [cursor, setCursor] = useState(() => new Date(today));
@@ -257,44 +251,10 @@ export default function Calendar() {
         )}
       </Paper>
 
-      {/* Login prompt dialog */}
-      <Dialog
+      <LoginPromptModal
         open={loginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Sign in to sync your calendar</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Create a free account to sync your Islamic calendar events across
-            devices and keep them backed up securely.
-          </Typography>
-          <Button
-            variant="outlined"
-            fullWidth
-            onClick={() => {
-              window.location.href = APIClient.getGoogleLoginUrl();
-            }}
-            sx={{ mb: 1 }}
-          >
-            Continue with Google
-          </Button>
-          <Button
-            variant="text"
-            fullWidth
-            onClick={() => {
-              setLoginDialogOpen(false);
-              navigate("/login");
-            }}
-          >
-            Sign in with Email
-          </Button>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLoginDialogOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+      />
 
       {/* Non-blocking loading indicator */}
       {loading && <LinearProgress />}

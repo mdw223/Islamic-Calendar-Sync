@@ -111,16 +111,13 @@ export function getHijriMonthRangeLabel(year, month) {
  *
  * @param {number} gregorianYear - The Gregorian year to generate events for.
  * @param {Array<import("../data/islamicEvents.json")["events"][number]>} definitions
- *   The full array from islamicEvents.json.
- * @param {string[]} [disabledIds=[]]
- *   Definition IDs the user has disabled; these are skipped.
+ *   The full array from islamicEvents.json (each may have `isHidden`).
  * @returns {Array<Object>} Array of event-shaped plain objects ready to be
  *   merged into CalendarContext's events state / localStorage.
  */
 export function generateIslamicEventsForYear(
   gregorianYear,
   definitions,
-  disabledIds = []
 ) {
   const events = [];
 
@@ -142,8 +139,8 @@ export function generateIslamicEventsForYear(
     const hijri = getHijriNumericParts(date);
 
     for (const def of definitions) {
-      // Skip events the user has explicitly disabled.
-      if (disabledIds.includes(def.id)) continue;
+      // Skip events the user has hidden.
+      if (def.isHidden) continue;
 
       // --- Match logic -------------------------------------------------------
       // The trigger day must equal the definition's hijriDay.

@@ -155,6 +155,9 @@ CREATE TABLE Event (
     -- When present, used for upsert deduplication: the partial unique index below
     -- prevents a user from syncing the same Islamic event twice.
     IslamicEventKey VARCHAR(256),
+    -- The definition ID from islamicEvents.json (e.g. "ramadan_begins").
+    -- Null for ordinary user-created events.
+    IslamicDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UserId INTEGER NOT NULL,

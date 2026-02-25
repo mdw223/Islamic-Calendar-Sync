@@ -11,7 +11,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "ashura",
@@ -24,7 +25,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "eid_mawlid",
@@ -37,7 +39,8 @@
       "isAllDay": true,
       "eventTypeId": 2,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "isra_miraj",
@@ -50,7 +53,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "shab_e_barat",
@@ -63,7 +67,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "ramadan_begins",
@@ -76,7 +81,8 @@
       "isAllDay": true,
       "eventTypeId": 1,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "last_10_nights",
@@ -89,7 +95,8 @@
       "isAllDay": true,
       "eventTypeId": 1,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "laylatul_qadr",
@@ -102,7 +109,8 @@
       "isAllDay": true,
       "eventTypeId": 1,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "eid_ul_fitr",
@@ -115,7 +123,8 @@
       "isAllDay": true,
       "eventTypeId": 2,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "dhul_hijjah_begins",
@@ -128,7 +137,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "first_10_dhul_hijjah",
@@ -141,7 +151,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "hajj",
@@ -154,7 +165,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "arafah",
@@ -167,7 +179,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "eid_al_adha",
@@ -180,7 +193,8 @@
       "isAllDay": true,
       "eventTypeId": 2,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "days_of_tashreeq",
@@ -193,7 +207,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "annual"
+      "category": "annual",
+      "isHidden": false
     },
     {
       "id": "white_days",
@@ -206,7 +221,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": true,
-      "category": "monthly"
+      "category": "monthly",
+      "isHidden": false
     },
     {
       "id": "month_start_muharram",
@@ -219,7 +235,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_safar",
@@ -232,7 +249,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_rabi_awwal",
@@ -245,7 +263,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_rabi_thani",
@@ -258,7 +277,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_jumada_awwal",
@@ -271,7 +291,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_jumada_thani",
@@ -284,7 +305,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_rajab",
@@ -297,7 +319,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_shaban",
@@ -310,7 +333,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_ramadan",
@@ -323,7 +347,8 @@
       "isAllDay": true,
       "eventTypeId": 1,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_shawwal",
@@ -336,7 +361,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_dhul_qadah",
@@ -349,7 +375,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     },
     {
       "id": "month_start_dhul_hijjah",
@@ -362,7 +389,8 @@
       "isAllDay": true,
       "eventTypeId": 4,
       "repeatsEachMonth": false,
-      "category": "monthStart"
+      "category": "monthStart",
+      "isHidden": false
     }
   ]
 }
