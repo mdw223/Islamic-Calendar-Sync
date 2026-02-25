@@ -18,20 +18,20 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
+import { EventTypeId } from "../../constants";
 
-const EVENT_TYPES = [
-  { id: 1, name: "Ramadan" },
-  { id: 2, name: "Eid" },
-  { id: 3, name: "Jumah" },
-  { id: 4, name: "Custom" },
-]; // TODO: get from backend ?
+/** Map enum entries to {id, name} pairs for the dropdown. */
+const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
+  id,
+  name: key.charAt(0) + key.slice(1).toLowerCase(),
+}));
 
 const DEFAULT_FORM = {
   name: "",
   startDate: "",
   endDate: "",
   isAllDay: false,
-  eventTypeId: 4,
+  eventTypeId: EventTypeId.RAMADAN,
   isCustom: false,
   isTask: false,
   description: "",
@@ -206,7 +206,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               value={form.eventTypeId}
               onChange={(e) => handleChange("eventTypeId", e.target.value)}
             >
-              {EVENT_TYPES.map((t) => (
+              {EVENT_TYPE_OPTIONS.map((t) => (
                 <MenuItem key={t.id} value={t.id}>
                   {t.name}
                 </MenuItem>

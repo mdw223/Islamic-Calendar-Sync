@@ -34,11 +34,8 @@ import {
 } from "@mui/material";
 import { ChevronLeft, ChevronRight, Moon } from "lucide-react";
 import { useState } from "react";
-import islamicEventsData from "../../data/islamicEvents.json";
 import { useCalendar } from "../../contexts/CalendarContext";
-
-// Pull the definitions array once at module level — it never changes.
-const ALL_DEFINITIONS = islamicEventsData.events;
+import { ALL_DEFINITIONS } from "../../constants";
 
 // Partition definitions into the three display groups.
 const ANNUAL_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "annual");
@@ -103,27 +100,29 @@ function EventDefinitionRow({ definition, checked, onChange }) {
 // ---------------------------------------------------------------------------
 
 export default function IslamicEventsPanel() {
-  const { disabledIslamicEvents, toggleIslamicEvent } = useCalendar();
+  const { islamicEventDefs, toggleIslamicEvent } = useCalendar();
 
   // Local collapse state — open by default.
   const [open, setOpen] = useState(true);
 
-  // A definition is "checked" when its id is NOT in the disabled list.
-  const isChecked = (id) => !disabledIslamicEvents.includes(id);
+  // A definition is "checked" when its isHidden flag is false/undefined.
+  const isChecked = (id) => {
+    const def = islamicEventDefs.find((d) => d.id === id);
+    return def ? !def.isHidden : true;
+  };
 
-  // "Select All" is checked when nothing is disabled.
-  const allChecked = disabledIslamicEvents.length === 0;
+  // "Select All" is checked when nothing is hidden.
+  const allChecked = islamicEventDefs.every((d) => !d.isHidden);
 
-  // "Select All" is indeterminate when some (but not all) are disabled.
-  const someChecked =
-    !allChecked && disabledIslamicEvents.length < ALL_DEFINITIONS.length;
+  // "Select All" is indeterminate when some (but not all) are hidden.
+  const someChecked = !allChecked && !islamicEventDefs.every((d) => d.isHidden);
 
   /**
    * Toggle a single definition.
    * Delegates to CalendarContext which handles localStorage + state updates.
    */
-  function handleToggle(id, checked) {
-    toggleIslamicEvent(id, checked);
+  function handleToggle(id) {
+    toggleIslamicEvent(id);
   }
 
   /**
@@ -132,11 +131,11 @@ export default function IslamicEventsPanel() {
    * Otherwise → re-enable everything.
    */
   function handleSelectAll(checked) {
-    for (const def of ALL_DEFINITIONS) {
+    for (const def of islamicEventDefs) {
       // Only call toggle if the state actually needs to change.
-      const currentlyEnabled = !disabledIslamicEvents.includes(def.id);
-      if (checked !== currentlyEnabled) {
-        toggleIslamicEvent(def.id, checked);
+      const currentlyVisible = !def.isHidden;
+      if (checked !== currentlyVisible) {
+        toggleIslamicEvent(def.id);
       }
     }
   }

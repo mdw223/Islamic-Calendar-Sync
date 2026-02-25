@@ -32,3 +32,14 @@ export const ALL_DEFINITIONS = islamicEventsData.events; // fallback
 
 // Auth constants
 export const AUTH_TOKEN_KEY = "authToken";
+
+/**
+ * Enum-like mapping for EventType identifiers.
+ * Backed by the EventType table (EventTypeId, Name).
+ */
+export const EventTypeId = Object.freeze({
+  RAMADAN: 1,
+  EID: 2,
+  JUMAH: 3,
+  CUSTOM: 4,
+});
