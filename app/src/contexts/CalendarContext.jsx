@@ -23,7 +23,14 @@
  *   "islamicEventsDisabled"  — JSON array of definition IDs the user disabled
  */
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import APIClient from "../util/ApiClient";
 import { useUser } from "./UserContext";
 import { generateIslamicEventsForYear } from "../util/hijriUtils";
@@ -282,9 +289,10 @@ export function CalendarProvider({ children }) {
    * After a successful sync, each returned event's integer `eventId` replaces
    * the temporary string ID in localStorage, and subsequent syncs will skip
    * those events.
+   *
+   * Usually used by user when they switch from non-authenticated mode to authenticated mode.
    */
   async function syncToBackend() {
-    // Collect events that have a string eventId (never been synced).
     const unsynced = eventsRef.current.filter(
       (e) => typeof e.eventId === "string" && e.islamicEventKey,
     );
@@ -333,6 +341,9 @@ export function CalendarProvider({ children }) {
    * localStorage. The backend is the source of truth for events with integer
    * IDs. Local-only events (string IDs) are preserved so unsaved work is
    * not lost.
+   *
+   * Usually used when the user's calendar providers have new events
+   * and they want to display them in calendar UI.
    */
   async function refreshFromBackend() {
     setIsRefreshing(true);
@@ -379,13 +390,15 @@ export function CalendarProvider({ children }) {
    * Toggle a single Islamic event definition's `isHidden` flag.
    *
    * When showing (isHidden → false):
-   *   - Flip the flag and persist the definitions list.
-   *   - Re-generate events for all already-processed Gregorian years so the
-   *     newly-shown event appears in past/future views.
+   *   - Flip the definition flag and persist.
+   *   - Un-hide all existing events for this definition (set hide: false).
+   *   - Generate any events for processed years that don't exist yet
+   *     (e.g. the definition was hidden before that year was generated).
    *
    * When hiding (isHidden → true):
-   *   - Flip the flag and persist the definitions list.
-   *   - Remove all generated events whose `islamicDefinitionId` matches.
+   *   - Flip the definition flag and persist.
+   *   - Soft-hide all matching events (set hide: true) — they stay in
+   *     localStorage so they can be restored instantly without re-generation.
    *
    * @param {string} definitionId - The `id` field from islamicEvents.json.
    */
@@ -402,37 +415,26 @@ export function CalendarProvider({ children }) {
     );
     saveDefs(nextDefs);
 
-    if (wasHidden) {
-      // Was hidden → now visible: re-generate for all processed years.
-      const generatedYears = readLS(GENERATED_YEARS_KEY, []);
-
-      for (const year of generatedYears) {
-        const newEvents = generateIslamicEventsForYear(year, nextDefs);
-        const existing = readLS(EVENTS_KEY, []);
-        const existingIds = new Set(existing.map((e) => String(e.eventId)));
-        const toAdd = newEvents.filter(
-          (e) => !existingIds.has(String(e.eventId)),
-        );
-        if (toAdd.length > 0) {
-          saveEvents([...existing, ...toAdd]);
-        }
-      }
-    } else {
-      // Was visible → now hidden: remove all instances from events.
-      const existing = readLS(EVENTS_KEY, []);
-      const filtered = existing.filter(
-        (e) => e.islamicDefinitionId !== definitionId,
-      );
-      saveEvents(filtered);
-    }
+    // Show or soft-hide all events belonging to this definition.
+    const existing = readLS(EVENTS_KEY, []);
+    const updated = existing.map((e) =>
+      e.islamicDefinitionId === definitionId ? { ...e, hide: !wasHidden } : e,
+    );
+    saveEvents(updated);
   }
+
+  // ── Derived state ───────────────────────────────────────────────────────
+  // Calendar views use `events` (visible only). Settings/admin views that
+  // need the full list (including hidden) can use `allEvents`.
+  const visibleEvents = useMemo(() => events.filter((e) => !e.hide), [events]);
 
   // ── Context value ────────────────────────────────────────────────────────
 
   return (
     <CalendarContext.Provider
       value={{
-        events,
+        events: visibleEvents,
+        allEvents: events,
         providers,
         currentView,
         changeView,
