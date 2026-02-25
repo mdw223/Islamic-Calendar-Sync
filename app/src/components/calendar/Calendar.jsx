@@ -1,15 +1,19 @@
 import {
   CalendarDays as TodayIcon,
+  Check as CheckIcon,
   ChevronLeft,
   ChevronRight,
   Plus as AddIcon,
   RefreshCw as RefreshIcon,
   Upload as SyncIcon,
+  X as XIcon,
 } from "lucide-react";
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
+  Collapse,
   IconButton,
   LinearProgress,
   Paper,
@@ -18,7 +22,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import EventModal from "./EventModal";
@@ -59,6 +63,51 @@ export default function Calendar() {
   const [editingEvent, setEditingEvent] = useState(null);
 
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  // ── Sync / Refresh feedback state ─────────────────────────────────────────
+  const [syncFeedback, setSyncFeedback] = useState(null); // 'success' | 'error' | null
+  const [refreshFeedback, setRefreshFeedback] = useState(null);
+  const [feedbackError, setFeedbackError] = useState(null); // error message string
+  const syncTimer = useRef(null);
+  const refreshTimer = useRef(null);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(syncTimer.current);
+      clearTimeout(refreshTimer.current);
+    };
+  }, []);
+
+  const handleSync = useCallback(async () => {
+    if (!user.isLoggedIn) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    setFeedbackError(null);
+    const result = await syncToBackend();
+    if (result?.ok) {
+      setSyncFeedback("success");
+    } else {
+      setSyncFeedback("error");
+      setFeedbackError(result?.error ?? "Failed to sync events");
+    }
+    clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => setSyncFeedback(null), 2500);
+  }, [user.isLoggedIn, syncToBackend]);
+
+  const handleRefresh = useCallback(async () => {
+    setFeedbackError(null);
+    const result = await refreshFromBackend();
+    if (result?.ok) {
+      setRefreshFeedback("success");
+    } else {
+      setRefreshFeedback("error");
+      setFeedbackError(result?.error ?? "Failed to refresh events");
+    }
+    clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => setRefreshFeedback(null), 2500);
+  }, [refreshFromBackend]);
 
   // ── Year-change detection ─────────────────────────────────────────────────
   useEffect(() => {
@@ -208,21 +257,50 @@ export default function Calendar() {
               startIcon={
                 isSyncing ? (
                   <CircularProgress size={14} />
+                ) : syncFeedback === "success" ? (
+                  <CheckIcon
+                    size={14}
+                    style={{
+                      color: "#10b981",
+                      animation: "popIn 0.3s ease-out",
+                    }}
+                  />
+                ) : syncFeedback === "error" ? (
+                  <XIcon
+                    size={14}
+                    style={{
+                      color: "#ef4444",
+                      animation: "popIn 0.3s ease-out",
+                    }}
+                  />
                 ) : (
                   <SyncIcon size={14} />
                 )
               }
-              disabled={isSyncing}
-              onClick={() => {
-                if (user.isLoggedIn) {
-                  syncToBackend();
-                } else {
-                  setLoginDialogOpen(true);
-                }
+              disabled={isSyncing || syncFeedback != null}
+              onClick={handleSync}
+              sx={{
+                ml: 0.5,
+                ...(syncFeedback === "success" && {
+                  borderColor: "#10b981",
+                  color: "#10b981",
+                }),
+                ...(syncFeedback === "error" && {
+                  borderColor: "#ef4444",
+                  color: "#ef4444",
+                }),
+                "@keyframes popIn": {
+                  "0%": { transform: "scale(0)" },
+                  "60%": { transform: "scale(1.3)" },
+                  "100%": { transform: "scale(1)" },
+                },
               }}
-              sx={{ ml: 0.5 }}
             >
-              Sync
+              {syncFeedback === "success"
+                ? "Synced!"
+                : syncFeedback === "error"
+                  ? "Failed"
+                  : "Sync"}
             </Button>
           </span>
         </Tooltip>
@@ -236,15 +314,50 @@ export default function Calendar() {
                 startIcon={
                   isRefreshing ? (
                     <CircularProgress size={14} />
+                  ) : refreshFeedback === "success" ? (
+                    <CheckIcon
+                      size={14}
+                      style={{
+                        color: "#10b981",
+                        animation: "popIn 0.3s ease-out",
+                      }}
+                    />
+                  ) : refreshFeedback === "error" ? (
+                    <XIcon
+                      size={14}
+                      style={{
+                        color: "#ef4444",
+                        animation: "popIn 0.3s ease-out",
+                      }}
+                    />
                   ) : (
                     <RefreshIcon size={14} />
                   )
                 }
-                disabled={isRefreshing}
-                onClick={refreshFromBackend}
-                sx={{ ml: 0.5 }}
+                disabled={isRefreshing || refreshFeedback != null}
+                onClick={handleRefresh}
+                sx={{
+                  ml: 0.5,
+                  ...(refreshFeedback === "success" && {
+                    borderColor: "#10b981",
+                    color: "#10b981",
+                  }),
+                  ...(refreshFeedback === "error" && {
+                    borderColor: "#ef4444",
+                    color: "#ef4444",
+                  }),
+                  "@keyframes popIn": {
+                    "0%": { transform: "scale(0)" },
+                    "60%": { transform: "scale(1.3)" },
+                    "100%": { transform: "scale(1)" },
+                  },
+                }}
               >
-                Refresh
+                {refreshFeedback === "success"
+                  ? "Done!"
+                  : refreshFeedback === "error"
+                    ? "Failed"
+                    : "Refresh"}
               </Button>
             </span>
           </Tooltip>
@@ -255,6 +368,17 @@ export default function Calendar() {
         open={loginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
       />
+
+      {/* Sync / Refresh error banner */}
+      <Collapse in={feedbackError != null}>
+        <Alert
+          severity="error"
+          onClose={() => setFeedbackError(null)}
+          sx={{ borderRadius: 0 }}
+        >
+          {feedbackError}
+        </Alert>
+      </Collapse>
 
       {/* Non-blocking loading indicator */}
       {loading && <LinearProgress />}

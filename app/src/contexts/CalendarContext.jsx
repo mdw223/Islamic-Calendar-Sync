@@ -297,7 +297,7 @@ export function CalendarProvider({ children }) {
       (e) => typeof e.eventId === "string" && e.islamicEventKey,
     );
 
-    if (unsynced.length === 0) return;
+    if (unsynced.length === 0) return { ok: true };
 
     setIsSyncing(true);
     setError(null);
@@ -327,8 +327,11 @@ export function CalendarProvider({ children }) {
       });
 
       saveEvents(next);
+      return { ok: true };
     } catch (err) {
-      setError(err.message ?? "Failed to sync events");
+      const msg = err.message ?? "Failed to sync events";
+      setError(msg);
+      return { ok: false, error: msg };
     } finally {
       setIsSyncing(false);
     }
@@ -366,6 +369,13 @@ export function CalendarProvider({ children }) {
         if (e.islamicEventKey) localByKey[e.islamicEventKey] = e;
       }
 
+      // Also track islamicEventKeys from the backend so we don't keep a
+      // local-only duplicate when the backend already has the same event
+      // under an integer ID.
+      const backendKeySet = new Set(
+        backendEvents.map((e) => e.islamicEventKey).filter(Boolean),
+      );
+
       const merged = [
         // Backend events enriched with any locally-stored extra fields.
         ...backendEvents.map((be) => {
@@ -375,12 +385,22 @@ export function CalendarProvider({ children }) {
           return local ? { ...local, ...be } : be;
         }),
         // Local-only events that the backend has no record of yet.
-        ...localOnly.filter((e) => !backendIdSet.has(e.eventId)),
+        // Exclude by both eventId AND islamicEventKey to prevent duplicates
+        // (local string IDs never match backend integer IDs, so the key
+        // check is essential for Islamic events).
+        ...localOnly.filter(
+          (e) =>
+            !backendIdSet.has(e.eventId) &&
+            (!e.islamicEventKey || !backendKeySet.has(e.islamicEventKey)),
+        ),
       ];
 
       saveEvents(merged);
+      return { ok: true };
     } catch (err) {
-      setError(err.message ?? "Failed to refresh events");
+      const msg = err.message ?? "Failed to refresh events";
+      setError(msg);
+      return { ok: false, error: msg };
     } finally {
       setIsRefreshing(false);
     }
@@ -423,6 +443,28 @@ export function CalendarProvider({ children }) {
     saveEvents(updated);
   }
 
+  /**
+   * Reset the calendar — clears all events, generated-year tracking, and
+   * definition preferences from localStorage, then re-generates Islamic
+   * events for the current year using default definitions.
+   */
+  function resetCalendar() {
+    // Clear persisted state.
+    writeLS(EVENTS_KEY, []);
+    writeLS(GENERATED_YEARS_KEY, []);
+    writeLS(ISLAMIC_DEFS_KEY, null);
+
+    // Reset React state.
+    const defaultDefs = ALL_DEFINITIONS.map((d) => ({ ...d }));
+    setEvents([]);
+    eventsRef.current = [];
+    setIslamicEventDefs(defaultDefs);
+    saveDefs(defaultDefs);
+
+    // Re-generate for the current year so the calendar isn't empty.
+    ensureIslamicEventsForYear(new Date().getFullYear());
+  }
+
   // ── Derived state ───────────────────────────────────────────────────────
   // Calendar views use `events` (visible only). Settings/admin views that
   // need the full list (including hidden) can use `allEvents`.
@@ -456,6 +498,9 @@ export function CalendarProvider({ children }) {
         refreshFromBackend,
         isSyncing,
         isRefreshing,
+
+        // Reset
+        resetCalendar,
       }}
     >
       {children}
