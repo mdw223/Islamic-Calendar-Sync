@@ -26,50 +26,15 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import APIClient from "../util/ApiClient";
 import { generateIslamicEventsForYear } from "../util/hijriUtils";
+import { readLS, writeLS, getSavedView } from "../util/localStorage";
 import {
-  VIEW_STORAGE_KEY,
+  CALENDAR_VIEW_KEY,
   VALID_VIEWS,
   EVENTS_KEY,
   GENERATED_YEARS_KEY,
   ISLAMIC_DEFS_KEY,
   ALL_DEFINITIONS,
 } from "../constants";
-
-// ---------------------------------------------------------------------------
-// localStorage helpers — all reads/writes are wrapped so that JSON parse
-// errors or missing keys are always handled gracefully.
-// ---------------------------------------------------------------------------
-
-function readLS(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeLS(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    console.error(
-      "localStorage may be unavailable in private browsing or when full. Error writing to localStorage for key: ",
-      key,
-      ". Error: ",
-      error,
-    );
-  }
-}
-
-function getSavedView() {
-  const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-  return VALID_VIEWS.includes(saved) ? saved : "month";
-}
-
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
 
 const CalendarContext = createContext(null);
 
@@ -161,15 +126,13 @@ export function CalendarProvider({ children }) {
     writeLS(ISLAMIC_DEFS_KEY, nextDefs);
   }
 
-  // ── Public API ───────────────────────────────────────────────────────────
-
   /**
    * Change the calendar view (month / week / day) and persist the preference.
    */
   function changeView(view) {
     if (!VALID_VIEWS.includes(view)) return;
     setCurrentView(view);
-    localStorage.setItem(VIEW_STORAGE_KEY, view);
+    localStorage.setItem(CALENDAR_VIEW_KEY, view);
   }
 
   /**

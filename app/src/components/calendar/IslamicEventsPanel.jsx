@@ -26,7 +26,6 @@ import {
   FormControlLabel,
   IconButton,
   List,
-  ListItem,
   ListSubheader,
   Paper,
   Tooltip,
@@ -36,6 +35,7 @@ import { ChevronLeft, ChevronRight, Moon } from "lucide-react";
 import { useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { ALL_DEFINITIONS } from "../../constants";
+import EventDefinitionRow from "./EventDefinitionRow";
 
 // Partition definitions into the three display groups.
 const ANNUAL_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "annual");
@@ -43,61 +43,6 @@ const MONTHLY_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "monthly");
 const MONTH_START_DEFS = ALL_DEFINITIONS.filter(
   (d) => d.category === "monthStart",
 );
-
-// Width of the panel when expanded.
-const PANEL_WIDTH = 288;
-
-// ---------------------------------------------------------------------------
-// Sub-component: a single checkbox row for one event definition
-// ---------------------------------------------------------------------------
-
-/**
- * Renders one checkbox + bilingual label row for an Islamic event definition.
- *
- * @param {{ definition: Object, checked: boolean, onChange: Function }} props
- */
-function EventDefinitionRow({ definition, checked, onChange }) {
-  return (
-    <ListItem disableGutters sx={{ py: 0.25, px: 1 }}>
-      <FormControlLabel
-        control={
-          <Checkbox
-            size="small"
-            checked={checked}
-            onChange={(e) => onChange(definition.id, e.target.checked)}
-            sx={{ py: 0.5 }}
-          />
-        }
-        label={
-          <Box>
-            {/* Arabic title — right-to-left, slightly larger */}
-            <Typography
-              variant="caption"
-              component="div"
-              dir="rtl"
-              sx={{ fontWeight: 600, lineHeight: 1.3, color: "text.primary" }}
-            >
-              {definition.titleAr}
-            </Typography>
-            {/* English title */}
-            <Typography
-              variant="caption"
-              component="div"
-              sx={{ color: "text.secondary", lineHeight: 1.2 }}
-            >
-              {definition.titleEn}
-            </Typography>
-          </Box>
-        }
-        sx={{ m: 0, alignItems: "flex-start" }}
-      />
-    </ListItem>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
 
 export default function IslamicEventsPanel() {
   const { islamicEventDefs, toggleIslamicEvent } = useCalendar();
@@ -170,7 +115,7 @@ export default function IslamicEventsPanel() {
     <Paper
       elevation={0}
       sx={{
-        width: PANEL_WIDTH,
+        width: 288, // panel width
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",

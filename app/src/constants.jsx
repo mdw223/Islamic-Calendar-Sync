@@ -21,7 +21,7 @@ export const MONTH_NAMES = [
 export const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 // Calendar context constants
-export const VIEW_STORAGE_KEY = "calendarView";
+export const CALENDAR_VIEW_KEY = "calendarView";
 export const VALID_VIEWS = ["month", "week", "day"];
 
 export const EVENTS_KEY = "calendarEvents"; // stores the generated events
