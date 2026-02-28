@@ -73,7 +73,7 @@ passport.use(
           scope: params?.scope,
         };
         const { user, provider } =
-          await findOrCreateUserFromGoogleProfile(profile, tokens);
+          await findOrCreateUserFromGoogleProfile(profile, tokens, req);
         req.googleTokens = tokens;
         req.googleProvider = provider;
         verified(null, user);
@@ -162,7 +162,7 @@ export const googleRedirect = [
    * @param {Object} tokens - OAuth tokens: { access_token, refresh_token?, expires_in, scope }
    * @returns {Promise<{user: Object, provider: Object}>}
    */
-export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) {
+export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, req = null) {
     const email =
         profile.emails && profile.emails[0] ? profile.emails[0].value : null;
     const name = profile.displayName || email;
@@ -171,10 +171,17 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
         throw new Error("Google profile did not include an email address");
     }
 
+    // Check if the current request has a guest user that should be upgraded
+    // instead of creating a new user. This preserves all guest events.
+    const guestUser = req?.user?.isGuest ? req.user : null;
+
     // Find or create user
     let user = await UserDOA.getUserByEmail(email);
 
-    if (!user) {
+    if (!user && guestUser) {
+        // Upgrade the guest user to a registered user
+        user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
+    } else if (!user) {
         user = await UserDOA.createUser({
             email,
             name,

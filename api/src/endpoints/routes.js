@@ -13,6 +13,7 @@ import CreateEvent from './events/CreateEvent.js';
 import BulkCreateEvents from './events/BulkCreateEvents.js';
 import UpdateEvent from './events/UpdateEvent.js';
 import DeleteEvent from './events/DeleteEvent.js';
+import CreateGuestSession from './users/CreateGuestSession.js';
 
 const router = express.Router();
 
@@ -26,13 +27,14 @@ router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUser
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
+router.post("/auth/guest", CreateGuestSession);
 
 // Providers routes
 router.get("/providers", Auth(AuthUser.ANY), GetProviders);
 
 // Events routes
 router.get("/events", Auth(AuthUser.ANY), GetEvents);
-router.post("/events/batch", Auth(AuthUser.VALID_USER), BulkCreateEvents);
+router.post("/events/batch", Auth(AuthUser.ANY), BulkCreateEvents); // TODO: move the event generation to the backend
 router.get("/events/:eventId", Auth(AuthUser.ANY), GetEventById);
 router.post("/events", Auth(AuthUser.ANY), CreateEvent);
 router.put("/events/:eventId", Auth(AuthUser.ANY), UpdateEvent);

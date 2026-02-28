@@ -45,6 +45,16 @@ export default class APIClient {
     return HTTPClient.post("/users/logout");
   }
 
+  /**
+   * Create a guest session explicitly.
+   * Called when the user clicks "Continue as Guest" on the auth prompt.
+   * Sets an encrypted session cookie on the response.
+   * @returns {Promise<{ success: boolean, user: Object }>}
+   */
+  static async createGuestSession() {
+    return HTTPClient.post("/auth/guest");
+  }
+
   // ── Providers ──────────────────────────────────────────────────────────────
 
   /**

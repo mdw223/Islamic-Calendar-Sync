@@ -4,13 +4,30 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import APIClient from "../util/ApiClient";
 
-export default function LoginPromptModal({ open, onClose }) {
+export default function LoginPromptModal({ open, onClose, onGuestLogin }) {
   const navigate = useNavigate();
+  const [guestLoading, setGuestLoading] = useState(false);
+
+  const handleContinueAsGuest = async () => {
+    setGuestLoading(true);
+    try {
+      const data = await APIClient.createGuestSession();
+      if (data?.success && data?.user) {
+        onGuestLogin?.(data.user);
+      }
+    } catch {
+      // Guest creation failed — user can retry or pick another option
+    } finally {
+      setGuestLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -39,6 +56,15 @@ export default function LoginPromptModal({ open, onClose }) {
           }}
         >
           Sign in with Email
+        </Button>
+        <Divider sx={{ my: 1.5 }}>or</Divider>
+        <Button
+          variant="text"
+          fullWidth
+          onClick={handleContinueAsGuest}
+          disabled={guestLoading}
+        >
+          {guestLoading ? "Setting up…" : "Continue as Guest"}
         </Button>
       </DialogContent>
       <DialogActions>

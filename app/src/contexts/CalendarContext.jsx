@@ -1,26 +1,21 @@
 /**
  * CalendarContext.jsx
  *
- * Provides calendar state (events, providers, view) to all child components.
+ * API-first calendar state management. All events are persisted server-side.
+ * Both guest users (HMAC-signed session cookie) and registered users (JWT)
+ * have a userId, so all API calls work for everyone.
  *
  * Data flow:
- *   1. On mount, events are loaded immediately from localStorage — no network
- *      request required, so the calendar renders instantly.
- *   2. Islamic events for the current Gregorian year are auto-generated and
- *      merged into localStorage if they haven't been generated yet.
- *   3. Providers are fetched from the API in the background (requires auth).
- *   4. The SYNC button (in Calendar.jsx) calls syncToBackend() — this batch-
- *      POSTs all unsynced Islamic events to the API and replaces their local
- *      string IDs with the backend's integer IDs.
- *   5. The REFRESH button calls refreshFromBackend() — this GETs all events
- *      from the API and merges them into localStorage (backend wins on conflicts
- *      for integer-keyed events; local-only string-keyed events are kept).
+ *   1. On mount (once user is available), events are loaded from GET /events.
+ *   2. Islamic events for the current Gregorian year are auto-generated
+ *      client-side and batch-POSTed to the API if not already present.
+ *   3. All CRUD operations go through the API — no localStorage for events.
+ *   4. Providers are fetched in the background.
  *
- * localStorage keys used:
- *   "calendarView"         — persisted view preference (month / week / day)
- *   "calendarEvents"       — JSON array of all event objects
- *   "calendarGeneratedYears" — JSON array of Gregorian years already generated
- *   "islamicEventsDisabled"  — JSON array of definition IDs the user disabled
+ * localStorage keys still used:
+ *   "calendarView"                     — UI preference (month / week / day)
+ *   "islamicEventDefs"                 — definition show/hide preferences (UI toggles)
+ *   "calendarGeneratedYears_<userId>"  — per-user tracking of generated years
  */
 
 import {
@@ -38,7 +33,6 @@ import { readLS, writeLS, getSavedView } from "../util/localStorage";
 import {
   CALENDAR_VIEW_KEY,
   VALID_VIEWS,
-  EVENTS_KEY,
   GENERATED_YEARS_KEY,
   ISLAMIC_DEFS_KEY,
   ALL_DEFINITIONS,
@@ -47,35 +41,30 @@ import {
 const CalendarContext = createContext(null);
 
 export function CalendarProvider({ children }) {
-  // ── Auth — check once, used by CRUD methods to skip API calls ───────────
+  // ── User (guest or registered — always has a userId after mount) ────────
   const { user } = useUser();
-  const isAuthenticated = user?.isLoggedIn ?? false;
 
   // ── Events state ────────────────────────────────────────────────────────
-  // Initialised directly from localStorage so the calendar renders
-  // immediately without waiting for any async work.
-  const [events, setEvents] = useState(() => readLS(EVENTS_KEY, []));
+  // Starts empty; populated from GET /events once the user is available.
+  const [events, setEvents] = useState([]);
 
   // ── View preference ─────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState(getSavedView);
 
-  // ── Providers (requires auth; loaded in background) ─────────────────────
+  // ── Providers (loaded in background) ────────────────────────────────────
   const [providers, setProviders] = useState([]);
 
   // ── Loading / error state ────────────────────────────────────────────────
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ── Sync / refresh in-flight flags ──────────────────────────────────────
-  const [isSyncing, setIsSyncing] = useState(false);
+  // ── Refresh in-flight flag ──────────────────────────────────────────────
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // New Islamic event definitions added to the JSON file are picked up automatically.
   const [islamicEventDefs, setIslamicEventDefs] = useState(() => {
     const stored = readLS(ISLAMIC_DEFS_KEY, null);
     if (stored) {
-      // Merge: keep stored isHidden preferences, but pick up any new defs
-      // from the bundled JSON that the user hasn't seen yet.
       const storedById = Object.fromEntries(stored.map((d) => [d.id, d]));
       return ALL_DEFINITIONS.map((def) =>
         storedById[def.id]
@@ -87,49 +76,67 @@ export function CalendarProvider({ children }) {
   });
 
   // ── Ref to always-current events (avoids stale closures in callbacks) ───
-  // We keep a ref in sync with the `events` state so that async operations
-  // that close over this ref always see the latest list.
   const eventsRef = useRef(events);
   useEffect(() => {
     eventsRef.current = events;
   }, [events]);
 
-  // ── On mount: load providers + ensure Islamic events for current year ───
+  // ── On mount (and when user changes): load events from API ──────────────
   useEffect(() => {
-    let cancelled = false;
+    if (!user?.userId) return;
 
-    // Fetch providers in the background (non-blocking for the calendar UI).
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        // Fetch events from the API (works for both guest and registered users).
+        const res = await APIClient.getEvents();
+        if (cancelled) return;
+        const serverEvents = res?.events ?? [];
+        setEvents(serverEvents);
+        eventsRef.current = serverEvents;
+
+        // Ensure Islamic events for the current year exist on the server.
+        await ensureIslamicEventsForYearInternal(
+          new Date().getFullYear(),
+          serverEvents,
+        );
+      } catch {
+        if (!cancelled) {
+          setEvents([]);
+          eventsRef.current = [];
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    // Fetch providers in the background (non-blocking).
     APIClient.getProviders()
       .then((data) => {
         if (!cancelled) setProviders(data?.providers ?? []);
       })
-      .catch(() => {
-        // Will be in network error anyways
-      });
-
-    // Ensure Islamic events for the current year are present in localStorage.
-    ensureIslamicEventsForYear(new Date().getFullYear());
+      .catch(() => {});
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.userId]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   /**
-   * Persist `nextEvents` to both React state and localStorage.
-   * All mutations (add/update/remove/generate) go through this function to
-   * keep state and storage always in sync.
+   * Update React state for events (no localStorage for events).
    */
   function saveEvents(nextEvents) {
     setEvents(nextEvents);
     eventsRef.current = nextEvents;
-    writeLS(EVENTS_KEY, nextEvents);
   }
 
   /**
-   * Persist `nextDefs` to both React state and localStorage.
+   * Persist definition preferences to localStorage.
    */
   function saveDefs(nextDefs) {
     setIslamicEventDefs(nextDefs);
@@ -146,102 +153,88 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Generate Islamic events for `year` if that year has not been processed yet.
-   *
-   * Called automatically on mount (current year) and whenever the user
-   * navigates to a new year in Calendar.jsx.  Each Gregorian year generates
-   * ~70 event objects that are merged into localStorage.  Already-present
-   * events are identified by their `eventId` string and are never duplicated.
-   *
-   * Uses the current `islamicEventDefs` state — definitions with
-   * `isHidden: true` are automatically skipped by the generator.
-   *
-   * @param {number} year - Gregorian year to ensure coverage for.
+   * Internal helper — generate Islamic events for `year` and batch-POST
+   * any that are not yet on the server.  Accepts an optional `existing`
+   * array so the mount effect can pass the just-fetched events.
    */
-  function ensureIslamicEventsForYear(year) {
-    const generatedYears = readLS(GENERATED_YEARS_KEY, []);
+  async function ensureIslamicEventsForYearInternal(year, existing = null) {
+    const userId = user?.userId;
+    if (!userId) return;
 
-    if (generatedYears.includes(year)) return; // already done
+    const key = `${GENERATED_YEARS_KEY}_${userId}`;
+    const generatedYears = readLS(key, []);
+    if (generatedYears.includes(year)) return;
 
     const currentDefs = readLS(ISLAMIC_DEFS_KEY, null) ?? ALL_DEFINITIONS;
     const newEvents = generateIslamicEventsForYear(year, currentDefs);
 
     if (newEvents.length === 0) {
-      // Even if nothing was generated (all hidden), mark the year so we
-      // don't re-enter this function on every navigation.
-      writeLS(GENERATED_YEARS_KEY, [...generatedYears, year]);
+      writeLS(key, [...generatedYears, year]);
       return;
     }
 
-    // Merge: skip events that already exist in localStorage (by eventId or
-    // islamicEventKey, since synced events have an integer eventId that won't
-    // match the generated string ID).
-    const existing = readLS(EVENTS_KEY, []);
-    const existingIds = new Set(existing.map((e) => String(e.eventId)));
+    // Filter out events that already exist on the server (by islamicEventKey).
+    const current = existing ?? eventsRef.current;
     const existingKeys = new Set(
-      existing.map((e) => e.islamicEventKey).filter(Boolean),
+      current.map((e) => e.islamicEventKey).filter(Boolean),
     );
     const toAdd = newEvents.filter(
-      (e) =>
-        !existingIds.has(String(e.eventId)) &&
-        !existingKeys.has(e.islamicEventKey),
+      (e) => e.islamicEventKey && !existingKeys.has(e.islamicEventKey),
     );
 
-    const merged = [...existing, ...toAdd];
-    saveEvents(merged);
-    writeLS(GENERATED_YEARS_KEY, [...generatedYears, year]);
+    if (toAdd.length === 0) {
+      writeLS(key, [...generatedYears, year]);
+      return;
+    }
+
+    try {
+      const res = await APIClient.bulkCreateEvents(toAdd);
+      const created = res?.events ?? [];
+      const next = [...eventsRef.current, ...created];
+      saveEvents(next);
+    } catch {
+      // Don't mark year as generated so it retries next time.
+      return;
+    }
+
+    writeLS(key, [...generatedYears, year]);
   }
 
   /**
-   * Add a new event.
-   *
-   * For authenticated users the event is immediately POST-ed to the API and
-   * stored with the server's integer eventId. For unauthenticated users (or
-   * when the API call fails), the event is stored locally with a temporary
-   * string ID using a timestamp.
+   * Public wrapper — called by Calendar.jsx when navigating to a new year.
+   */
+  async function ensureIslamicEventsForYear(year) {
+    await ensureIslamicEventsForYearInternal(year);
+  }
+
+  /**
+   * Add a new event via the API.
    *
    * @param {Object} eventData - Fields matching the API's createEvent schema.
    * @returns {Promise<Object>} The created event object.
    */
   async function addEvent(eventData) {
-    // Unauthenticated — skip the API call entirely for instant local save.
-    if (!isAuthenticated) {
-      const localEvent = {
-        ...eventData,
-        eventId: `local_${Date.now()}`,
-      };
-      const next = [localEvent, ...eventsRef.current];
-      saveEvents(next);
-      return localEvent;
-    }
-
     try {
       const res = await APIClient.createEvent(eventData);
       const created = res?.event ?? res;
       const next = [created, ...eventsRef.current];
       saveEvents(next);
       return created;
-    } catch {
-      const localEvent = {
-        ...eventData,
-        eventId: `local_${Date.now()}`,
-      };
-      const next = [localEvent, ...eventsRef.current];
-      saveEvents(next);
-      return localEvent;
+    } catch (err) {
+      setError(err.message ?? "Failed to create event");
+      throw err;
     }
   }
 
   /**
-   * Update an existing event by its ID (integer or string).
+   * Update an existing event via the API.
    *
-   * @param {number|string} eventId
+   * @param {number} eventId
    * @param {Object} updates
    * @returns {Promise<Object>} The updated event object.
    */
   async function updateEvent(eventId, updates) {
-    if (isAuthenticated && typeof eventId === "number") {
-      // Synced event — update the backend, then reflect in local state.
+    try {
       const res = await APIClient.updateEvent(eventId, updates);
       const updated = res?.event ?? res;
       const next = eventsRef.current.map((e) =>
@@ -249,153 +242,46 @@ export function CalendarProvider({ children }) {
       );
       saveEvents(next);
       return updated;
-    } else {
-      // Local-only (unauthenticated, or string eventId)
-      const updated = {
-        ...eventsRef.current.find((e) => e.eventId === eventId),
-        ...updates,
-      };
-      const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e,
-      );
-      saveEvents(next);
-      return updated;
+    } catch (err) {
+      setError(err.message ?? "Failed to update event");
+      throw err;
     }
   }
 
   /**
-   * Delete an event by its ID (integer or string).
+   * Delete an event via the API.
    *
-   * @param {number|string} eventId
+   * @param {number} eventId
    */
   async function removeEvent(eventId) {
-    if (isAuthenticated && typeof eventId === "number") {
-      // Synced event — remove from the backend first.
+    try {
       await APIClient.deleteEvent(eventId);
+      const next = eventsRef.current.filter((e) => e.eventId !== eventId);
+      saveEvents(next);
+    } catch (err) {
+      setError(err.message ?? "Failed to delete event");
+      throw err;
     }
-    const next = eventsRef.current.filter((e) => e.eventId !== eventId);
-    saveEvents(next);
   }
 
   /**
-   * Sync all unsynced Islamic events to the backend.
-   *
-   * "Unsynced" means `eventId` is a string (local-only); synced events have
-   * an integer `eventId` assigned by the backend.
-   *
-   * The batch endpoint performs upserts keyed on `(userId, islamicEventKey)`
-   * so calling this multiple times is safe — no duplicates are created.
-   *
-   * After a successful sync, each returned event's integer `eventId` replaces
-   * the temporary string ID in localStorage, and subsequent syncs will skip
-   * those events.
-   *
-   * Usually used by user when they switch from non-authenticated mode to authenticated mode.
+   * No-op — kept for backwards compatibility.
+   * With API-first architecture all writes already go through the API.
    */
   async function syncToBackend() {
-    const unsynced = eventsRef.current.filter(
-      (e) => typeof e.eventId === "string" && e.islamicEventKey,
-    );
-
-    if (unsynced.length === 0) return { ok: true };
-
-    setIsSyncing(true);
-    setError(null);
-    try {
-      const res = await APIClient.bulkCreateEvents(unsynced);
-      const synced = res?.events ?? [];
-
-      // Build a lookup from islamicEventKey → backend integer eventId so we
-      // can update the correct local records.
-      const keyToBackendId = {};
-      for (const event of synced) {
-        if (event.islamicEventKey) {
-          keyToBackendId[event.islamicEventKey] = event.eventId;
-        }
-      }
-
-      // Replace string IDs with the authoritative backend IDs.
-      const next = eventsRef.current.map((e) => {
-        if (
-          typeof e.eventId === "string" &&
-          e.islamicEventKey &&
-          keyToBackendId[e.islamicEventKey] != null
-        ) {
-          return { ...e, eventId: keyToBackendId[e.islamicEventKey] };
-        }
-        return e;
-      });
-
-      saveEvents(next);
-      return { ok: true };
-    } catch (err) {
-      const msg = err.message ?? "Failed to sync events";
-      setError(msg);
-      return { ok: false, error: msg };
-    } finally {
-      setIsSyncing(false);
-    }
+    return { ok: true };
   }
 
   /**
-   * Refresh events from the backend.
-   *
-   * Fetches all events for the authenticated user and merges them into
-   * localStorage. The backend is the source of truth for events with integer
-   * IDs. Local-only events (string IDs) are preserved so unsaved work is
-   * not lost.
-   *
-   * Usually used when the user's calendar providers have new events
-   * and they want to display them in calendar UI.
+   * Reload events from the server (manual refresh).
    */
   async function refreshFromBackend() {
     setIsRefreshing(true);
     setError(null);
     try {
       const res = await APIClient.getEvents();
-      const backendEvents = res?.events ?? [];
-
-      // Build a set of backend integer IDs for fast lookup.
-      const backendIdSet = new Set(backendEvents.map((e) => e.eventId));
-
-      // Keep local-only events (string IDs) that the backend doesn't know about.
-      const localOnly = eventsRef.current.filter(
-        (e) => typeof e.eventId === "string",
-      );
-
-      // Preserve local-side fields that the backend strips (islamicDefinitionId).
-      const localByKey = {};
-      for (const e of eventsRef.current) {
-        if (e.islamicEventKey) localByKey[e.islamicEventKey] = e;
-      }
-
-      // Also track islamicEventKeys from the backend so we don't keep a
-      // local-only duplicate when the backend already has the same event
-      // under an integer ID.
-      const backendKeySet = new Set(
-        backendEvents.map((e) => e.islamicEventKey).filter(Boolean),
-      );
-
-      const merged = [
-        // Backend events enriched with any locally-stored extra fields.
-        ...backendEvents.map((be) => {
-          const local = be.islamicEventKey
-            ? localByKey[be.islamicEventKey]
-            : null;
-          return local ? { ...local, ...be } : be;
-        }),
-        // Local-only events that the backend has no record of yet.
-        // Exclude by both eventId AND islamicEventKey to prevent duplicates
-        // (local string IDs never match backend integer IDs, so the key
-        // check is essential for Islamic events).
-        ...localOnly.filter(
-          (e) =>
-            !backendIdSet.has(e.eventId) &&
-            (!e.islamicEventKey || !backendKeySet.has(e.islamicEventKey)),
-        ),
-      ];
-
-      saveEvents(merged);
+      const serverEvents = res?.events ?? [];
+      saveEvents(serverEvents);
       return { ok: true };
     } catch (err) {
       const msg = err.message ?? "Failed to refresh events";
@@ -408,66 +294,70 @@ export function CalendarProvider({ children }) {
 
   /**
    * Toggle a single Islamic event definition's `isHidden` flag.
-   *
-   * When showing (isHidden → false):
-   *   - Flip the definition flag and persist.
-   *   - Un-hide all existing events for this definition (set hide: false).
-   *   - Generate any events for processed years that don't exist yet
-   *     (e.g. the definition was hidden before that year was generated).
-   *
-   * When hiding (isHidden → true):
-   *   - Flip the definition flag and persist.
-   *   - Soft-hide all matching events (set hide: true) — they stay in
-   *     localStorage so they can be restored instantly without re-generation.
+   * Updates matching events on the server.
    *
    * @param {string} definitionId - The `id` field from islamicEvents.json.
    */
-  function toggleIslamicEvent(definitionId) {
+  async function toggleIslamicEvent(definitionId) {
     const currentDefs = readLS(ISLAMIC_DEFS_KEY, null) ?? ALL_DEFINITIONS;
     const target = currentDefs.find((d) => d.id === definitionId);
     if (!target) return;
 
     const wasHidden = target.isHidden;
 
-    // Flip the bit and persist.
+    // Flip the bit and persist definition preference.
     const nextDefs = currentDefs.map((d) =>
       d.id === definitionId ? { ...d, isHidden: !d.isHidden } : d,
     );
     saveDefs(nextDefs);
 
-    // Show or soft-hide all events belonging to this definition.
-    const existing = readLS(EVENTS_KEY, []);
-    const updated = existing.map((e) =>
+    // Update hide flag on matching events (optimistic local update).
+    const matching = eventsRef.current.filter(
+      (e) => e.islamicDefinitionId === definitionId,
+    );
+    const updated = eventsRef.current.map((e) =>
       e.islamicDefinitionId === definitionId ? { ...e, hide: !wasHidden } : e,
     );
     saveEvents(updated);
+
+    // Persist hide changes to the server in parallel.
+    await Promise.allSettled(
+      matching
+        .filter((e) => typeof e.eventId === "number")
+        .map((e) => APIClient.updateEvent(e.eventId, { hide: !wasHidden })),
+    );
   }
 
   /**
-   * Reset the calendar — clears all events, generated-year tracking, and
-   * definition preferences from localStorage, then re-generates Islamic
-   * events for the current year using default definitions.
+   * Reset the calendar — deletes all events on the server, clears generated-
+   * year tracking and definition preferences, then re-generates Islamic events.
    */
-  function resetCalendar() {
-    // Clear persisted state.
-    writeLS(EVENTS_KEY, []);
-    writeLS(GENERATED_YEARS_KEY, []);
+  async function resetCalendar() {
+    // Clear definition preferences.
     writeLS(ISLAMIC_DEFS_KEY, null);
+    const userId = user?.userId;
+    if (userId) {
+      writeLS(`${GENERATED_YEARS_KEY}_${userId}`, []);
+    }
+
+    // Delete all current events from the server.
+    await Promise.allSettled(
+      eventsRef.current
+        .filter((e) => typeof e.eventId === "number")
+        .map((e) => APIClient.deleteEvent(e.eventId)),
+    );
 
     // Reset React state.
     const defaultDefs = ALL_DEFINITIONS.map((d) => ({ ...d }));
-    setEvents([]);
-    eventsRef.current = [];
+    saveEvents([]);
     setIslamicEventDefs(defaultDefs);
     saveDefs(defaultDefs);
 
-    // Re-generate for the current year so the calendar isn't empty.
-    ensureIslamicEventsForYear(new Date().getFullYear());
+    // Re-generate for the current year.
+    await ensureIslamicEventsForYearInternal(new Date().getFullYear());
   }
 
   // ── Derived state ───────────────────────────────────────────────────────
-  // Calendar views use `events` (visible only). Settings/admin views that
-  // need the full list (including hidden) can use `allEvents`.
   const visibleEvents = useMemo(() => events.filter((e) => !e.hide), [events]);
 
   // ── Context value ────────────────────────────────────────────────────────
@@ -493,10 +383,10 @@ export function CalendarProvider({ children }) {
         toggleIslamicEvent,
         ensureIslamicEventsForYear,
 
-        // Backend sync / refresh
+        // Backend sync / refresh (syncToBackend is now a no-op)
         syncToBackend,
         refreshFromBackend,
-        isSyncing,
+        isSyncing: false,
         isRefreshing,
 
         // Reset

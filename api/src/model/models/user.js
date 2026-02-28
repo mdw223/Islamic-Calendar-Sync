@@ -11,6 +11,8 @@ export class User {
     this.updatedAt = null;
     this.lastLogin = null;
     this.isAdmin = null;
+    this.isGuest = null;
+    this.sessionId = null;
     this.language = null;
     this.eventConfigurationStart = null;
     this.eventConfigurationEnd = null;
@@ -37,6 +39,8 @@ export class User {
     user.updatedAt = row.updatedat;
     user.lastLogin = row.lastlogin;
     user.isAdmin = row.isadmin;
+    user.isGuest = row.isguest ?? false;
+    user.sessionId = row.sessionid ?? null;
     user.language = row.language;
     user.eventConfigurationStart = row.eventconfigurationstart;
     user.eventConfigurationEnd = row.eventconfigurationend;

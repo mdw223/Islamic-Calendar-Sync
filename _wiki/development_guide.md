@@ -335,7 +335,7 @@ This project uses Docker Compose with an Nginx reverse proxy. Understanding the 
 # Clean up Docker cache
 docker system prune -a
 
-# Rebuild specific service
+# Rebuild specific service (api)
 docker compose build --no-cache api
 ```
 

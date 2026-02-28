@@ -24,8 +24,7 @@ export const HOURS = Array.from({ length: 24 }, (_, i) => i);
 export const CALENDAR_VIEW_KEY = "calendarView";
 export const VALID_VIEWS = ["month", "week", "day"];
 
-export const EVENTS_KEY = "calendarEvents"; // stores the generated events
-export const GENERATED_YEARS_KEY = "calendarGeneratedYears"; // stores which years have been generated already
+export const GENERATED_YEARS_KEY = "calendarGeneratedYears"; // per-userId tracking of generated years
 export const ISLAMIC_DEFS_KEY = "islamicEventDefs"; // controls which types of events get generated
 
 export const ALL_DEFINITIONS = islamicEventsData.events; // fallback
