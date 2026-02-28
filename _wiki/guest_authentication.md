@@ -6,11 +6,11 @@ Guest authentication allows unauthenticated users to use the calendar without re
 
 There are three user states:
 
-| State | How identified | `req.user` set by |
-|---|---|---|
-| **Registered (JWT)** | `Authorization: Bearer <token>` header | `optionalJwtAuth` middleware |
-| **Guest (returning)** | Encrypted iron-session cookie | `guestSessionMiddleware` |
-| **Anonymous (no session)** | No JWT, no cookie | Neither — `req.user` is `undefined` |
+| State                      | How identified                         | `req.user` set by                   |
+| -------------------------- | -------------------------------------- | ----------------------------------- |
+| **Registered (JWT)**       | `Authorization: Bearer <token>` header | `optionalJwtAuth` middleware        |
+| **Guest (returning)**      | Encrypted iron-session cookie          | `guestSessionMiddleware`            |
+| **Anonymous (no session)** | No JWT, no cookie                      | Neither — `req.user` is `undefined` |
 
 ---
 
@@ -47,7 +47,7 @@ In `api/src/config.js`:
 
 ```js
 export const guestSessionConfig = {
-  COOKIE_NAME: 'guestSessionId',
+  COOKIE_NAME: "guestSessionId",
   SECRET: process.env.GUEST_SESSION_SECRET || sessionConfig.SECRET,
   COOKIE_MAX_AGE_MS: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
@@ -94,12 +94,12 @@ The `sessionOptions` object is exported from this file so `CreateGuestSession.js
 
 Guest users are stored in the `User` table:
 
-| Column | Value |
-|---|---|
-| `IsGuest` | `true` |
+| Column      | Value                             |
+| ----------- | --------------------------------- |
+| `IsGuest`   | `true`                            |
 | `SessionID` | UUID (from `crypto.randomUUID()`) |
-| `Email` | `NULL` |
-| `Name` | `NULL` |
+| `Email`     | `NULL`                            |
+| `Name`      | `NULL`                            |
 
 Created via `UserDOA.createGuestUser(sessionId)`. Looked up via `UserDOA.findBySessionId(sessionId)`.
 
@@ -135,12 +135,12 @@ Rendered in `MainLayout.jsx`. The modal opens when `showAuthPrompt && !isHome &&
 
 The modal offers three options:
 
-| Button | Action |
-|---|---|
-| **Continue with Google** | Redirects to `GET /auth/google/login` (OAuth flow) |
-| **Sign in with Email** | Navigates to `/auth/login` |
-| **Continue as Guest** | Calls `POST /auth/guest` → sets user state → modal closes |
-| **Cancel** | Dismisses the modal for the current page (re-appears on navigation) |
+| Button                   | Action                                                              |
+| ------------------------ | ------------------------------------------------------------------- |
+| **Continue with Google** | Redirects to `GET /auth/google/login` (OAuth flow)                  |
+| **Sign in with Email**   | Navigates to `/auth/login`                                          |
+| **Continue as Guest**    | Calls `POST /auth/guest` → sets user state → modal closes           |
+| **Cancel**               | Dismisses the modal for the current page (re-appears on navigation) |
 
 ### 3. Guest Session Created
 
@@ -205,21 +205,21 @@ sequenceDiagram
 
 ## Files Summary
 
-| Layer | File | Role |
-|---|---|---|
-| API | `api/src/config.js` | `guestSessionConfig` — cookie name, secret, max age |
-| API | `api/src/index.js` | Wires `guestSessionMiddleware` after `optionalJwtAuth` |
-| API | `api/src/middleware/GuestSessionMiddleware.js` | Restores existing guest sessions from cookie; exports `sessionOptions` |
-| API | `api/src/endpoints/users/CreateGuestSession.js` | `POST /auth/guest` — creates guest user + cookie on demand |
-| API | `api/src/endpoints/Routes.js` | Registers `POST /auth/guest` route |
-| API | `api/src/model/db/doa/UserDOA.js` | `createGuestUser(sessionId)`, `findBySessionId(sessionId)` |
-| API | `api/src/passport.js` | Guest-to-registered merge on Google OAuth |
-| API | `api/src/endpoints/users/LoginUser.js` | Guest-to-registered merge on email verify |
-| App | `app/src/util/ApiClient.js` | `createGuestSession()` → `POST /auth/guest` |
-| App | `app/src/components/LoginPromptModal.jsx` | Auth prompt with Google / Email / Guest / Cancel options |
-| App | `app/src/contexts/UserContext.jsx` | `ready`, `showAuthPrompt`, `startGuestSession` |
-| App | `app/src/layouts/MainLayout.jsx` | Renders `LoginPromptModal` when `showAuthPrompt` is true |
-| App | `app/src/contexts/CalendarContext.jsx` | Gates data loading on `user.userId` — loads once guest/login is established |
+| Layer | File                                            | Role                                                                        |
+| ----- | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| API   | `api/src/config.js`                             | `guestSessionConfig` — cookie name, secret, max age                         |
+| API   | `api/src/index.js`                              | Wires `guestSessionMiddleware` after `optionalJwtAuth`                      |
+| API   | `api/src/middleware/GuestSessionMiddleware.js`  | Restores existing guest sessions from cookie; exports `sessionOptions`      |
+| API   | `api/src/endpoints/users/CreateGuestSession.js` | `POST /auth/guest` — creates guest user + cookie on demand                  |
+| API   | `api/src/endpoints/Routes.js`                   | Registers `POST /auth/guest` route                                          |
+| API   | `api/src/model/db/doa/UserDOA.js`               | `createGuestUser(sessionId)`, `findBySessionId(sessionId)`                  |
+| API   | `api/src/passport.js`                           | Guest-to-registered merge on Google OAuth                                   |
+| API   | `api/src/endpoints/users/LoginUser.js`          | Guest-to-registered merge on email verify                                   |
+| App   | `app/src/util/ApiClient.js`                     | `createGuestSession()` → `POST /auth/guest`                                 |
+| App   | `app/src/components/LoginPromptModal.jsx`       | Auth prompt with Google / Email / Guest / Cancel options                    |
+| App   | `app/src/contexts/UserContext.jsx`              | `ready`, `showAuthPrompt`, `startGuestSession`                              |
+| App   | `app/src/layouts/MainLayout.jsx`                | Renders `LoginPromptModal` when `showAuthPrompt` is true                    |
+| App   | `app/src/contexts/CalendarContext.jsx`          | Gates data loading on `user.userId` — loads once guest/login is established |
 
 ---
 
