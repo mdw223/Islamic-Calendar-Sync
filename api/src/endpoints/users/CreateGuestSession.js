@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { getIronSession } from "iron-session";
 import UserDOA from "../../model/db/doa/UserDOA.js";
 import { sessionOptions } from "../../middleware/GuestSessionMiddleware.js";
+import { generateForNewUser } from "../../services/IslamicEventService.js";
 
 /**
  * POST /auth/guest
@@ -51,6 +52,10 @@ export default async function CreateGuestSession(req, res) {
     // Store the session ID in the encrypted cookie.
     session.guestSessionId = user.sessionId;
     await session.save();
+
+    // Fire-and-forget: auto-generate Islamic events for the new guest so
+    // their first GET /events already has events.
+    generateForNewUser(user.userId).catch(() => {});
 
     const { salt, ...userData } = user;
     res.status(201).json({ success: true, user: userData });

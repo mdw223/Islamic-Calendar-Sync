@@ -17,6 +17,10 @@ export function AuthenticateUser(req, res, next) {
 export function AuthMiddleware(req, res, next) {
 
   const user = req.user;
+
+  // SAME_USER is only resolved for routes that include a :userId param
+  // (e.g. GET /users/:userId). For resource-based ownership (e.g. :eventId),
+  // the handlers themselves scope DB queries by req.user.userId.
   const requestedUserId = req.params.userId;
 
   let userRoles = AuthUser.ANY;
@@ -24,6 +28,9 @@ export function AuthMiddleware(req, res, next) {
     userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
+    }
+    if (user.isGuest) {
+      userRoles |= AuthUser.GUEST_USER;
     }
     if (requestedUserId && user.userId == requestedUserId) {
       userRoles |= AuthUser.SAME_USER;

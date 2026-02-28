@@ -231,7 +231,7 @@ Add the following launch.json for vs code
 ```
 
 ```bash
-docker compose -f compose.yml -f compose.debug.yml up -d
+docker compose -f compose.debug.yml up -d
 ```
 
 Testing your database

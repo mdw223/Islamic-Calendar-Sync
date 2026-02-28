@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS Provider CASCADE;
 DROP TABLE IF EXISTS ProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
+DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
 
 -- Create CalculationMethod table
@@ -174,6 +175,18 @@ CREATE TABLE Event (
 CREATE UNIQUE INDEX idx_event_islamic_key
     ON Event (UserId, IslamicEventKey)
     WHERE IslamicEventKey IS NOT NULL;
+
+-- User-level show/hide preferences for Islamic event definitions.
+-- Stores which definitions a user has hidden in the sidebar panel.
+-- The backend merges these with the base definitions from islamicEvents.json
+-- when generating events or serving GET /definitions.
+CREATE TABLE UserIslamicDefinitionPreference (
+    UserId INTEGER NOT NULL,
+    DefinitionId VARCHAR(256) NOT NULL,
+    IsHidden BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (UserId, DefinitionId),
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
 
 -- -- Create indexes for better query performance
 -- CREATE INDEX idx_provider_userid ON Provider(UserId);

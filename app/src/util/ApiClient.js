@@ -98,22 +98,39 @@ export default class APIClient {
     return HTTPClient.delete(`/events/${eventId}`);
   }
 
+  // ── Islamic event generation (server-side) ────────────────────────────────
+
   /**
-   * Batch upsert events.
+   * Generate Islamic events for a Gregorian year on the backend.
+   * The backend's upsert handles idempotency — calling this for the same
+   * year is harmless.
    *
-   * Sends all events in a single request to POST /events/batch. The backend
-   * performs an INSERT … ON CONFLICT … DO UPDATE for events that carry an
-   * `islamicEventKey`, so re-syncing is idempotent.
-   *
-   * Returns every event with its server-assigned integer `eventId` — the
-   * frontend uses these to replace the temporary string IDs in localStorage.
-   *
-   * @param {Array<{ name: string, startDate: string, endDate: string,
-   *   eventTypeId: number, islamicEventKey?: string, isAllDay?: boolean,
-   *   description?: string, hide?: boolean, isCustom?: boolean, isTask?: boolean }>} events
-   * @returns {Promise<{ success: boolean, events: Object[] }>}
+   * @param {number} year - Gregorian year, e.g. 2026
+   * @returns {Promise<{ success: boolean, events: Object[], generatedCount: number }>}
    */
-  static async bulkCreateEvents(events) {
-    return HTTPClient.post("/events/batch", { events });
+  static async generateEvents(year) {
+    return HTTPClient.post("/events/generate", { year });
+  }
+
+  // ── Definitions ────────────────────────────────────────────────────────────
+
+  /**
+   * Get all Islamic event definitions with per-user isHidden preferences.
+   * @returns {Promise<{ success: boolean, definitions: Object[] }>}
+   */
+  static async getDefinitions() {
+    return HTTPClient.get("/definitions");
+  }
+
+  /**
+   * Update the isHidden preference for a single definition.
+   * Also updates the hide flag on all matching events server-side.
+   *
+   * @param {string} definitionId
+   * @param {boolean} isHidden
+   * @returns {Promise<{ success: boolean, definitionId: string, isHidden: boolean, eventsUpdated: number }>}
+   */
+  static async updateDefinitionPreference(definitionId, isHidden) {
+    return HTTPClient.put(`/definitions/${definitionId}`, { isHidden });
   }
 }

@@ -7,6 +7,7 @@ import { appConfig, googleAuthConfig, jwtConfig } from "./config.js";
 import ProviderDOA from "./model/db/doa/ProviderDOA.js";
 import jwt from "jsonwebtoken";
 import { ProviderTypeId } from "./constants.js";
+import { generateForNewUser } from "./services/IslamicEventService.js";
 
 /**
  * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
@@ -229,6 +230,11 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, 
 
     // Update last login timestamp
     await UserDOA.updateLastLogin(user.userId);
+
+    // Auto-generate Islamic events for the current year if this is a new or
+    // upgraded user. The upsert makes this idempotent so calling it
+    // redundantly is harmless.
+    generateForNewUser(user.userId).catch(() => {});
 
     return { user, provider };
 }

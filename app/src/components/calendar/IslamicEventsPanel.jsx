@@ -41,20 +41,26 @@ import {
   Moon,
   RotateCcw as ResetIcon,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
-import { ALL_DEFINITIONS } from "../../constants";
 import EventDefinitionRow from "./EventDefinitionRow";
-
-// Partition definitions into the three display groups.
-const ANNUAL_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "annual");
-const MONTHLY_DEFS = ALL_DEFINITIONS.filter((d) => d.category === "monthly");
-const MONTH_START_DEFS = ALL_DEFINITIONS.filter(
-  (d) => d.category === "monthStart",
-);
 
 export default function IslamicEventsPanel() {
   const { islamicEventDefs, toggleIslamicEvent, resetCalendar } = useCalendar();
+
+  // Partition definitions into the three display groups (derived from context).
+  const ANNUAL_DEFS = useMemo(
+    () => islamicEventDefs.filter((d) => d.category === "annual"),
+    [islamicEventDefs],
+  );
+  const MONTHLY_DEFS = useMemo(
+    () => islamicEventDefs.filter((d) => d.category === "monthly"),
+    [islamicEventDefs],
+  );
+  const MONTH_START_DEFS = useMemo(
+    () => islamicEventDefs.filter((d) => d.category === "monthStart"),
+    [islamicEventDefs],
+  );
 
   // Local collapse state — open by default.
   const [open, setOpen] = useState(true);

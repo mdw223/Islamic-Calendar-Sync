@@ -124,6 +124,24 @@ export default class EventDOA {
   }
 
   /**
+   * Update the hide flag on all events matching a given Islamic definition ID
+   * for a specific user. Used when toggling a definition's visibility.
+   * @param {number} userId
+   * @param {string} islamicDefinitionId
+   * @param {boolean} hide
+   * @returns {Promise<number>} Number of rows updated.
+   */
+  static async updateHideByDefinitionId(userId, islamicDefinitionId, hide) {
+    const result = await query(
+      `UPDATE event
+       SET hide = $3, updatedat = NOW()
+       WHERE userid = $1 AND islamicdefinitionid = $2`,
+      [userId, islamicDefinitionId, hide],
+    );
+    return result.rowCount;
+  }
+
+  /**
    * Batch upsert events for a user inside a single transaction.
    *
    * For events that carry an `islamicEventKey`, the INSERT uses an ON CONFLICT
