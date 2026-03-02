@@ -47,6 +47,7 @@ export default function CalendarToolbar({
           borderBottom: 1,
           borderColor: "divider",
           flexShrink: 0,
+          borderRadius: 0,
         }}
       >
         {/* Row 1: Prev | centered label | Next */}

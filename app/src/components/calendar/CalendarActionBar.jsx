@@ -41,11 +41,8 @@ export default function CalendarActionBar({
     <Paper
       elevation={0}
       sx={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 20,
+        mt: { xs: 3, sm: 0 },
+        mb: { xs: 3, sm: 0 },
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -53,9 +50,14 @@ export default function CalendarActionBar({
         gap: { xs: 0.5, sm: 1 },
         px: 2,
         py: 1.5,
-        borderTop: 1,
+        borderTop: { xs: 0, sm: 1 },
         borderColor: "divider",
-        bgcolor: "background.paper",
+        bgcolor: { xs: "transparent", sm: "background.paper" },
+        position: { sm: "fixed" },
+        bottom: { sm: 0 },
+        left: { sm: 0 },
+        right: { sm: 0 },
+        zIndex: { sm: 20 },
       }}
     >
       {/* ── Reset button ──────────────────────────────────────────────────── */}

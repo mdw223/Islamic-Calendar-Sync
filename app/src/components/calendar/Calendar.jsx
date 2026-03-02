@@ -157,7 +157,6 @@ export default function Calendar() {
         flexDirection: "column",
         height: "100%",
         minHeight: 0,
-        paddingBottom: { xs: 3, sm: 0 },
       }}
     >
       <CalendarToolbar
