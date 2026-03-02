@@ -43,22 +43,37 @@ import {
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import EventDefinitionRow from "./EventDefinitionRow";
+import SearchField from "../SearchField";
 
 export default function IslamicEventsPanel() {
   const { islamicEventDefs, toggleIslamicEvent } = useCalendar();
 
+  // ── Search state ────────────────────────────────────────────────────────
+  const [search, setSearch] = useState("");
+
+  // Filter definitions by search query (matches titleEn or titleAr).
+  const filteredDefs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return islamicEventDefs;
+    return islamicEventDefs.filter(
+      (d) =>
+        (d.titleEn && d.titleEn.toLowerCase().includes(q)) ||
+        (d.titleAr && d.titleAr.includes(q)),
+    );
+  }, [islamicEventDefs, search]);
+
   // Partition definitions into the three display groups (derived from context).
   const ANNUAL_DEFS = useMemo(
-    () => islamicEventDefs.filter((d) => d.category === "annual"),
-    [islamicEventDefs],
+    () => filteredDefs.filter((d) => d.category === "annual"),
+    [filteredDefs],
   );
   const MONTHLY_DEFS = useMemo(
-    () => islamicEventDefs.filter((d) => d.category === "monthly"),
-    [islamicEventDefs],
+    () => filteredDefs.filter((d) => d.category === "monthly"),
+    [filteredDefs],
   );
   const MONTH_START_DEFS = useMemo(
-    () => islamicEventDefs.filter((d) => d.category === "monthStart"),
-    [islamicEventDefs],
+    () => filteredDefs.filter((d) => d.category === "monthStart"),
+    [filteredDefs],
   );
 
   // Local collapse state — open by default.
@@ -121,6 +136,7 @@ export default function IslamicEventsPanel() {
         zIndex: 10,
       }}
     >
+      {/**add the search functionaly here as component */}
       <Tooltip
         title={open ? "Collapse panel" : "Show Islamic Events"}
         placement="right"
@@ -182,6 +198,17 @@ export default function IslamicEventsPanel() {
           <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
             Islamic Events
           </Typography>
+        </Box>
+
+        {/* ── Search ──────────────────────────────────────────────────────── */}
+        <Box
+          sx={{ px: 1.5, py: 0.75, borderBottom: 1, borderColor: "divider" }}
+        >
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder="Search events…"
+          />
         </Box>
 
         {/* ── Select All ────────────────────────────────────────────────────── */}
