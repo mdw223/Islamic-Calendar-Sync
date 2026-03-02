@@ -120,28 +120,25 @@ export default function IslamicEventsPanel() {
     }
   }
 
-  // ── Collapsed state: show a narrow strip with a toggle icon ─────────────
+  // ── Collapsed state: floating button over the calendar ─────────────────
   if (!open) {
     return (
-      <Paper
-        elevation={0}
+      <Box
         sx={{
-          width: 40,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          borderRight: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          pt: 1,
+          position: "absolute",
+          top: 8,
+          left: 8,
+          zIndex: 10,
+          bgcolor: "primary.main",
+          borderRadius: 1,
         }}
       >
-        <Tooltip title="Show Islamic Events" placement="right">
+        <Tooltip title="Events Menu" placement="right">
           <IconButton size="small" onClick={() => setOpen(true)}>
             <ChevronRight size={18} />
           </IconButton>
         </Tooltip>
-      </Paper>
+      </Box>
     );
   }
 

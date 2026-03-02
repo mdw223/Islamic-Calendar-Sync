@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material";
+import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
 import { DAY_NAMES, MONTH_NAMES } from "../../constants";
 import { getHijriMonthRangeLabel, getHijriParts } from "../../util/hijriUtils";
@@ -64,10 +64,17 @@ export function eventColor(event, theme) {
  * handler on the parent cell.
  */
 export function EventChip({ event, onClick, theme }) {
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   return (
     <Chip
       key={event.eventId}
-      label={event.name}
+      label={
+        isMobile
+          ? event.name.includes("|")
+            ? event.name.split("|")[1].trim()
+            : event.name
+          : event.name
+      }
       size="small"
       onClick={(e) => {
         e.stopPropagation();
@@ -79,12 +86,13 @@ export function EventChip({ event, onClick, theme }) {
         bgcolor: eventColor(event, theme),
         color: "#fff",
         fontSize: "0.7rem",
+        borderRadius: { xs: 0, sm: "12px" },
         height: 20,
         cursor: "pointer",
         "& .MuiChip-label": {
-          px: 0.75,
+          px: { xs: 0.25, sm: 0.75 },
           overflow: "hidden",
-          textOverflow: "ellipsis",
+          textOverflow: { xs: "clip", sm: "ellipsis" },
         },
       }}
     />

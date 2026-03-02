@@ -24,6 +24,7 @@ export default function CalendarPage() {
       sx={{
         display: "flex",
         flexDirection: "row",
+        position: "relative",
         // Fill the full height allocated by CalendarLayout
         // (CalendarLayout sets height: calc(100vh - 64px)).
         height: "100%",
@@ -37,10 +38,10 @@ export default function CalendarPage() {
       <Box
         sx={{
           flex: 1,
-          minWidth: 0,   // allows the calendar to shrink below its natural width
+          minWidth: 0, // allows the calendar to shrink below its natural width
           display: "flex",
           flexDirection: "column",
-          p: 2,
+          p: { xs: "0px", sm: 2 },
           overflow: "hidden",
         }}
       >

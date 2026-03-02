@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { DAY_NAMES } from "../../constants";
 import { toDateKey, sameDay, EventChip } from "./CalendarHelpers.jsx";
 import { getHijriParts } from "../../util/hijriUtils";
+import { Moon } from "lucide-react";
 
 /**
  * Renders a standard monthly grid (Sun–Sat columns) for the given `year` and
@@ -55,7 +56,7 @@ export default function MonthView({
   }, [startOffset, days]);
 
   return (
-    <Box sx={{ flex: 1, overflow: "auto", p: 1 }}>
+    <Box sx={{ flex: 1, overflow: "auto", p: { xs: "0px", sm: 1 } }}>
       {/* Day-of-week header */}
       <Box
         sx={{
@@ -83,11 +84,11 @@ export default function MonthView({
         sx={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 0.5,
+          gap: { xs: 0, sm: 0.5 },
         }}
       >
         {cells.map((day, idx) => {
-          if (!day) return <Box key={`empty-${idx}`} />;
+          if (!day) return <Box key={`empty-${idx}`} sx={{ minWidth: 0 }} />;
 
           const cellDate = new Date(year, month, day);
           const key = toDateKey(cellDate);
@@ -102,11 +103,14 @@ export default function MonthView({
               onClick={() => onDayClick(key)}
               sx={{
                 minHeight: 90,
+                minWidth: 0,
                 p: 0.75,
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 gap: 0.25,
+                borderRadius: { xs: 0, sm: "12px" },
+                overflow: "hidden",
                 borderColor: isToday ? "primary.main" : "divider",
                 borderWidth: isToday ? 2 : 1,
                 transition: "background-color 0.15s",
@@ -127,6 +131,16 @@ export default function MonthView({
                   sx={{ fontSize: "0.65rem", lineHeight: 1, pl: 0.25 }}
                 >
                   {hijri?.day}
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 0.2,
+                      display: "inline-flex",
+                      verticalAlign: "top",
+                    }}
+                  >
+                    <Moon size={10} />
+                  </Box>
                 </Typography>
 
                 <Box
@@ -153,6 +167,7 @@ export default function MonthView({
                   flexDirection: "column",
                   gap: 0.25,
                   flex: 1,
+                  mx: { xs: -0.75, sm: 0 },
                 }}
               >
                 {dayEvents.slice(0, 3).map((ev) => (

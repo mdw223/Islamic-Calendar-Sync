@@ -94,7 +94,7 @@ const Navbar = () => {
             <Typography
               variant="h6"
               noWrap
-              sx={{ fontWeight: 700, display: { xs: "none", sm: "block" } }}
+              sx={{ fontWeight: 700, display: "block" }}
             >
               Islamic Calendar Sync
             </Typography>
