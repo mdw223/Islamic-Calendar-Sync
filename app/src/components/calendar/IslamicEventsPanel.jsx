@@ -34,19 +34,18 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  Check as CheckIcon,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Moon,
-  RotateCcw as ResetIcon,
 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import EventDefinitionRow from "./EventDefinitionRow";
 
 export default function IslamicEventsPanel() {
-  const { islamicEventDefs, toggleIslamicEvent, resetCalendar } = useCalendar();
+  const { islamicEventDefs, toggleIslamicEvent } = useCalendar();
 
   // Partition definitions into the three display groups (derived from context).
   const ANNUAL_DEFS = useMemo(
@@ -65,6 +64,8 @@ export default function IslamicEventsPanel() {
   // Local collapse state — open by default.
   const [open, setOpen] = useState(true);
 
+  const [collapseAll, setCollapseAll] = useState(false);
+
   // Section collapse state — all expanded by default.
   const [sections, setSections] = useState({
     annual: true,
@@ -73,17 +74,6 @@ export default function IslamicEventsPanel() {
   });
   const toggleSection = (key) =>
     setSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  // ── Reset button feedback state ─────────────────────────────────────────
-  const [resetFeedback, setResetFeedback] = useState(null); // 'success' | null
-  const resetTimer = useRef(null);
-
-  const handleReset = useCallback(() => {
-    resetCalendar();
-    setResetFeedback("success");
-    clearTimeout(resetTimer.current);
-    resetTimer.current = setTimeout(() => setResetFeedback(null), 2500);
-  }, [resetCalendar]);
 
   // A definition is "checked" when its isHidden flag is false/undefined.
   const isChecked = (id) => {
@@ -195,7 +185,16 @@ export default function IslamicEventsPanel() {
         </Box>
 
         {/* ── Select All ────────────────────────────────────────────────────── */}
-        <Box sx={{ px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+        <Box
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <FormControlLabel
             control={
               <Checkbox
@@ -212,6 +211,49 @@ export default function IslamicEventsPanel() {
             }
             sx={{ m: 0 }}
           />
+
+          <Box sx={{ flex: 1 }} />
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+              paddingLeft: "4px",
+              paddingRight: "4px",
+            }}
+            onClick={() => {
+              setCollapseAll(!collapseAll);
+              toggleSection("annual");
+              toggleSection("monthly");
+              toggleSection("monthStart");
+            }}
+          >
+            {collapseAll ? (
+              <ChevronRight
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.annual
+                    ? "rotate(0deg)"
+                    : "rotate(-90deg)",
+                }}
+              />
+            ) : (
+              <ChevronDown
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.annual
+                    ? "rotate(0deg)"
+                    : "rotate(-90deg)",
+                }}
+              />
+            )}
+          </Box>
         </Box>
 
         {/* ── Scrollable list of definitions ────────────────────────────────── */}
@@ -329,51 +371,6 @@ export default function IslamicEventsPanel() {
               ))}
             </Collapse>
           </List>
-        </Box>
-
-        {/* ── Reset button ──────────────────────────────────────────────────── */}
-        <Box
-          sx={{
-            px: 1.5,
-            py: 1,
-            borderTop: 1,
-            borderColor: "divider",
-            flexShrink: 0,
-          }}
-        >
-          <Button
-            variant="outlined"
-            size="small"
-            fullWidth
-            startIcon={
-              resetFeedback === "success" ? (
-                <CheckIcon
-                  size={14}
-                  style={{
-                    color: "#10b981",
-                    animation: "popIn 0.3s ease-out",
-                  }}
-                />
-              ) : (
-                <ResetIcon size={14} />
-              )
-            }
-            disabled={resetFeedback != null}
-            onClick={handleReset}
-            sx={{
-              ...(resetFeedback === "success" && {
-                borderColor: "#10b981",
-                color: "#10b981",
-              }),
-              "@keyframes popIn": {
-                "0%": { transform: "scale(0)" },
-                "60%": { transform: "scale(1.3)" },
-                "100%": { transform: "scale(1)" },
-              },
-            }}
-          >
-            {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
-          </Button>
         </Box>
       </Paper>
     </>

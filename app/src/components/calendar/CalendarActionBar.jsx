@@ -1,11 +1,14 @@
 import {
-  Check as CheckIcon,
   Plus as AddIcon,
   RefreshCw as RefreshIcon,
   Upload as SyncIcon,
   X as XIcon,
+  RotateCcw as ResetIcon,
+  Check as CheckIcon,
 } from "lucide-react";
-import { Button, CircularProgress, Paper, Tooltip } from "@mui/material";
+import { Button, CircularProgress, Paper, Tooltip, Box } from "@mui/material";
+import { useCallback, useRef, useState } from "react";
+import { useCalendar } from "../../contexts/CalendarContext";
 
 /**
  * CalendarActionBar
@@ -22,6 +25,18 @@ export default function CalendarActionBar({
   refreshFeedback,
   onRefresh,
 }) {
+  const { resetCalendar } = useCalendar();
+  // ── Reset button feedback state ─────────────────────────────────────────
+  const [resetFeedback, setResetFeedback] = useState(null); // 'success' | null
+  const resetTimer = useRef(null);
+
+  const handleReset = useCallback(() => {
+    resetCalendar();
+    setResetFeedback("success");
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => setResetFeedback(null), 2500);
+  }, [resetCalendar]);
+
   return (
     <Paper
       elevation={0}
@@ -38,6 +53,40 @@ export default function CalendarActionBar({
         backgroundColor: "transparent",
       }}
     >
+      {/* ── Reset button ──────────────────────────────────────────────────── */}
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={
+          resetFeedback === "success" ? (
+            <CheckIcon
+              size={14}
+              style={{
+                color: "#10b981",
+                animation: "popIn 0.3s ease-out",
+              }}
+            />
+          ) : (
+            <ResetIcon size={14} />
+          )
+        }
+        disabled={resetFeedback != null}
+        onClick={handleReset}
+        sx={{
+          ...(resetFeedback === "success" && {
+            borderColor: "#10b981",
+            color: "#10b981",
+          }),
+          "@keyframes popIn": {
+            "0%": { transform: "scale(0)" },
+            "60%": { transform: "scale(1.3)" },
+            "100%": { transform: "scale(1)" },
+          },
+        }}
+      >
+        {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
+      </Button>
+
       <Tooltip
         title={
           user.isLoggedIn
