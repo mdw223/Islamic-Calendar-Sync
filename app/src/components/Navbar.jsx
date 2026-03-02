@@ -32,6 +32,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { ThemeContext } from "../contexts/ThemeContext";
 import UserBadge from "./UserBadge";
+import GlobalSearch from "./GlobalSearch";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -96,13 +97,14 @@ const Navbar = () => {
               noWrap
               sx={{ fontWeight: 700, display: "block" }}
             >
-              Islamic Calendar Sync
+              ICS
             </Typography>
           </Box>
 
           {/* Desktop Nav */}
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <GlobalSearch />
               {navLinks.map((link) => (
                 <Button
                   key={link.name}
@@ -174,6 +176,7 @@ const Navbar = () => {
           {/* Mobile: menu icon and profile or sign-in */}
           {isMobile && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <GlobalSearch />
               {user.isLoggedIn ? (
                 <UserBadge
                   user={user}
