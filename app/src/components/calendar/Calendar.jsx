@@ -2,6 +2,7 @@ import { Alert, Box, Collapse, LinearProgress } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
+import CalendarActionBar from "./CalendarActionBar";
 import CalendarToolbar from "./CalendarToolbar";
 import EventModal from "./EventModal";
 import MonthView from "./MonthView";
@@ -166,14 +167,6 @@ export default function Calendar() {
         goToday={goToday}
         goPrev={goPrev}
         goNext={goNext}
-        onAddEvent={() => openCreate(null)}
-        user={user}
-        isSyncing={isSyncing}
-        syncFeedback={syncFeedback}
-        onSync={handleSync}
-        isRefreshing={isRefreshing}
-        refreshFeedback={refreshFeedback}
-        onRefresh={handleRefresh}
       />
 
       <LoginPromptModal
@@ -223,6 +216,18 @@ export default function Calendar() {
           onEventClick={openEdit}
         />
       )}
+
+      {/* Action buttons (Add Event, Sync, Refresh) */}
+      <CalendarActionBar
+        onAddEvent={() => openCreate(null)}
+        user={user}
+        isSyncing={isSyncing}
+        syncFeedback={syncFeedback}
+        onSync={handleSync}
+        isRefreshing={isRefreshing}
+        refreshFeedback={refreshFeedback}
+        onRefresh={handleRefresh}
+      />
 
       {/* Event modal */}
       <EventModal

@@ -120,242 +120,262 @@ export default function IslamicEventsPanel() {
     }
   }
 
-  // ── Collapsed state: floating button over the calendar ─────────────────
-  if (!open) {
-    return (
-      <Box
-        sx={{
-          position: "absolute",
-          top: 8,
-          left: 8,
-          zIndex: 10,
-          bgcolor: "primary.main",
-          borderRadius: 1,
-        }}
+  // ── Toggle tab (always visible on the right edge of the panel / left of calendar) ──
+  const toggleTab = (
+    <Box
+      sx={{
+        position: "absolute",
+        top: "50%",
+        left: open ? 288 : 0,
+        transform: "translateY(-50%)",
+        zIndex: 10,
+      }}
+    >
+      <Tooltip
+        title={open ? "Collapse panel" : "Show Islamic Events"}
+        placement="right"
       >
-        <Tooltip title="Events Menu" placement="right">
-          <IconButton size="small" onClick={() => setOpen(true)}>
-            <ChevronRight size={18} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    );
+        <IconButton
+          size="small"
+          onClick={() => setOpen((prev) => !prev)}
+          sx={{
+            bgcolor:
+              "rgba(var(--mui-palette-background-defaultChannel) / 0.75)",
+            backdropFilter: "blur(4px)",
+            borderRadius: "0 6px 6px 0",
+            border: 1,
+            borderLeft: 0,
+            borderColor: "divider",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          {open ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+
+  // ── Collapsed state ─────────────────────────────────────────────────────
+  if (!open) {
+    return toggleTab;
   }
 
   // ── Expanded state ────────────────────────────────────────────────────────
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        width: 288, // panel width
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        borderRight: 1,
-        borderColor: "divider",
-        overflow: "hidden",
-      }}
-    >
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <Box
+    <>
+      {toggleTab}
+      <Paper
+        elevation={0}
         sx={{
+          width: 288, // panel width
+          flexShrink: 0,
           display: "flex",
-          alignItems: "center",
-          px: 1.5,
-          py: 1,
-          borderBottom: 1,
+          flexDirection: "column",
+          borderRight: 1,
           borderColor: "divider",
-          flexShrink: 0,
+          overflow: "hidden",
         }}
       >
-        <Moon size={16} style={{ marginRight: 6 }} />
-        <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-          Islamic Events
-        </Typography>
-        <Tooltip title="Collapse panel">
-          <IconButton size="small" onClick={() => setOpen(false)}>
-            <ChevronLeft size={18} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* ── Select All ────────────────────────────────────────────────────── */}
-      <Box sx={{ px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
-        <FormControlLabel
-          control={
-            <Checkbox
-              size="small"
-              checked={allChecked}
-              indeterminate={someChecked}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-            />
-          }
-          label={
-            <Typography variant="body2" fontWeight={600}>
-              Select All
-            </Typography>
-          }
-          sx={{ m: 0 }}
-        />
-      </Box>
-
-      {/* ── Scrollable list of definitions ────────────────────────────────── */}
-      <Box sx={{ overflowY: "auto", flex: 1 }}>
-        <List dense disablePadding>
-          {/* Annual events */}
-          <ListSubheader
-            sx={{
-              lineHeight: "28px",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              userSelect: "none",
-            }}
-            onClick={() => toggleSection("annual")}
-          >
-            Annual Events
-            <ChevronDown
-              size={14}
-              style={{
-                marginLeft: "auto",
-                transition: "transform 0.2s",
-                transform: sections.annual ? "rotate(0deg)" : "rotate(-90deg)",
-              }}
-            />
-          </ListSubheader>
-          <Collapse in={sections.annual}>
-            {ANNUAL_DEFS.map((def) => (
-              <EventDefinitionRow
-                key={def.id}
-                definition={def}
-                checked={isChecked(def.id)}
-                onChange={handleToggle}
-              />
-            ))}
-          </Collapse>
-
-          <Divider sx={{ my: 0.5 }} />
-
-          {/* Monthly (White Days) */}
-          <ListSubheader
-            sx={{
-              lineHeight: "28px",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              userSelect: "none",
-            }}
-            onClick={() => toggleSection("monthly")}
-          >
-            Monthly
-            <ChevronDown
-              size={14}
-              style={{
-                marginLeft: "auto",
-                transition: "transform 0.2s",
-                transform: sections.monthly ? "rotate(0deg)" : "rotate(-90deg)",
-              }}
-            />
-          </ListSubheader>
-          <Collapse in={sections.monthly}>
-            {MONTHLY_DEFS.map((def) => (
-              <EventDefinitionRow
-                key={def.id}
-                definition={def}
-                checked={isChecked(def.id)}
-                onChange={handleToggle}
-              />
-            ))}
-          </Collapse>
-
-          <Divider sx={{ my: 0.5 }} />
-
-          {/* Month starts */}
-          <ListSubheader
-            sx={{
-              lineHeight: "28px",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              userSelect: "none",
-            }}
-            onClick={() => toggleSection("monthStart")}
-          >
-            Month Starts
-            <ChevronDown
-              size={14}
-              style={{
-                marginLeft: "auto",
-                transition: "transform 0.2s",
-                transform: sections.monthStart
-                  ? "rotate(0deg)"
-                  : "rotate(-90deg)",
-              }}
-            />
-          </ListSubheader>
-          <Collapse in={sections.monthStart}>
-            {MONTH_START_DEFS.map((def) => (
-              <EventDefinitionRow
-                key={def.id}
-                definition={def}
-                checked={isChecked(def.id)}
-                onChange={handleToggle}
-              />
-            ))}
-          </Collapse>
-        </List>
-      </Box>
-
-      {/* ── Reset button ──────────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          px: 1.5,
-          py: 1,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-        }}
-      >
-        <Button
-          variant="outlined"
-          size="small"
-          fullWidth
-          startIcon={
-            resetFeedback === "success" ? (
-              <CheckIcon
-                size={14}
-                style={{
-                  color: "#10b981",
-                  animation: "popIn 0.3s ease-out",
-                }}
-              />
-            ) : (
-              <ResetIcon size={14} />
-            )
-          }
-          disabled={resetFeedback != null}
-          onClick={handleReset}
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <Box
           sx={{
-            ...(resetFeedback === "success" && {
-              borderColor: "#10b981",
-              color: "#10b981",
-            }),
-            "@keyframes popIn": {
-              "0%": { transform: "scale(0)" },
-              "60%": { transform: "scale(1.3)" },
-              "100%": { transform: "scale(1)" },
-            },
+            display: "flex",
+            alignItems: "center",
+            px: 1.5,
+            py: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+            flexShrink: 0,
           }}
         >
-          {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
-        </Button>
-      </Box>
-    </Paper>
+          <Moon size={16} style={{ marginRight: 6 }} />
+          <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
+            Islamic Events
+          </Typography>
+        </Box>
+
+        {/* ── Select All ────────────────────────────────────────────────────── */}
+        <Box sx={{ px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={allChecked}
+                indeterminate={someChecked}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+              />
+            }
+            label={
+              <Typography variant="body2" fontWeight={600}>
+                Select All
+              </Typography>
+            }
+            sx={{ m: 0 }}
+          />
+        </Box>
+
+        {/* ── Scrollable list of definitions ────────────────────────────────── */}
+        <Box sx={{ overflowY: "auto", flex: 1 }}>
+          <List dense disablePadding>
+            {/* Annual events */}
+            <ListSubheader
+              sx={{
+                lineHeight: "28px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+              onClick={() => toggleSection("annual")}
+            >
+              Annual Events
+              <ChevronDown
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.annual
+                    ? "rotate(0deg)"
+                    : "rotate(-90deg)",
+                }}
+              />
+            </ListSubheader>
+            <Collapse in={sections.annual}>
+              {ANNUAL_DEFS.map((def) => (
+                <EventDefinitionRow
+                  key={def.id}
+                  definition={def}
+                  checked={isChecked(def.id)}
+                  onChange={handleToggle}
+                />
+              ))}
+            </Collapse>
+
+            <Divider sx={{ my: 0.5 }} />
+
+            {/* Monthly (White Days) */}
+            <ListSubheader
+              sx={{
+                lineHeight: "28px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+              onClick={() => toggleSection("monthly")}
+            >
+              Monthly
+              <ChevronDown
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.monthly
+                    ? "rotate(0deg)"
+                    : "rotate(-90deg)",
+                }}
+              />
+            </ListSubheader>
+            <Collapse in={sections.monthly}>
+              {MONTHLY_DEFS.map((def) => (
+                <EventDefinitionRow
+                  key={def.id}
+                  definition={def}
+                  checked={isChecked(def.id)}
+                  onChange={handleToggle}
+                />
+              ))}
+            </Collapse>
+
+            <Divider sx={{ my: 0.5 }} />
+
+            {/* Month starts */}
+            <ListSubheader
+              sx={{
+                lineHeight: "28px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+              onClick={() => toggleSection("monthStart")}
+            >
+              Month Starts
+              <ChevronDown
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.monthStart
+                    ? "rotate(0deg)"
+                    : "rotate(-90deg)",
+                }}
+              />
+            </ListSubheader>
+            <Collapse in={sections.monthStart}>
+              {MONTH_START_DEFS.map((def) => (
+                <EventDefinitionRow
+                  key={def.id}
+                  definition={def}
+                  checked={isChecked(def.id)}
+                  onChange={handleToggle}
+                />
+              ))}
+            </Collapse>
+          </List>
+        </Box>
+
+        {/* ── Reset button ──────────────────────────────────────────────────── */}
+        <Box
+          sx={{
+            px: 1.5,
+            py: 1,
+            borderTop: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            startIcon={
+              resetFeedback === "success" ? (
+                <CheckIcon
+                  size={14}
+                  style={{
+                    color: "#10b981",
+                    animation: "popIn 0.3s ease-out",
+                  }}
+                />
+              ) : (
+                <ResetIcon size={14} />
+              )
+            }
+            disabled={resetFeedback != null}
+            onClick={handleReset}
+            sx={{
+              ...(resetFeedback === "success" && {
+                borderColor: "#10b981",
+                color: "#10b981",
+              }),
+              "@keyframes popIn": {
+                "0%": { transform: "scale(0)" },
+                "60%": { transform: "scale(1.3)" },
+                "100%": { transform: "scale(1)" },
+              },
+            }}
+          >
+            {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
+          </Button>
+        </Box>
+      </Paper>
+    </>
   );
 }
