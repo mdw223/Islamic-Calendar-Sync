@@ -41,16 +41,21 @@ export default function CalendarActionBar({
     <Paper
       elevation={0}
       sx={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 20,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
         gap: { xs: 0.5, sm: 1 },
         px: 2,
-        py: 1,
-        paddingTop: 3,
-        flexShrink: 0,
-        backgroundColor: "transparent",
+        py: 1.5,
+        borderTop: 1,
+        borderColor: "divider",
+        bgcolor: "background.paper",
       }}
     >
       {/* ── Reset button ──────────────────────────────────────────────────── */}
