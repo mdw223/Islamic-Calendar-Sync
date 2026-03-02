@@ -1,4 +1,5 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
+import { sanitizeDescription } from '../../util/sanitizeHtml.js';
 
 /**
  * PUT /events/:eventId
@@ -13,6 +14,10 @@ export default async function UpdateEvent(req, res) {
                 success: false,
                 message: 'Invalid event ID',
             });
+        }
+
+        if (req.body.description !== undefined) {
+            req.body.description = sanitizeDescription(req.body.description);
         }
 
         const event = await EventDOA.updateEvent(eventId, req.user.userId, req.body);

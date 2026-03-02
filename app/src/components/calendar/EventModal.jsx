@@ -17,8 +17,10 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { EventTypeId } from "../../constants";
+import RichTextEditor from "../RichTextEditor";
 
 /** Map enum entries to {id, name} pairs for the dropdown. */
 const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
@@ -108,6 +110,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     try {
       const payload = {
         ...form,
+        description: form.description
+          ? DOMPurify.sanitize(form.description)
+          : "",
         startDate: form.startDate
           ? new Date(form.startDate).toISOString()
           : null,
@@ -247,14 +252,21 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             />
           </Box>
 
-          <TextField
-            label="Description"
-            value={form.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            fullWidth
-            multiline
-            minRows={3}
-          />
+          <Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 0.5, display: "block" }}
+            >
+              Description
+            </Typography>
+            <RichTextEditor
+              value={form.description}
+              onChange={(html) => handleChange("description", html)}
+              placeholder="Add a description…"
+              minHeight={120}
+            />
+          </Box>
 
           <FormControlLabel
             control={

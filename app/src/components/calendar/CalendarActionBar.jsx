@@ -50,7 +50,6 @@ export default function CalendarActionBar({
         gap: { xs: 0.5, sm: 1 },
         px: 2,
         py: 1.5,
-        borderTop: { xs: 0, sm: 1 },
         borderColor: "divider",
         bgcolor: { xs: "transparent", sm: "background.paper" },
         position: { sm: "fixed" },

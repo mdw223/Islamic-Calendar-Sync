@@ -41,7 +41,7 @@ export default function MonthView({
   const eventsByDay = useMemo(() => {
     const map = {};
     events.forEach((ev) => {
-      const key = ev.startDate ?? "";
+      const key = (ev.startDate ?? "").slice(0, 10);
       if (!map[key]) map[key] = [];
       map[key].push(ev);
     });

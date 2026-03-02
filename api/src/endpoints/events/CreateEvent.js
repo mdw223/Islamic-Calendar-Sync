@@ -23,6 +23,13 @@ export default async function CreateEvent(req, res) {
             });
         }
 
+        if (eventData.description && eventData.description.length > 50000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Event description must be 50,000 characters or fewer.',
+            });
+        }
+
         const event = await EventDOA.createEvent({ ...eventData, userId: req.user.userId });
 
         res.status(201).json({

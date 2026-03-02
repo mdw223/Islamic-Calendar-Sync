@@ -13,6 +13,7 @@
 import { InputAdornment, TextField } from "@mui/material";
 import { Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import IconButton from "@mui/material/IconButton";
+import DOMPurify from "dompurify";
 
 export default function SearchField({
   value,
@@ -26,7 +27,9 @@ export default function SearchField({
       variant="outlined"
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) =>
+        onChange(DOMPurify.sanitize(e.target.value, { ALLOWED_TAGS: [] }))
+      }
       fullWidth
       slotProps={{
         input: {

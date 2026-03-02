@@ -108,7 +108,11 @@ export default function GlobalSearch() {
         .filter(
           (e) =>
             (e.name && e.name.toLowerCase().includes(q)) ||
-            (e.description && e.description.toLowerCase().includes(q)),
+            (e.description &&
+              e.description
+                .replace(/<[^>]*>/g, "")
+                .toLowerCase()
+                .includes(q)),
         )
         .slice(0, 20); // cap for performance
 
