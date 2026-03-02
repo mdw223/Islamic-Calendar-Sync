@@ -68,11 +68,23 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           hide: event.hide ?? false,
         });
       } else {
+        // initialDate may be "YYYY-MM-DD" (from MonthView) or
+        // "YYYY-MM-DDThh:mm" (from WeekView / DayView slot clicks).
+        const hasTime = initialDate && initialDate.includes("T");
         const base = initialDate
-          ? `${initialDate}T09:00`
+          ? hasTime
+            ? initialDate
+            : `${initialDate}T09:00`
           : toDatetimeLocal(new Date().toISOString());
         const end = initialDate
-          ? `${initialDate}T10:00`
+          ? hasTime
+            ? (() => {
+                const d = new Date(initialDate);
+                d.setHours(d.getHours() + 1);
+                const pad = (n) => String(n).padStart(2, "0");
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+              })()
+            : `${initialDate}T10:00`
           : toDatetimeLocal(
               new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             );

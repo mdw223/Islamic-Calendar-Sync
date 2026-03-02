@@ -125,7 +125,7 @@ export default function Calendar() {
   // ── Modal helpers ───────────────────────────────────────────────────────────
 
   function openCreate(dateString) {
-    const date = dateString ? dateString.slice(0, 10) : toDateKey(today);
+    const date = dateString ?? toDateKey(today);
     setEditingEvent(null);
     setModalInitialDate(date);
     setModalOpen(true);

@@ -124,7 +124,7 @@ export default function IslamicEventsPanel() {
   const toggleTab = (
     <Box
       sx={{
-        position: "absolute",
+        position: "fixed",
         top: "50%",
         left: open ? 288 : 0,
         transform: "translateY(-50%)",
