@@ -1,0 +1,1357 @@
+{
+    "code": 200,
+    "status": "OK",
+    "data": [
+        {
+            "hijri": {
+                "date": "12-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "12",
+                "weekday": {
+                    "en": "Al Khamees",
+                    "ar": "الخميس"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "01-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "01",
+                "weekday": {
+                    "en": "Thursday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "13-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "13",
+                "weekday": {
+                    "en": "Al Juma'a",
+                    "ar": "الجمعة"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina `Ali ibn Abi Talib (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "02-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "02",
+                "weekday": {
+                    "en": "Friday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "14-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "14",
+                "weekday": {
+                    "en": "Al Sabt",
+                    "ar": "السبت"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "03-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "03",
+                "weekday": {
+                    "en": "Saturday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "15-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "15",
+                "weekday": {
+                    "en": "Al Ahad",
+                    "ar": "الاحد"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Urs of Sayyidina Jāfar as-Sādiq (ق)",
+                    "Urs of Zaynab bint Ali (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "04-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "04",
+                "weekday": {
+                    "en": "Sunday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "16-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "16",
+                "weekday": {
+                    "en": "Al Athnayn",
+                    "ar": "الاثنين"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "05-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "05",
+                "weekday": {
+                    "en": "Monday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "17-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "17",
+                "weekday": {
+                    "en": "Al Thalaata",
+                    "ar": "الثلاثاء"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "06-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "06",
+                "weekday": {
+                    "en": "Tuesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "18-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "18",
+                "weekday": {
+                    "en": "Al Arba'a",
+                    "ar": "الاربعاء"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "07-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "07",
+                "weekday": {
+                    "en": "Wednesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "19-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "19",
+                "weekday": {
+                    "en": "Al Khamees",
+                    "ar": "الخميس"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "08-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "08",
+                "weekday": {
+                    "en": "Thursday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "20-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "20",
+                "weekday": {
+                    "en": "Al Juma'a",
+                    "ar": "الجمعة"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "09-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "09",
+                "weekday": {
+                    "en": "Friday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "21-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "21",
+                "weekday": {
+                    "en": "Al Sabt",
+                    "ar": "السبت"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "10-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "10",
+                "weekday": {
+                    "en": "Saturday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "22-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "22",
+                "weekday": {
+                    "en": "Al Ahad",
+                    "ar": "الاحد"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "11-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "11",
+                "weekday": {
+                    "en": "Sunday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "23-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "23",
+                "weekday": {
+                    "en": "Al Athnayn",
+                    "ar": "الاثنين"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "12-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "12",
+                "weekday": {
+                    "en": "Monday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "24-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "24",
+                "weekday": {
+                    "en": "Al Thalaata",
+                    "ar": "الثلاثاء"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "13-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "13",
+                "weekday": {
+                    "en": "Tuesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "25-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "25",
+                "weekday": {
+                    "en": "Al Arba'a",
+                    "ar": "الاربعاء"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "14-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "14",
+                "weekday": {
+                    "en": "Wednesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "26-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "26",
+                "weekday": {
+                    "en": "Al Khamees",
+                    "ar": "الخميس"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "15-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "15",
+                "weekday": {
+                    "en": "Thursday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "27-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "27",
+                "weekday": {
+                    "en": "Al Juma'a",
+                    "ar": "الجمعة"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Lailat-ul-Miraj"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "16-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "16",
+                "weekday": {
+                    "en": "Friday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "28-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "28",
+                "weekday": {
+                    "en": "Al Sabt",
+                    "ar": "السبت"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "17-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "17",
+                "weekday": {
+                    "en": "Saturday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "29-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "29",
+                "weekday": {
+                    "en": "Al Ahad",
+                    "ar": "الاحد"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "18-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "18",
+                "weekday": {
+                    "en": "Sunday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "30-07-1447",
+                "format": "DD-MM-YYYY",
+                "day": "30",
+                "weekday": {
+                    "en": "Al Athnayn",
+                    "ar": "الاثنين"
+                },
+                "month": {
+                    "number": 7,
+                    "en": "Rajab",
+                    "ar": "رَجَب",
+                    "days": 30
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "19-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "19",
+                "weekday": {
+                    "en": "Monday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "01-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "1",
+                "weekday": {
+                    "en": "Al Thalaata",
+                    "ar": "الثلاثاء"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "20-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "20",
+                "weekday": {
+                    "en": "Tuesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "02-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "2",
+                "weekday": {
+                    "en": "Al Arba'a",
+                    "ar": "الاربعاء"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "21-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "21",
+                "weekday": {
+                    "en": "Wednesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "03-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "3",
+                "weekday": {
+                    "en": "Al Khamees",
+                    "ar": "الخميس"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina Husayn ibn `Ali (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "22-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "22",
+                "weekday": {
+                    "en": "Thursday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "04-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "4",
+                "weekday": {
+                    "en": "Al Juma'a",
+                    "ar": "الجمعة"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina Abbas ibn `Ali (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "23-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "23",
+                "weekday": {
+                    "en": "Friday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "05-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "5",
+                "weekday": {
+                    "en": "Al Sabt",
+                    "ar": "السبت"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina `Ali ibn Husayn (ر)",
+                    "Urs of Imam Shamil al-Daghestani (ق)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "24-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "24",
+                "weekday": {
+                    "en": "Saturday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "06-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "6",
+                "weekday": {
+                    "en": "Al Ahad",
+                    "ar": "الاحد"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "25-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "25",
+                "weekday": {
+                    "en": "Sunday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "07-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "7",
+                "weekday": {
+                    "en": "Al Athnayn",
+                    "ar": "الاثنين"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina Qasim ibn Hasan (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "26-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "26",
+                "weekday": {
+                    "en": "Monday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "08-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "8",
+                "weekday": {
+                    "en": "Al Thalaata",
+                    "ar": "الثلاثاء"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "27-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "27",
+                "weekday": {
+                    "en": "Tuesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "09-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "9",
+                "weekday": {
+                    "en": "Al Arba'a",
+                    "ar": "الاربعاء"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "28-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "28",
+                "weekday": {
+                    "en": "Wednesday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "10-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "10",
+                "weekday": {
+                    "en": "Al Khamees",
+                    "ar": "الخميس"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "29-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "29",
+                "weekday": {
+                    "en": "Thursday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "11-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "11",
+                "weekday": {
+                    "en": "Al Juma'a",
+                    "ar": "الجمعة"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [
+                    "Birth of Sayyidina Ali Akbar ibn Husayn (ر)"
+                ],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "30-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "30",
+                "weekday": {
+                    "en": "Friday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        },
+        {
+            "hijri": {
+                "date": "12-08-1447",
+                "format": "DD-MM-YYYY",
+                "day": "12",
+                "weekday": {
+                    "en": "Al Sabt",
+                    "ar": "السبت"
+                },
+                "month": {
+                    "number": 8,
+                    "en": "Shaʿbān",
+                    "ar": "شَعْبان",
+                    "days": 29
+                },
+                "year": "1447",
+                "designation": {
+                    "abbreviated": "AH",
+                    "expanded": "Anno Hegirae"
+                },
+                "holidays": [],
+                "adjustedHolidays": [],
+                "method": "UAQ"
+            },
+            "gregorian": {
+                "date": "31-01-2026",
+                "format": "DD-MM-YYYY",
+                "day": "31",
+                "weekday": {
+                    "en": "Saturday"
+                },
+                "month": {
+                    "number": 1,
+                    "en": "January"
+                },
+                "year": "2026",
+                "designation": {
+                    "abbreviated": "AD",
+                    "expanded": "Anno Domini"
+                },
+                "lunarSighting": false
+            }
+        }
+    ]
+}

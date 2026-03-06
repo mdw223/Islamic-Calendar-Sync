@@ -7,13 +7,14 @@ import React, {
 } from "react";
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
-import { setToken, clearToken } from "../util/authToken";
+import { setToken, clearToken } from "../util/AuthToken";
 
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
   const [subscriptions, setSubscriptions] = useState([]);
+  const [ready, setReady] = useState(false);
 
   // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
   useEffect(() => {
@@ -23,7 +24,11 @@ export const UserProvider = ({ children }) => {
       const token = params.get("token");
       if (token) {
         setToken(decodeURIComponent(token));
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
       }
     }
 
@@ -32,6 +37,7 @@ export const UserProvider = ({ children }) => {
       .then((data) => {
         if (cancelled) return;
         if (data?.success && data?.user) {
+          // Always set the user — even if isGuest is true (guest users now have a userId).
           setUser(createUser(data.user));
         } else {
           setUser(createUser(defaultUser));
@@ -39,6 +45,9 @@ export const UserProvider = ({ children }) => {
       })
       .catch((err) => {
         if (!cancelled) setUser(createUser(defaultUser));
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
       });
     return () => {
       cancelled = true;
@@ -73,6 +82,21 @@ export const UserProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
+  /**
+   * Explicitly create a guest session via POST /auth/guest.
+   * Called when the user clicks "Continue as Guest" in the auth prompt.
+   */
+  const startGuestSession = useCallback(async () => {
+    const data = await APIClient.createGuestSession();
+    if (data?.success && data?.user) {
+      setUser(createUser(data.user));
+    }
+  }, []);
+
+  // True when the initial session check is done and no user was found.
+  // Used to show the auth prompt modal.
+  const showAuthPrompt = ready && !user?.userId;
+
   return (
     <UserContext.Provider
       value={{
@@ -84,6 +108,9 @@ export const UserProvider = ({ children }) => {
         updateUserPreferences,
         subscriptions,
         setSubscriptions,
+        ready,
+        showAuthPrompt,
+        startGuestSession,
       }}
     >
       {children}

@@ -3,10 +3,11 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, googleAuthConfig, jwtConfig } from "./config.js";
+import { appConfig, googleAuthConfig, jwtConfig } from "./Config.js";
 import ProviderDOA from "./model/db/doa/ProviderDOA.js";
 import jwt from "jsonwebtoken";
-import { ProviderTypeId } from "./constants.js";
+import { ProviderTypeId } from "./Constants.js";
+import { generateForNewUser } from "./services/IslamicEventService.js";
 
 /**
  * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
@@ -73,7 +74,7 @@ passport.use(
           scope: params?.scope,
         };
         const { user, provider } =
-          await findOrCreateUserFromGoogleProfile(profile, tokens);
+          await findOrCreateUserFromGoogleProfile(profile, tokens, req);
         req.googleTokens = tokens;
         req.googleProvider = provider;
         verified(null, user);
@@ -162,7 +163,7 @@ export const googleRedirect = [
    * @param {Object} tokens - OAuth tokens: { access_token, refresh_token?, expires_in, scope }
    * @returns {Promise<{user: Object, provider: Object}>}
    */
-export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) {
+export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, req = null) {
     const email =
         profile.emails && profile.emails[0] ? profile.emails[0].value : null;
     const name = profile.displayName || email;
@@ -171,10 +172,17 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
         throw new Error("Google profile did not include an email address");
     }
 
+    // Check if the current request has a guest user that should be upgraded
+    // instead of creating a new user. This preserves all guest events.
+    const guestUser = req?.user?.isGuest ? req.user : null;
+
     // Find or create user
     let user = await UserDOA.getUserByEmail(email);
 
-    if (!user) {
+    if (!user && guestUser) {
+        // Upgrade the guest user to a registered user
+        user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
+    } else if (!user) {
         user = await UserDOA.createUser({
             email,
             name,
@@ -222,6 +230,11 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
 
     // Update last login timestamp
     await UserDOA.updateLastLogin(user.userId);
+
+    // Auto-generate Islamic events for the current year if this is a new or
+    // upgraded user. The upsert makes this idempotent so calling it
+    // redundantly is harmless.
+    generateForNewUser(user.userId).catch(() => {});
 
     return { user, provider };
 }

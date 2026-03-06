@@ -1,4 +1,4 @@
-import { AuthUser } from "../constants.js";
+import { AuthUser } from "../Constants.js";
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
@@ -9,7 +9,6 @@ export function AuthenticateUser(req, res, next) {
     return res.status(401).json({
       success: false,
       message: 'Authentication failed',
-      error: 'Not authenticated'
     });
   }
   next();
@@ -18,14 +17,23 @@ export function AuthenticateUser(req, res, next) {
 export function AuthMiddleware(req, res, next) {
 
   const user = req.user;
+
+  // SAME_USER is only resolved for routes that include a :userId param
+  // (e.g. GET /users/:userId). For resource-based ownership (e.g. :eventId),
+  // the handlers themselves scope DB queries by req.user.userId.
   const requestedUserId = req.params.userId;
-  let requestedRoles = req.userRoles;
 
   let userRoles = AuthUser.ANY;
   if (user) {
     userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
+    }
+    if (user.isGuest) {
+      userRoles |= AuthUser.GUEST_USER;
+    }
+    if (requestedUserId && user.userId == requestedUserId) {
+      userRoles |= AuthUser.SAME_USER;
     }
   }
 
@@ -46,20 +54,20 @@ export function Auth(allowedRoles) {
 
         if (Array.isArray(allowedRoles)) {
           for(const allowedRole of allowedRoles) {
-            // ANY_USER (0) always matches
-            if (allowedRole === AuthUser.ANY_USER) {
+            // ANY (0) always matches
+            if (allowedRole === AuthUser.ANY) {
               return next();
             }
-            if ((requestedRoles & allowedRole) === allowedRole) {
+            if ((req.userRoles & allowedRole) === allowedRole) {
               return next();
             }
           }
         } else {
-          // ANY_USER (0) always matches
-          if (allowedRoles === AuthUser.ANY_USER) {
+          // ANY (0) always matches
+          if (allowedRoles === AuthUser.ANY) {
             return next();
           }
-          if ((requestedRoles & allowedRoles) === allowedRoles) {
+          if ((req.userRoles & allowedRoles) === allowedRoles) {
             return next();
           }
         }
@@ -70,7 +78,6 @@ export function Auth(allowedRoles) {
         res.status(403).json({
           success: false,
           message: 'Authorization failed',
-          error: error.message
         });
       }
       })

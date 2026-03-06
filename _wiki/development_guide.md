@@ -231,7 +231,7 @@ Add the following launch.json for vs code
 ```
 
 ```bash
-docker compose -f compose.yml -f compose.debug.yml up -d
+docker compose -f compose.debug.yml up -d
 ```
 
 Testing your database
@@ -335,7 +335,7 @@ This project uses Docker Compose with an Nginx reverse proxy. Understanding the 
 # Clean up Docker cache
 docker system prune -a
 
-# Rebuild specific service
+# Rebuild specific service (api)
 docker compose build --no-cache api
 ```
 

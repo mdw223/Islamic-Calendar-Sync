@@ -12,7 +12,8 @@ DROP TABLE IF EXISTS Provider CASCADE;
 DROP TABLE IF EXISTS ProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
-DROP TABLE IF EXISTS Users CASCADE;
+DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
+DROP TABLE IF EXISTS "User" CASCADE;
 
 -- Create CalculationMethod table
 CREATE TABLE CalculationMethod (
@@ -27,7 +28,7 @@ CREATE TABLE ProviderType (
 );
 
 -- Create Users table
-CREATE TABLE Users (
+CREATE TABLE "User" (
     UserId SERIAL PRIMARY KEY,
     Name VARCHAR(100) NULL,
     Email VARCHAR(255) NULL UNIQUE,
@@ -35,6 +36,8 @@ CREATE TABLE Users (
     UpdatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     LastLogin TIMESTAMP,
     IsAdmin BOOLEAN DEFAULT FALSE,
+    IsGuest BOOLEAN NOT NULL DEFAULT FALSE,
+    SessionID VARCHAR(255) NULL UNIQUE,
     Timezone VARCHAR(100),
     Latitude VARCHAR(50),
     Longitude VARCHAR(50),
@@ -69,7 +72,7 @@ CREATE TABLE Log (
     ErrorCode VARCHAR(100),
     ErrorStack TEXT,
     Meta JSONB NOT NULL DEFAULT '{}'::jsonb,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE SET NULL
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_log_timestamp ON Log(Timestamp);
@@ -93,7 +96,7 @@ CREATE TABLE Provider (
     Salt VARCHAR(255),
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
-    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
 -- -- Create Calendar table
@@ -133,29 +136,57 @@ CREATE TABLE Provider (
 --     FOREIGN KEY (PrayerTypeId) REFERENCES PrayerType(PrayerTypeId) ON DELETE RESTRICT
 -- );
 
--- -- Create EventType table
--- CREATE TABLE EventType (
---     EventTypeId SERIAL PRIMARY KEY,
---     Name VARCHAR(100) NOT NULL
--- );
+-- Create EventType table
+CREATE TABLE EventType (
+    EventTypeId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL
+);
 
--- -- Create Event table
--- CREATE TABLE Event (
---     EventId SERIAL PRIMARY KEY,
---     Name VARCHAR(255) NOT NULL,
---     StartDate TIMESTAMP NOT NULL,
---     EndDate TIMESTAMP NOT NULL,
---     IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
---     Description TEXT,
---     Hide BOOLEAN NOT NULL DEFAULT FALSE,
---     EventTypeId INTEGER NOT NULL,
---     IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
---     IsTask BOOLEAN NOT NULL DEFAULT FALSE,
---     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (EventConfigurationId) REFERENCES EventConfiguration(EventConfigurationId) ON DELETE CASCADE,
---     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
--- );
+-- Create Event table
+CREATE TABLE Event (
+    EventId SERIAL PRIMARY KEY,
+    Name VARCHAR(1024) NOT NULL,
+    StartDate TIMESTAMP NOT NULL,
+    EndDate TIMESTAMP NOT NULL,
+    IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
+    Description TEXT,
+    Hide BOOLEAN NOT NULL DEFAULT FALSE,
+    EventTypeId INTEGER NOT NULL,
+    IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
+    IsTask BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Stable string key for Islamic calendar events (e.g. "ramadan_begins_1447").
+    -- When present, used for upsert deduplication: the partial unique index below
+    -- prevents a user from syncing the same Islamic event twice.
+    IslamicEventKey VARCHAR(256),
+    -- The definition ID from islamicEvents.json (e.g. "ramadan_begins").
+    -- Null for ordinary user-created events.
+    IslamicDefinitionId VARCHAR(256),
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UserId INTEGER NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
+    FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
+);
+
+-- Partial unique index: only enforces uniqueness when IslamicEventKey is not NULL.
+-- PostgreSQL treats NULLs as not equal in regular UNIQUE constraints, so two rows
+-- with IslamicEventKey = NULL would not conflict — which is correct for user-created
+-- events. The partial index targets only Islamic calendar events.
+CREATE UNIQUE INDEX idx_event_islamic_key
+    ON Event (UserId, IslamicEventKey)
+    WHERE IslamicEventKey IS NOT NULL;
+
+-- User-level show/hide preferences for Islamic event definitions.
+-- Stores which definitions a user has hidden in the sidebar panel.
+-- The backend merges these with the base definitions from islamicEvents.json
+-- when generating events or serving GET /definitions.
+CREATE TABLE UserIslamicDefinitionPreference (
+    UserId INTEGER NOT NULL,
+    DefinitionId VARCHAR(256) NOT NULL,
+    IsHidden BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (UserId, DefinitionId),
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
 
 -- -- Create indexes for better query performance
 -- CREATE INDEX idx_provider_userid ON Provider(UserId);
@@ -174,7 +205,7 @@ CREATE TABLE Provider (
 -- $$ LANGUAGE plpgsql;
 
 -- -- Create triggers to automatically update UpdatedAt on relevant tables
--- CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON Users
+-- CREATE TRIGGER update_user_updated_at BEFORE UPDATE ON User
 --     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- CREATE TRIGGER update_provider_updated_at BEFORE UPDATE ON Provider
@@ -196,15 +227,15 @@ INSERT INTO ProviderType (Name) VALUES
     ('Apple Calendar'),
     ('Cal.com');
 
--- -- Insert default calculation methods
--- INSERT INTO CalculationMethod (Name) VALUES 
---     ('Muslim World League'),
---     ('Islamic Society of North America'),
---     ('Egyptian General Authority of Survey'),
---     ('Umm Al-Qura University, Makkah'),
---     ('University of Islamic Sciences, Karachi'),
---     ('Institute of Geophysics, University of Tehran'),
---     ('Shia Ithna-Ashari');
+-- Insert default calculation methods
+INSERT INTO CalculationMethod (Name) VALUES 
+    ('Muslim World League'),
+    ('Islamic Society of North America'),
+    ('Egyptian General Authority of Survey'),
+    ('Umm Al-Qura University, Makkah'),
+    ('University of Islamic Sciences, Karachi'),
+    ('Institute of Geophysics, University of Tehran'),
+    ('Shia Ithna-Ashari');
 
 -- -- Insert default prayer types
 -- INSERT INTO PrayerType (Name) VALUES 
@@ -216,9 +247,9 @@ INSERT INTO ProviderType (Name) VALUES
 --     ('Isha'),
 --     ('Custom');
 
--- -- Insert default event types
--- INSERT INTO EventType (Name) VALUES 
---     ('Ramadan'),
---     ('Eid'),
---     ('Jumah'),
---     ('Custom');
+-- Insert default event types
+INSERT INTO EventType (Name) VALUES 
+    ('Ramadan'),
+    ('Eid'),
+    ('Jumah'),
+    ('Custom');

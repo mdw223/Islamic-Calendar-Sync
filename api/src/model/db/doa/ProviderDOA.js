@@ -7,6 +7,19 @@ import { Provider } from "../../models/Provider.js";
  */
 export default class ProviderDOA {
   /**
+   * Get all providers for a user.
+   * @param {number} userId
+   * @returns {Promise<Provider[]>}
+   */
+  static async findAllByUserId(userId) {
+    const result = await query(
+      "SELECT * FROM provider WHERE userid = $1 ORDER BY createdat ASC",
+      [userId],
+    );
+    return result.rows.map(Provider.fromRow);
+  }
+
+  /**
    * @param {number} userId
    * @param {number} providerTypeId
    * @returns {Promise<ReturnType<Provider.fromRow>|null>}

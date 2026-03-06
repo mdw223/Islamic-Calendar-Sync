@@ -1,5 +1,15 @@
 import UserDOA from '../../model/db/doa/UserDOA.js';
-import { signToken } from '../../passport.js';
+import { signToken } from '../../Passport.js';
+import { sendJson } from '../SendJson.js';
+
+/**
+ * If the request has a guest session user, return it for merging.
+ * @param {import('express').Request} req
+ * @returns {Object|null}
+ */
+function getGuestUser(req) {
+  return req.user?.isGuest ? req.user : null;
+}
 
 /**
  * POST /users/send-code
@@ -12,10 +22,10 @@ export async function SendVerificationCode(req, res) {
         const { email, name } = req.body;
 
         if (!email || !name) {
-            return res.status(400).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Email and name are required'
-            });
+            }, 400);
         }
 
         // TODO: Generate a verification code and send it via email
@@ -25,16 +35,15 @@ export async function SendVerificationCode(req, res) {
         // 2. Store it temporarily (e.g., in Redis with email as key, expire in 10 minutes)
         // 3. Send email via service like SendGrid, AWS SES, etc.
 
-        res.json({
+        return sendJson(res, {
             success: true,
             message: 'Verification code sent to email'
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to send verification code',
-            error: error.message
-        });
+        }, 500);
     }
 }
 
@@ -47,10 +56,10 @@ export async function VerifyCode(req, res) {
         const { email, code } = req.body;
 
         if (!email || !code) {
-            return res.status(400).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Email and code are required'
-            });
+            }, 400);
         }
 
         // TODO: Verify the code against what was sent
@@ -62,7 +71,14 @@ export async function VerifyCode(req, res) {
         // For now, we'll just check if the user exists and create/login them
         let user = await UserDOA.getUserByEmail(email);
 
-        if (!user) {
+        // If the request has a guest session and no existing user with this email,
+        // upgrade the guest record so all their events are preserved.
+        const guestUser = getGuestUser(req);
+
+        if (!user && guestUser) {
+            const name = email.split('@')[0];
+            user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
+        } else if (!user) {
             const name = email.split('@')[0];
             user = await UserDOA.createUser({ email, name });
         }
@@ -70,7 +86,7 @@ export async function VerifyCode(req, res) {
         await UserDOA.updateLastLogin(user.userId);
 
         const token = signToken(user);
-        res.json({
+        return sendJson(res, {
             success: true,
             message: 'Code verified successfully',
             token,
@@ -81,11 +97,10 @@ export async function VerifyCode(req, res) {
             }
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to verify code',
-            error: error.message
-        });
+        }, 500);
     }
 }
 
@@ -94,7 +109,7 @@ export async function VerifyCode(req, res) {
  * Acknowledge logout. With JWT auth there is no server-side session; the client must discard the token.
  */
 export async function Logout(req, res) {
-    res.json({
+    return sendJson(res, {
         success: true,
         message: 'Logged out successfully'
     });

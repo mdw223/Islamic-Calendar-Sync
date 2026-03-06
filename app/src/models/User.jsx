@@ -1,5 +1,5 @@
 /**
- * User model aligned with DB schema (Users table).
+ * User model aligned with DB schema (User table).
  * API returns lowercase column names (e.g. userid, createdat); we map to camelCase.
  * "Logged in" is session-based (cookie): no isLoggedIn in DB; use user.userId != null or user.isLoggedIn getter.
  */
@@ -14,6 +14,7 @@ function fromApiRow(row) {
     updatedAt: row.updatedat ?? null,
     lastLogin: row.lastlogin ?? null,
     isAdmin: row.isadmin ?? false,
+    isGuest: row.isguest ?? false,
     timezone: row.timezone ?? null,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
@@ -36,6 +37,7 @@ export const defaultUser = {
   updatedAt: null,
   lastLogin: null,
   isAdmin: false,
+  isGuest: false,
   timezone: null,
   latitude: null,
   longitude: null,
@@ -62,6 +64,7 @@ export class User {
     this.updatedAt = normalized.updatedAt ?? null;
     this.lastLogin = normalized.lastLogin ?? null;
     this.isAdmin = normalized.isAdmin ?? false;
+    this.isGuest = normalized.isGuest ?? false;
     this.timezone = normalized.timezone ?? null;
     this.latitude = normalized.latitude ?? null;
     this.longitude = normalized.longitude ?? null;
@@ -93,6 +96,7 @@ export class User {
       this.updatedAt = normalized.updatedAt ?? this.updatedAt;
       this.lastLogin = normalized.lastLogin ?? new Date().toISOString();
       this.isAdmin = normalized.isAdmin ?? this.isAdmin;
+      this.isGuest = normalized.isGuest ?? false;
       this.timezone = normalized.timezone ?? this.timezone;
       this.latitude = normalized.latitude ?? this.latitude;
       this.longitude = normalized.longitude ?? this.longitude;
@@ -115,7 +119,8 @@ export class User {
     Object.assign(this, new User(defaultUser));
   }
 
-  updatePreferences(preferences) { // TODO USE THESE
+  updatePreferences(preferences) {
+    // TODO USE THESE
     if (preferences && typeof preferences.notifications !== "undefined")
       this.notifications = preferences.notifications;
     if (preferences && typeof preferences.emailUpdates !== "undefined")
@@ -162,6 +167,7 @@ export class User {
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
+      isGuest: this.isGuest,
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,

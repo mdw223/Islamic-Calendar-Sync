@@ -1,10 +1,27 @@
-import React from "react";
-import { Outlet } from "react-router";
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router";
 import { Box } from "@mui/material";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import LoginPromptModal from "../components/LoginPromptModal";
+import { useUser } from "../contexts/UserContext";
+import { createUser } from "../models/User";
 
 const MainLayout = () => {
+  const { showAuthPrompt, setUser } = useUser();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+  const [dismissed, setDismissed] = useState(false);
+
+  // Re-show the prompt when navigating to a different page
+  useEffect(() => {
+    setDismissed(false);
+  }, [location.pathname]);
+
+  const handleGuestLogin = (userData) => {
+    setUser(createUser(userData));
+  };
+
   return (
     <Box
       sx={{
@@ -18,6 +35,11 @@ const MainLayout = () => {
         <Outlet />
       </Box>
       <Footer />
+      <LoginPromptModal
+        open={showAuthPrompt && !isHome && !dismissed}
+        onClose={() => setDismissed(true)}
+        onGuestLogin={handleGuestLogin}
+      />
     </Box>
   );
 };

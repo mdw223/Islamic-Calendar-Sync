@@ -8,14 +8,15 @@ import {
 import { CssBaseline, Box } from "@mui/material";
 import { ThemeProviderWrapper } from "./contexts/ThemeContext";
 import { UserProvider } from "./contexts/UserContext";
+import { CalendarProvider } from "./contexts/CalendarContext";
 import NotFoundPage from "./pages/NotFoundPage";
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
 import Home from "./pages/app/home/Home";
 import Login from "./pages/app/login/Login";
 import Register from "./pages/app/register/Register";
-import Dashboard from "./pages/app/dashboard/Dashboard";
 import Settings from "./pages/app/settings/Settings";
+import CalendarPage from "./pages/app/calendar/Calendar";
 import RootLayout from "./layouts/RootLayout";
 
 const router = createBrowserRouter([
@@ -28,8 +29,8 @@ const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { index: true, element: <Home /> },
-          { path: "dashboard", element: <Dashboard /> },
           { path: "settings", element: <Settings /> },
+          { path: "calendar", element: <CalendarPage /> },
         ],
       },
       {
@@ -46,13 +47,15 @@ const router = createBrowserRouter([
   },
 ]);
 
-export default App = () => {
+export default function App() {
   return (
     <ThemeProviderWrapper>
       <UserProvider>
-        <CssBaseline />
-        <RouterProvider router={router} />
+        <CalendarProvider>
+          <CssBaseline />
+          <RouterProvider router={router} />
+        </CalendarProvider>
       </UserProvider>
     </ThemeProviderWrapper>
   );
-};
+}

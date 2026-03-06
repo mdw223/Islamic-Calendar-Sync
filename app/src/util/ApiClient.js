@@ -44,4 +44,93 @@ export default class APIClient {
   static async logout() {
     return HTTPClient.post("/users/logout");
   }
+
+  /**
+   * Create a guest session explicitly.
+   * Called when the user clicks "Continue as Guest" on the auth prompt.
+   * Sets an encrypted session cookie on the response.
+   * @returns {Promise<{ success: boolean, user: Object }>}
+   */
+  static async createGuestSession() {
+    return HTTPClient.post("/auth/guest");
+  }
+
+  // ── Providers ──────────────────────────────────────────────────────────────
+
+  /**
+   * Get all calendar providers linked to the current user.
+   */
+  static async getProviders() {
+    return HTTPClient.get("/providers");
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Get all events for the current user.
+   */
+  static async getEvents() {
+    return HTTPClient.get("/events");
+  }
+
+  /**
+   * Create a new event.
+   * @param {{ name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }} eventData
+   */
+  static async createEvent(eventData) {
+    return HTTPClient.post("/events", eventData);
+  }
+
+  /**
+   * Update an existing event by its ID.
+   * @param {number} eventId
+   * @param {{ name?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isCustom?, isTask? }} updates
+   */
+  static async updateEvent(eventId, updates) {
+    return HTTPClient.put(`/events/${eventId}`, updates);
+  }
+
+  /**
+   * Delete an event by its ID.
+   * @param {number} eventId
+   */
+  static async deleteEvent(eventId) {
+    return HTTPClient.delete(`/events/${eventId}`);
+  }
+
+  // ── Islamic event generation (server-side) ────────────────────────────────
+
+  /**
+   * Generate Islamic events for a Gregorian year on the backend.
+   * The backend's upsert handles idempotency — calling this for the same
+   * year is harmless.
+   *
+   * @param {number} year - Gregorian year, e.g. 2026
+   * @returns {Promise<{ success: boolean, events: Object[], generatedCount: number }>}
+   */
+  static async generateEvents(year) {
+    return HTTPClient.post("/events/generate", { year });
+  }
+
+  // ── Definitions ────────────────────────────────────────────────────────────
+
+  /**
+   * Get all Islamic event definitions with per-user isHidden preferences.
+   * @returns {Promise<{ success: boolean, definitions: Object[] }>}
+   */
+  static async getDefinitions() {
+    return HTTPClient.get("/definitions");
+  }
+
+  /**
+   * Update the isHidden preference for a single definition.
+   * Also updates the hide flag on all matching events server-side.
+   *
+   * @param {string} definitionId
+   * @param {boolean} isHidden
+   * @returns {Promise<{ success: boolean, definitionId: string, isHidden: boolean, eventsUpdated: number }>}
+   */
+  static async updateDefinitionPreference(definitionId, isHidden) {
+    return HTTPClient.put(`/definitions/${definitionId}`, { isHidden });
+  }
 }

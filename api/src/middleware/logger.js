@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import winston from "winston";
 import Transport from "winston-transport";
 import { query as dbQuery } from "../model/db/DBConnection.js";
-import { logConfig } from "../config.js";
+import { logConfig } from "../Config.js";
 
 // TODO: use a service like BetterStack for logging when deploying to production
 

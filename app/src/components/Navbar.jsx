@@ -32,6 +32,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { ThemeContext } from "../contexts/ThemeContext";
 import UserBadge from "./UserBadge";
+import GlobalSearch from "./GlobalSearch";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -50,8 +51,8 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Calendar", path: "/calendar", icon: <Calendar size={18} /> },
-    { name: "Prayers", path: "/calendar", icon: <Clock size={18} /> },
-    { name: "Events", path: "/calendar", icon: <Star size={18} /> },
+    { name: "Prayers", path: "/prayers", icon: <Clock size={18} /> },
+    { name: "Events", path: "/events", icon: <Star size={18} /> },
   ];
 
   const handleThemeToggle = (event, newTheme) => {
@@ -94,15 +95,16 @@ const Navbar = () => {
             <Typography
               variant="h6"
               noWrap
-              sx={{ fontWeight: 700, display: { xs: "none", sm: "block" } }}
+              sx={{ fontWeight: 700, display: "block" }}
             >
-              Islamic Calendar Sync
+              ICS
             </Typography>
           </Box>
 
           {/* Desktop Nav */}
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <GlobalSearch />
               {navLinks.map((link) => (
                 <Button
                   key={link.name}
@@ -152,7 +154,11 @@ const Navbar = () => {
                 />
               ) : (
                 <Box sx={{ ml: 2, display: "flex", gap: 1 }}>
-                  <Button variant="outlined" component={RouterLink} to="/auth/login">
+                  <Button
+                    variant="outlined"
+                    component={RouterLink}
+                    to="/auth/login"
+                  >
                     Sign In
                   </Button>
                   <Button
@@ -170,6 +176,7 @@ const Navbar = () => {
           {/* Mobile: menu icon and profile or sign-in */}
           {isMobile && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <GlobalSearch />
               {user.isLoggedIn ? (
                 <UserBadge
                   user={user}

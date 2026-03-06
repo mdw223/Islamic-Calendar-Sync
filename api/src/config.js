@@ -38,4 +38,11 @@ export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-production",
 };
 
+// Guest session: HMAC-signed cookie for unauthenticated users. Set GUEST_SESSION_SECRET in production.
+export const guestSessionConfig = {
+  COOKIE_NAME: 'guestSessionId',
+  SECRET: process.env.GUEST_SESSION_SECRET || sessionConfig.SECRET,
+  COOKIE_MAX_AGE_MS: 30 * 24 * 60 * 60 * 1000, // 30 days
+};
+
 
