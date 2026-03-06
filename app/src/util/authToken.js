@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_KEY } from "../constants";
+import { AUTH_TOKEN_KEY } from "../Constants";
 
 /**
  * Get the stored JWT. Used by HttpClient to send Authorization: Bearer.

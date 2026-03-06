@@ -1,4 +1,4 @@
-import { AuthUser } from "../constants.js";
+import { AuthUser } from "../Constants.js";
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.

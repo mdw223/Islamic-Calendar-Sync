@@ -15,7 +15,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const islamicEventsData = require("../data/islamicEvents.json");
 
-import { generateIslamicEventsForYear } from "../util/hijriUtils.js";
+import { generateIslamicEventsForYear } from "../util/HijriUtils.js";
 import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../model/db/doa/EventDOA.js";
 

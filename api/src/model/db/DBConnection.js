@@ -1,4 +1,4 @@
-import { dbConfig, logConfig } from "../../config.js";
+import { dbConfig, logConfig } from "../../Config.js";
 import pkg from "pg";
 const { Pool } = pkg;
 

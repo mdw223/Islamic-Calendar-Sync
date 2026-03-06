@@ -5,7 +5,7 @@
  * and quota/private-browsing restrictions are always handled gracefully.
  */
 
-import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../constants";
+import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
 
 /**
  * Read a JSON value from localStorage.

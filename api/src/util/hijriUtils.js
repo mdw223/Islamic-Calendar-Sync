@@ -10,7 +10,7 @@
  * persistence and validation).
  */
 
-import { EventTypeId } from "../constants.js";
+import { EventTypeId } from "../Constants.js";
 
 // Hijri numeric formatter — instantiated once for performance.
 const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(

@@ -1,6 +1,6 @@
 import { getIronSession } from "iron-session";
 import UserDOA from "../model/db/doa/UserDOA.js";
-import { guestSessionConfig, appConfig } from "../config.js";
+import { guestSessionConfig, appConfig } from "../Config.js";
 
 const sessionOptions = {
   password: guestSessionConfig.SECRET, // Must be at least 32 characters — used for AES-256-CBC encryption and HMAC-SHA256 signing

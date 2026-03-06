@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
-import { setToken, clearToken } from "../util/authToken";
+import { setToken, clearToken } from "../util/AuthToken";
 
 const UserContext = createContext(undefined);
 

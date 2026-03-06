@@ -1,4 +1,4 @@
-import { getToken } from "./authToken.js";
+import { getToken } from "./AuthToken.js";
 
 function handleResponse(response) {
   if (!response.ok) {

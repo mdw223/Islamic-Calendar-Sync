@@ -2,7 +2,7 @@
  * Event model. Maps DB rows (snake_case) to camelCase via fromRow.
  * Matches the EVENT table (EventId, Name, StartDate, EndDate, etc.).
  */
-import { sanitizeDescription } from '../../util/sanitizeHtml.js';
+import { sanitizeDescription } from '../../util/SanitizeHtml.js';
 export class Event {
   constructor() {
     this.eventId = null;

@@ -3,10 +3,10 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, googleAuthConfig, jwtConfig } from "./config.js";
+import { appConfig, googleAuthConfig, jwtConfig } from "./Config.js";
 import ProviderDOA from "./model/db/doa/ProviderDOA.js";
 import jwt from "jsonwebtoken";
-import { ProviderTypeId } from "./constants.js";
+import { ProviderTypeId } from "./Constants.js";
 import { generateForNewUser } from "./services/IslamicEventService.js";
 
 /**

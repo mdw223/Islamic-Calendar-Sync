@@ -1,5 +1,5 @@
 import UserDOA from '../../model/db/doa/UserDOA.js';
-import { signToken } from '../../passport.js';
+import { signToken } from '../../Passport.js';
 
 /**
  * If the request has a guest session user, return it for merging.

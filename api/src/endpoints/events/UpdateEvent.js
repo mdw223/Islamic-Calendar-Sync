@@ -1,5 +1,5 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
-import { sanitizeDescription } from '../../util/sanitizeHtml.js';
+import { sanitizeDescription } from '../../util/SanitizeHtml.js';
 
 /**
  * PUT /events/:eventId
