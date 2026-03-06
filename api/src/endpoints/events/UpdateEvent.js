@@ -1,5 +1,6 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { sanitizeDescription } from '../../util/SanitizeHtml.js';
+import { sendJson } from '../SendJson.js';
 
 /**
  * PUT /events/:eventId
@@ -10,10 +11,10 @@ export default async function UpdateEvent(req, res) {
         const eventId = parseInt(req.params.eventId);
 
         if (isNaN(eventId)) {
-            return res.status(400).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Invalid event ID',
-            });
+            }, 400);
         }
 
         if (req.body.description !== undefined) {
@@ -23,20 +24,20 @@ export default async function UpdateEvent(req, res) {
         const event = await EventDOA.updateEvent(eventId, req.user.userId, req.body);
 
         if (!event) {
-            return res.status(404).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Event not found',
-            });
+            }, 404);
         }
 
-        res.json({
+        return sendJson(res, {
             success: true,
             event,
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to update event',
-        });
+        }, 500);
     }
 }

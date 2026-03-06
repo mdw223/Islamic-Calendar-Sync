@@ -3,6 +3,7 @@ import { getIronSession } from "iron-session";
 import UserDOA from "../../model/db/doa/UserDOA.js";
 import { sessionOptions } from "../../middleware/GuestSessionMiddleware.js";
 import { generateForNewUser } from "../../services/IslamicEventService.js";
+import { sendJson } from "../SendJson.js";
 
 /**
  * POST /auth/guest
@@ -18,17 +19,16 @@ export default async function CreateGuestSession(req, res) {
   try {
     // If the user is already authenticated (JWT), no need for a guest session.
     if (req.user && !req.user.isGuest) {
-      return res.status(400).json({
+      return sendJson(res, {
         success: false,
         message: "Already authenticated — guest session not needed.",
-      });
+      }, 400);
     }
 
     // If the middleware already restored a guest user from an existing cookie,
     // just return that user (idempotent).
     if (req.user?.isGuest) {
-      const { salt, ...userData } = req.user;
-      return res.json({ success: true, user: userData });
+      return sendJson(res, { success: true, user: req.user });
     }
 
     // Decrypt session cookie (may be empty if no cookie exists yet).
@@ -38,8 +38,7 @@ export default async function CreateGuestSession(req, res) {
     if (session.guestSessionId) {
       const existing = await UserDOA.findBySessionId(session.guestSessionId);
       if (existing) {
-        const { salt, ...userData } = existing;
-        return res.json({ success: true, user: userData });
+        return sendJson(res, { success: true, user: existing });
       }
       // Stale session — destroy and recreate below.
       await session.destroy();
@@ -57,12 +56,11 @@ export default async function CreateGuestSession(req, res) {
     // their first GET /events already has events.
     generateForNewUser(user.userId).catch(() => {});
 
-    const { salt, ...userData } = user;
-    res.status(201).json({ success: true, user: userData });
+    return sendJson(res, { success: true, user: user }, 201);
   } catch (error) {
-    res.status(500).json({
+    return sendJson(res, {
       success: false,
       message: "Failed to create guest session.",
-    });
+    }, 500);
   }
 }

@@ -53,4 +53,23 @@ export class User {
     user.notifications = row.notifications;
     return user;
   }
+
+  toJSON() {
+    return {
+      userId: this.userId,
+      email: this.email,
+      name: this.name,
+      isAdmin: this.isAdmin,
+      isGuest: this.isGuest,
+      language: this.language,
+      eventConfigurationStart: this.eventConfigurationStart,
+      eventConfigurationEnd: this.eventConfigurationEnd,
+      prayerConfigurationStart: this.prayerConfigurationStart,
+      prayerConfigurationEnd: this.prayerConfigurationEnd,
+      calculationMethodId: this.calculationMethodId,
+      hanafi: this.hanafi,
+      emailUpdates: this.emailUpdates,
+      notifications: this.notifications
+    };
+  }
 }

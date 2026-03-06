@@ -69,4 +69,22 @@ export class Event {
     event.updatedAt = row.updatedat;
     return event;
   }
+
+  toJSON() {
+    return {
+      eventId: this.eventId,
+      name: this.name,
+      startDate: this.startDate,
+      endDate: this.endDate,
+      isAllDay: this.isAllDay,
+      description: this.description,
+      hide: this.hide,
+      eventTypeId: this.eventTypeId,
+      isCustom: this.isCustom,
+      isTask: this.isTask,
+      islamicEventKey: this.islamicEventKey,
+      islamicDefinitionId: this.islamicDefinitionId,
+      userId: this.userId,
+    }
+  }
 }

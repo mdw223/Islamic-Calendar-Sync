@@ -18,6 +18,7 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
+import { sendJson } from "../SendJson.js";
 
 export default async function UpdateDefinitionPreference(req, res) {
   try {
@@ -25,10 +26,10 @@ export default async function UpdateDefinitionPreference(req, res) {
     const { isHidden } = req.body;
 
     if (typeof isHidden !== "boolean") {
-      return res.status(400).json({
+      return sendJson(res, {
         success: false,
         message: "Request body must contain \"isHidden\" as a boolean.",
-      });
+      }, 400);
     }
 
     // Upsert the preference
@@ -45,7 +46,7 @@ export default async function UpdateDefinitionPreference(req, res) {
       isHidden,
     );
 
-    return res.json({
+    return sendJson(res, {
       success: true,
       definitionId,
       isHidden,
@@ -53,9 +54,9 @@ export default async function UpdateDefinitionPreference(req, res) {
     });
   } catch (error) {
     console.error("UpdateDefinitionPreference error:", error);
-    return res.status(500).json({
+    return sendJson(res, {
       success: false,
       message: "Failed to update definition preference.",
-    });
+    }, 500);
   }
 }

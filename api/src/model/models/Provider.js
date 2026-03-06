@@ -39,4 +39,18 @@ export class Provider {
     provider.isActive = row.isactive;
     return provider;
   }
+
+  toJSON() {
+    return {
+      providerId: this.providerId,
+      providerTypeId: this.providerTypeId,
+      email: this.email,
+      userId: this.userId,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      expiresAt: this.expiresAt,
+      scopes: this.scopes,
+      isActive: this.isActive
+    };
+  }
 }

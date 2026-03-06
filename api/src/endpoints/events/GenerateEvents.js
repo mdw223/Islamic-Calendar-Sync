@@ -17,6 +17,7 @@
  *   500 — server error
  */
 import { generateForUser } from "../../services/IslamicEventService.js";
+import { sendJson } from "../SendJson.js";
 
 export default async function GenerateEvents(req, res) {
   try {
@@ -29,11 +30,11 @@ export default async function GenerateEvents(req, res) {
       year < 2000 ||
       year > 2100
     ) {
-      return res.status(400).json({
+      return sendJson(res, {
         success: false,
         message:
           "Request body must contain a \"year\" field with an integer between 2000 and 2100.",
-      });
+      }, 400);
     }
 
     const { events, generatedCount } = await generateForUser(
@@ -41,16 +42,16 @@ export default async function GenerateEvents(req, res) {
       year,
     );
 
-    return res.status(201).json({
+    return sendJson(res, {
       success: true,
       events,
       generatedCount,
-    });
+    }, 201);
   } catch (error) {
     console.error("GenerateEvents error:", error);
-    return res.status(500).json({
+    return sendJson(res, {
       success: false,
       message: "Failed to generate Islamic events.",
-    });
+    }, 500);
   }
 }

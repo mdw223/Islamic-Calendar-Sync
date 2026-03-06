@@ -1,4 +1,5 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
+import { sendJson } from '../SendJson.js';
 
 /**
  * DELETE /events/:eventId
@@ -9,26 +10,26 @@ export default async function DeleteEvent(req, res) {
         const eventId = parseInt(req.params.eventId);
 
         if (isNaN(eventId)) {
-            return res.status(400).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Invalid event ID',
-            });
+            }, 400);
         }
 
         const deleted = await EventDOA.deleteEvent(eventId, req.user.userId);
 
         if (!deleted) {
-            return res.status(404).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Event not found',
-            });
+            }, 404);
         }
 
         res.status(204).send();
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to delete event',
-        });
+        }, 500);
     }
 }

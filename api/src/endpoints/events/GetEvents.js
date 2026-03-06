@@ -1,4 +1,5 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
+import { sendJson } from '../SendJson.js';
 
 /**
  * GET /events
@@ -8,14 +9,16 @@ export default async function GetEvents(req, res) {
     try {
         const events = await EventDOA.findAllByUserId(req.user.userId);
 
-        res.json({
+        // TODO: can convert to .ics here in sep endpoint
+
+        return sendJson(res, {
             success: true,
             events,
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to get events',
-        });
+        }, 500);
     }
 }

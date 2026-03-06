@@ -1,5 +1,4 @@
-import UserDOA from '../../model/db/doa/UserDOA.js';
-import ProviderDOA from '../../model/db/doa/ProviderDOA.js';
+import { sendJson } from '../SendJson.js';
 
 /**
  * GET /users/me
@@ -10,23 +9,20 @@ export default async function GetCurrentUser(req, res) {
     try {
         const user = req.user;
         if (!user) {
-            return res.status(404).json({
+            return sendJson(res, {
                 success: false,
                 message: 'User not found'
-            });
+            }, 404);
         }
 
-        // Return user data (excluding sensitive fields like salt)
-        const { salt, ...userData } = user;
-
-        res.json({
+        return sendJson(res, {
             success: true,
-            user: userData
+            user: user
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to get current user',
-        });
+        }, 500);
     }
 }

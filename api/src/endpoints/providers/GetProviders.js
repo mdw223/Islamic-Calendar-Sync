@@ -1,24 +1,23 @@
 import ProviderDOA from '../../model/db/doa/ProviderDOA.js';
+import { sendJson } from '../SendJson.js';
 
 /**
  * GET /providers
  * Get all calendar providers linked to the current user.
- * Sensitive token/salt fields are stripped before returning.
+ * Sensitive token/salt fields are stripped by Provider.toJSON().
  */
 export default async function GetProviders(req, res) {
     try {
         const providers = await ProviderDOA.findAllByUserId(req.user.userId);
 
-        const safeProviders = providers.map(({ accessToken, refreshToken, salt, ...rest }) => rest);
-
-        res.json({
+        return sendJson(res, {
             success: true,
-            providers: safeProviders,
+            providers: providers,
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to get providers',
-        });
+        }, 500);
     }
 }

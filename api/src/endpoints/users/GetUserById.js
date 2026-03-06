@@ -1,3 +1,6 @@
+import UserDOA from '../../model/db/doa/UserDOA.js';
+import { sendJson } from '../SendJson.js';
+
 /**
  * GET /users/:userId
  * Get a user by ID.
@@ -8,32 +11,29 @@ export default async function GetUserById(req, res) {
         const userId = parseInt(req.params.userId);
 
         if (isNaN(userId)) {
-            return res.status(400).json({
+            return sendJson(res, {
                 success: false,
                 message: 'Invalid user ID'
-            });
+            }, 400);
         }
 
         const user = await UserDOA.findById(userId);
 
         if (!user) {
-            return res.status(404).json({
+            return sendJson(res, {
                 success: false,
                 message: 'User not found'
-            });
+            }, 404);
         }
 
-        // Return user data (excluding sensitive fields like salt)
-        const { salt, ...userData } = user;
-
-        res.json({
+        return sendJson(res, {
             success: true,
-            user: userData
+            user: user
         });
     } catch (error) {
-        res.status(500).json({
+        return sendJson(res, {
             success: false,
             message: 'Failed to get user',
-        });
+        }, 500);
     }
 }

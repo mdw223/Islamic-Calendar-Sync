@@ -8,20 +8,21 @@
  *   { success: true, definitions: Array<{ id, titleAr, titleEn, ..., isHidden }> }
  */
 import { getMergedDefinitions } from "../../services/IslamicEventService.js";
+import { sendJson } from "../SendJson.js";
 
 export default async function GetDefinitions(req, res) {
   try {
     const definitions = await getMergedDefinitions(req.user.userId);
 
-    return res.json({
+    return sendJson(res, {
       success: true,
       definitions,
     });
   } catch (error) {
     console.error("GetDefinitions error:", error);
-    return res.status(500).json({
+    return sendJson(res, {
       success: false,
       message: "Failed to load definitions.",
-    });
+    }, 500);
   }
 }
