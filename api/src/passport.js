@@ -4,9 +4,9 @@ import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
 import { appConfig, googleAuthConfig, jwtConfig } from "./Config.js";
-import ProviderDOA from "./model/db/doa/ProviderDOA.js";
+import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
-import { ProviderTypeId } from "./Constants.js";
+import { AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
 import { generateForNewUser } from "./services/IslamicEventService.js";
 
 /**
@@ -73,10 +73,8 @@ passport.use(
           expires_in: params?.expires_in,
           scope: params?.scope,
         };
-        const { user, provider } =
-          await findOrCreateUserFromGoogleProfile(profile, tokens, req);
+        const user = await findOrCreateUserFromGoogleProfile(profile, tokens, req);
         req.googleTokens = tokens;
-        req.googleProvider = provider;
         verified(null, user);
       } catch (err) {
         verified(err);
@@ -110,18 +108,19 @@ const googleRedirectHandler = async (req, res) => {
   try {
     const user = req.user;
     const tokens = req.googleTokens;
-    const provider = req.googleProvider;
 
-    if (tokens && provider) {
+    if (tokens) {
       const expiresAt = tokens.expires_in
         ? new Date(Date.now() + tokens.expires_in * 1000)
         : null;
 
-      await ProviderDOA.updateTokens(provider.providerId, {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || null,
-        expiresAt: expiresAt,
+      // Store OAuth tokens in User table for authentication
+      await UserDOA.updateUser(user.userId, {
+        accesstoken: tokens.access_token,
+        refreshtoken: tokens.refresh_token || null,
+        expiresat: expiresAt,
         scopes: tokens.scope || null,
+        isexpired: false,
       });
     }
 
@@ -155,13 +154,13 @@ export const googleRedirect = [
 ];
 
 /**
-   * Find or create a user and provider row based on a Google profile.
-   * This is called from the Google Passport strategy, so it MUST NOT
-   * talk to the database directly – it delegates to DOAs.
+   * Find or create a user based on a Google profile.
+   * Sets authProviderTypeId to GOOGLE and stores OAuth tokens in User table.
+   * Optionally creates CalendarProvider for calendar integration.
    *
    * @param {Object} profile - Google user profile from OAuth (contains email, name, etc.)
    * @param {Object} tokens - OAuth tokens: { access_token, refresh_token?, expires_in, scope }
-   * @returns {Promise<{user: Object, provider: Object}>}
+   * @returns {Promise<Object>} user object
    */
 export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, req = null) {
     const email =
@@ -176,67 +175,94 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, 
     // instead of creating a new user. This preserves all guest events.
     const guestUser = req?.user?.isGuest ? req.user : null;
 
-    // Find or create user
-    let user = await UserDOA.getUserByEmail(email);
-
-    if (!user && guestUser) {
-        // Upgrade the guest user to a registered user
-        user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
-    } else if (!user) {
-        user = await UserDOA.createUser({
-            email,
-            name,
-        });
-    }
-
-    // Find or create provider row for this user and Google
-    let provider = await ProviderDOA.findByUserAndType(
-        user.userId,
-        ProviderTypeId.GOOGLE,
-    );
-
     // Calculate expiration time if tokens provided
     const expiresAt = tokens?.expires_in
         ? new Date(Date.now() + tokens.expires_in * 1000)
         : null;
 
-    if (!provider) {
-        // Create new provider with initial tokens if available
-        provider = await ProviderDOA.createProvider({
-            userId: user.userId,
-            providerTypeId: ProviderTypeId.GOOGLE,
-            email,
-            accessToken: tokens?.access_token || null,
-            refreshToken: tokens?.refresh_token || null,
-            expiresAt: expiresAt,
+    // Find or create user with Google auth provider
+    let user = await UserDOA.getUserByEmail(email);
+
+    if (!user && guestUser) {
+        // Upgrade the guest user to a registered user with Google auth
+        user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
+        // Set auth provider and tokens
+        await UserDOA.updateUser(user.userId, {
+            authprovidertypeid: AuthProviderTypeId.GOOGLE,
+            accesstoken: tokens?.access_token || null,
+            refreshtoken: tokens?.refresh_token || null,
+            expiresat: expiresAt,
             scopes: tokens?.scope || null,
-            salt: null,
+            isexpired: false,
+        });
+    } else if (!user) {
+        // Create new user with Google auth
+        user = await UserDOA.createUser({
+            email,
+            name,
+            authProviderTypeId: AuthProviderTypeId.GOOGLE,
+        });
+        // Store OAuth tokens
+        await UserDOA.updateUser(user.userId, {
+            accesstoken: tokens?.access_token || null,
+            refreshtoken: tokens?.refresh_token || null,
+            expiresat: expiresAt,
+            scopes: tokens?.scope || null,
+            isexpired: false,
         });
     } else if (tokens) {
-        // Update existing provider with new tokens
-        // Preserve existing refresh token if new one not provided (Google only gives refresh token on first consent)
-        await ProviderDOA.updateTokens(provider.providerId, {
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token || provider.refreshToken,
-            expiresAt: expiresAt,
-            scopes: tokens.scope || provider.scopes,
+        // Update existing user with new tokens
+        await UserDOA.updateUser(user.userId, {
+            authprovidertypeid: AuthProviderTypeId.GOOGLE,
+            accesstoken: tokens.access_token,
+            refreshtoken: tokens.refresh_token || user.refreshToken,
+            expiresat: expiresAt,
+            scopes: tokens.scope || user.scopes,
+            isexpired: false,
         });
-        // Refresh provider data from database
-        provider = await ProviderDOA.findByUserAndType(
-            user.userId,
-            ProviderTypeId.GOOGLE,
-        );
+    }
+
+    // Optionally create/update CalendarProvider for calendar integration
+    // This is separate from authentication - used for calendar API access
+    let calendarProvider = await CalendarProviderDOA.findByUserAndType(
+        user.userId,
+        CalendarProviderTypeId.GOOGLE_CALENDAR,
+    );
+
+    if (!calendarProvider && tokens) {
+        // Create calendar provider for this user
+        await CalendarProviderDOA.createCalendarProvider({
+            userId: user.userId,
+            calendarProviderTypeId: CalendarProviderTypeId.GOOGLE_CALENDAR,
+            email,
+            accessToken: tokens.access_token || null,
+            refreshToken: tokens.refresh_token || null,
+            expiresAt: expiresAt,
+            scopes: tokens.scope || null,
+            salt: null,
+        });
+    } else if (calendarProvider && tokens) {
+        // Update calendar provider tokens
+        await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
+            expiresAt: expiresAt,
+            scopes: tokens.scope || calendarProvider.scopes,
+        });
     }
 
     // Update last login timestamp
     await UserDOA.updateLastLogin(user.userId);
+
+    // Refresh user from database to get latest data
+    user = await UserDOA.findById(user.userId);
 
     // Auto-generate Islamic events for the current year if this is a new or
     // upgraded user. The upsert makes this idempotent so calling it
     // redundantly is harmless.
     generateForNewUser(user.userId).catch(() => {});
 
-    return { user, provider };
+    return user;
 }
 
 export default passport;

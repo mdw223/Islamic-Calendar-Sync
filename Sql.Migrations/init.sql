@@ -8,12 +8,13 @@ DROP TABLE IF EXISTS Prayer CASCADE;
 DROP TABLE IF EXISTS PrayerType CASCADE;
 DROP TABLE IF EXISTS CalculationMethod CASCADE;
 DROP TABLE IF EXISTS Calendar CASCADE;
-DROP TABLE IF EXISTS Provider CASCADE;
-DROP TABLE IF EXISTS ProviderType CASCADE;
+DROP TABLE IF EXISTS CalendarProvider CASCADE;
+DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Settings CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
+DROP TABLE IF EXISTS AuthProviderType CASCADE;
 
 -- Create CalculationMethod table
 CREATE TABLE CalculationMethod (
@@ -21,9 +22,15 @@ CREATE TABLE CalculationMethod (
     Name VARCHAR(100) NOT NULL
 );
 
--- Create ProviderType table
-CREATE TABLE ProviderType (
-    ProviderTypeId SERIAL PRIMARY KEY,
+-- Create AuthProviderType table (authentication methods for users)
+CREATE TABLE AuthProviderType (
+    AuthProviderTypeId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL
+);
+
+-- Create CalendarProviderType table (calendar integration providers)
+CREATE TABLE CalendarProviderType (
+    CalendarProviderTypeId SERIAL PRIMARY KEY,
     Name VARCHAR(100) NOT NULL
 );
 
@@ -51,7 +58,14 @@ CREATE TABLE "User" (
     Salt VARCHAR(255),
     EmailUpdates BOOLEAN DEFAULT TRUE,
     Notifications BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
+    AuthProviderTypeId INTEGER NOT NULL,
+    AccessToken VARCHAR(500),
+    RefreshToken VARCHAR(500),
+    ExpiresAt TIMESTAMP,
+    Scopes VARCHAR(1000),
+    IsExpired BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT,
+    FOREIGN KEY (AuthProviderTypeId) REFERENCES AuthProviderType(AuthProviderTypeId) ON DELETE RESTRICT
 );
 
 -- Create Log table (server-side application logs; values are redacted/sanitized at write time)
@@ -80,10 +94,10 @@ CREATE INDEX idx_log_level ON Log(Level);
 CREATE INDEX idx_log_requestid ON Log(RequestId);
 CREATE INDEX idx_log_userid ON Log(UserId);
 
--- Create Provider table
-CREATE TABLE Provider (
-    ProviderId SERIAL PRIMARY KEY,
-    ProviderTypeId INTEGER NOT NULL,
+-- Create CalendarProvider table
+CREATE TABLE CalendarProvider (
+    CalendarProviderId SERIAL PRIMARY KEY,
+    CalendarProviderTypeId INTEGER NOT NULL,
     Name VARCHAR(100),
     Email VARCHAR(255),
     UserId INTEGER NOT NULL,
@@ -95,7 +109,7 @@ CREATE TABLE Provider (
     Scopes VARCHAR(1000),
     Salt VARCHAR(255),
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
-    FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
+    FOREIGN KEY (CalendarProviderTypeId) REFERENCES CalendarProviderType(CalendarProviderTypeId) ON DELETE RESTRICT,
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
@@ -220,8 +234,16 @@ CREATE TABLE UserIslamicDefinitionPreference (
 -- CREATE TRIGGER update_event_updated_at BEFORE UPDATE ON Event
 --     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- -- Insert default provider types
-INSERT INTO ProviderType (Name) VALUES 
+-- Insert default auth provider types (authentication methods)
+INSERT INTO AuthProviderType (Name) VALUES 
+    ('Google'),
+    ('Microsoft'),
+    ('Apple'),
+    ('Email'),
+    ('Guest');
+
+-- Insert default calendar provider types (calendar integration providers)
+INSERT INTO CalendarProviderType (Name) VALUES 
     ('Google Calendar'),
     ('Microsoft Outlook'),
     ('Apple Calendar'),

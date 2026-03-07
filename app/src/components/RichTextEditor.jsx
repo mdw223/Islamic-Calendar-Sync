@@ -114,7 +114,7 @@ injectStyles();
 // Skip re-importing HTML that the editor itself just emitted (avoids cursor reset).
 function HtmlSyncPlugin({ value, lastEmittedRef }) {
   const [editor] = useLexicalComposerContext();
-  const lastPushed = useRef(value);
+  const lastPushed = useRef();
 
   useEffect(() => {
     // If the incoming value matches what we last emitted via onChange,
@@ -130,9 +130,36 @@ function HtmlSyncPlugin({ value, lastEmittedRef }) {
         root.append($createParagraphNode());
         return;
       }
-      const dom = new DOMParser().parseFromString(value, "text/html");
+
+      const incoming = String(value);
+      const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(incoming);
+
+      if (!looksLikeHtml) {
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(incoming));
+        root.append(paragraph);
+        return;
+      }
+
+      const cleanHtml = DOMPurify.sanitize(incoming);
+      const dom = new DOMParser().parseFromString(cleanHtml, "text/html");
       const nodes = $generateNodesFromDOM(editor, dom);
-      for (const n of nodes) root.append(n);
+
+      if (nodes.length === 0) {
+        root.append($createParagraphNode());
+        return;
+      }
+
+      // Insert through selection so Lexical normalizes top-level nodes safely.
+      root.select();
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        selection.insertNodes(nodes);
+      } else {
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(incoming));
+        root.append(paragraph);
+      }
     });
   }, [editor, value, lastEmittedRef]);
 
@@ -292,7 +319,7 @@ export default function RichTextEditor({
 }) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
-  const lastEmittedRef = useRef(value);
+  const lastEmittedRef = useRef(null);
   const [internalReadOnly, setInternalReadOnly] = useState(false);
   const isReadOnly = externalReadOnly ?? internalReadOnly;
 

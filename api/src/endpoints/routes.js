@@ -6,7 +6,7 @@ import { googleLogin, googleRedirect } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
 import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
-import GetProviders from './providers/GetProviders.js';
+import GetCalendarProviders from './calendar-providers/GetCalendarProviders.js';
 import GetEvents from './events/GetEvents.js';
 import GetEventById from './events/GetEventById.js';
 import CreateEvent from './events/CreateEvent.js';
@@ -31,8 +31,8 @@ router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
 router.post("/auth/guest", CreateGuestSession);
 
-// Providers routes
-router.get("/providers", Auth(AuthUser.ANY), GetProviders);
+// Calendar Providers routes
+router.get("/calendar-providers", Auth(AuthUser.ANY), GetCalendarProviders);
 
 // Events routes — handlers scope all queries by req.user.userId (ownership enforced at DB layer)
 router.get("/events", Auth([AuthUser.VALID_USER, AuthUser.GUEST_USER]), GetEvents);

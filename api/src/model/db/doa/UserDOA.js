@@ -36,15 +36,16 @@ export default class UserDOA {
 
   /**
    * Create a new user with minimal fields (Email, Name).
-   * @param {{ email: string, name: string }} userData
+   * Defaults to Email auth provider type.
+   * @param {{ email: string, name: string, authProviderTypeId?: number }} userData
    * @returns {Promise<ReturnType<User.fromRow>>}
    */
-  static async createUser({ email, name }) {
+  static async createUser({ email, name, authProviderTypeId = 4 }) { // TODO: remove 4 for guest
     const result = await query(
-      `INSERT INTO "User" (email, name, createdat, updatedat)
-       VALUES ($1, $2, NOW(), NOW())
+      `INSERT INTO "User" (email, name, authprovidertypeid, createdat, updatedat)
+       VALUES ($1, $2, $3, NOW(), NOW())
        RETURNING *`,
-      [email, name],
+      [email, name, authProviderTypeId],
     );
     return User.fromRow(result.rows[0]);
   }
@@ -116,13 +117,14 @@ export default class UserDOA {
 
   /**
    * Create a guest user with only a session ID (no email/name).
+   * Sets authProviderTypeId to Guest (5).
    * @param {string} sessionId - Cryptographically random session ID
    * @returns {Promise<ReturnType<User.fromRow>>}
    */
   static async createGuestUser(sessionId) {
     const result = await query(
-      `INSERT INTO "User" (isguest, sessionid, createdat, updatedat)
-       VALUES (true, $1, NOW(), NOW())
+      `INSERT INTO "User" (isguest, sessionid, authprovidertypeid, createdat, updatedat)
+       VALUES (true, $1, 5, NOW(), NOW())
        RETURNING *`,
       [sessionId],
     );

@@ -47,7 +47,7 @@ function toDatetimeLocal(isoString) {
 }
 
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent } = useCalendar();
+  const { addEvent, updateEvent, removeEvent, refreshEventData } = useCalendar();
   const isEdit = Boolean(event);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
@@ -59,16 +59,17 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       setError(null);
       if (isEdit) {
         setForm({
-          name: event.name ?? "",
-          startDate: toDatetimeLocal(event.startDate),
-          endDate: toDatetimeLocal(event.endDate),
-          isAllDay: event.isAllDay ?? false,
-          eventTypeId: event.eventTypeId ?? EventTypeId.CUSTOM,
-          isCustom: event.isCustom ?? false,
-          isTask: event.isTask ?? false,
-          description: event.description ?? "",
-          hide: event.hide ?? false,
+          name: event?.name ?? "",
+          startDate: toDatetimeLocal(event?.startDate),
+          endDate: toDatetimeLocal(event?.endDate),
+          isAllDay: event?.isAllDay ?? false,
+          eventTypeId: event?.eventTypeId ?? EventTypeId.CUSTOM,
+          isCustom: event?.isCustom ?? false,
+          isTask: event?.isTask ?? false,
+          description: event?.description ?? "",
+          hide: event?.hide ?? false,
         });
+        console.log(event);
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
         // "YYYY-MM-DDThh:mm" (from WeekView / DayView slot clicks).
@@ -119,9 +120,15 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
       };
       if (isEdit) {
-        await updateEvent(event.eventId, payload);
+        const savedEvent = await updateEvent(event.eventId, payload);
+        if (savedEvent?.eventId) {
+          void refreshEventData(savedEvent.eventId).catch(() => {});
+        }
       } else {
-        await addEvent(payload);
+        const savedEvent = await addEvent(payload);
+        if (savedEvent?.eventId) {
+          void refreshEventData(savedEvent.eventId).catch(() => {});
+        }
       }
       onClose();
     } catch (err) {
@@ -261,6 +268,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               Description
             </Typography>
             <RichTextEditor
+              key={isEdit ? `event-${event?.eventId}` : "new-event"}
               value={form.description}
               onChange={(html) => handleChange("description", html)}
               placeholder="Add a description…"

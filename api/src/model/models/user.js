@@ -23,6 +23,12 @@ export class User {
     this.salt = null;
     this.emailUpdates = null;
     this.notifications = null;
+    this.authProviderTypeId = null;
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.expiresAt = null;
+    this.scopes = null;
+    this.isExpired = null;
   }
 
   /**
@@ -51,6 +57,12 @@ export class User {
     user.salt = row.salt;
     user.emailUpdates = row.emailupdates;
     user.notifications = row.notifications;
+    user.authProviderTypeId = row.authprovidertypeid;
+    user.accessToken = row.accesstoken;
+    user.refreshToken = row.refreshtoken;
+    user.expiresAt = row.expiresat;
+    user.scopes = row.scopes;
+    user.isExpired = row.isexpired ?? true;
     return user;
   }
 

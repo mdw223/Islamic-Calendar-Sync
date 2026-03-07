@@ -30,7 +30,7 @@ import {
 import APIClient from "../util/ApiClient";
 import { useUser } from "./UserContext";
 import { getSavedView } from "../util/localStorage";
-import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../constants";
+import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
 
 const CalendarContext = createContext(null);
 
@@ -45,8 +45,8 @@ export function CalendarProvider({ children }) {
   // ── View preference ─────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState(getSavedView);
 
-  // ── Providers (loaded in background) ────────────────────────────────────
-  const [providers, setProviders] = useState([]);
+  // ── Calendar Providers (loaded in background) ───────────────────────────
+  const [calendarProviders, setCalendarProviders] = useState([]);
 
   // ── Loading / error state ────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -104,10 +104,10 @@ export function CalendarProvider({ children }) {
       }
     })();
 
-    // Fetch providers in the background (non-blocking).
-    APIClient.getProviders()
+    // Fetch calendar providers in the background (non-blocking).
+    APIClient.getCalendarProviders()
       .then((data) => {
-        if (!cancelled) setProviders(data?.providers ?? []);
+        if (!cancelled) setCalendarProviders(data?.calendarProviders ?? []);
       })
       .catch(() => {});
 
@@ -188,6 +188,28 @@ export function CalendarProvider({ children }) {
       return created;
     } catch (err) {
       setError(err.message ?? "Failed to create event");
+      throw err;
+    }
+  }
+
+  /**
+   * Fetch the latest event data from the backend and update context.
+   * Use this before opening an event modal to ensure fresh data.
+   *
+   * @param {number} eventId
+   * @returns {Promise<Object>} The refreshed event object.
+   */
+  async function refreshEventData(eventId) {
+    try {
+      const res = await APIClient.getEventById(eventId);
+      const updated = res?.event ?? res;
+      const next = eventsRef.current.map((e) =>
+        e.eventId === eventId ? updated : e,
+      );
+      saveEvents(next);
+      return updated;
+    } catch (err) {
+      setError(err.message ?? "Failed to refresh event");
       throw err;
     }
   }
@@ -340,7 +362,7 @@ export function CalendarProvider({ children }) {
       value={{
         events: visibleEvents,
         allEvents: events,
-        providers,
+        calendarProviders,
         currentView,
         changeView,
         loading,
@@ -350,6 +372,7 @@ export function CalendarProvider({ children }) {
         addEvent,
         updateEvent,
         removeEvent,
+        refreshEventData,
 
         // Islamic event definitions (with isHidden flags)
         islamicEventDefs,

@@ -55,13 +55,13 @@ export default class APIClient {
     return HTTPClient.post("/auth/guest");
   }
 
-  // ── Providers ──────────────────────────────────────────────────────────────
+  // ── Calendar Providers ─────────────────────────────────────────────────────
 
   /**
    * Get all calendar providers linked to the current user.
    */
-  static async getProviders() {
-    return HTTPClient.get("/providers");
+  static async getCalendarProviders() {
+    return HTTPClient.get("/calendar-providers");
   }
 
   // ── Events ─────────────────────────────────────────────────────────────────
@@ -71,6 +71,14 @@ export default class APIClient {
    */
   static async getEvents() {
     return HTTPClient.get("/events");
+  }
+
+  /**
+   * Get a single event by ID.
+   * @param {number} eventId
+   */
+  static async getEventById(eventId) {
+    return HTTPClient.get(`/events/${eventId}`);
   }
 
   /**

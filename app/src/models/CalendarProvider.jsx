@@ -1,12 +1,12 @@
 /**
- * Provider model aligned with DB schema (Provider table).
+ * CalendarProvider model aligned with DB schema (CalendarProvider table).
  * API would return lowercase column names; we use camelCase in the app.
  */
 export function fromApiRow(row) {
   if (!row) return null;
   return {
-    providerId: row.providerid ?? null,
-    providerTypeId: row.providertypeid ?? null,
+    calendarProviderId: row.calendarproviderid ?? null,
+    calendarProviderTypeId: row.calendarprovidertypeid ?? null,
     name: row.name ?? null,
     email: row.email ?? null,
     userId: row.userid ?? null,
@@ -18,9 +18,9 @@ export function fromApiRow(row) {
   };
 }
 
-export const defaultProvider = {
-  providerId: null,
-  providerTypeId: null,
+export const defaultCalendarProvider = {
+  calendarProviderId: null,
+  calendarProviderTypeId: null,
   name: null,
   email: null,
   userId: null,
@@ -31,11 +31,11 @@ export const defaultProvider = {
   isActive: true,
 };
 
-export class Provider {
+export class CalendarProvider {
   constructor(data = {}) {
-    const normalized = data.providerid != null ? fromApiRow(data) : { ...defaultProvider, ...data };
-    this.providerId = normalized.providerId ?? null;
-    this.providerTypeId = normalized.providerTypeId ?? null;
+    const normalized = data.calendarproviderid != null ? fromApiRow(data) : { ...defaultCalendarProvider, ...data };
+    this.calendarProviderId = normalized.calendarProviderId ?? null;
+    this.calendarProviderTypeId = normalized.calendarProviderTypeId ?? null;
     this.name = normalized.name ?? null;
     this.email = normalized.email ?? null;
     this.userId = normalized.userId ?? null;
@@ -48,8 +48,8 @@ export class Provider {
 
   toJSON() {
     return {
-      providerId: this.providerId,
-      providerTypeId: this.providerTypeId,
+      calendarProviderId: this.calendarProviderId,
+      calendarProviderTypeId: this.calendarProviderTypeId,
       name: this.name,
       email: this.email,
       userId: this.userId,
@@ -62,4 +62,4 @@ export class Provider {
   }
 }
 
-export const createProvider = (data = {}) => new Provider(data);
+export const createCalendarProvider = (data = {}) => new CalendarProvider(data);
