@@ -38,7 +38,6 @@ const SENSITIVE_KEYS = [
   "apikey",
   "x-api-key",
   "session",
-  "sessionid",
 ];
 
 function isSensitiveKey(key) {

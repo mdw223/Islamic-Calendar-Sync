@@ -7,27 +7,11 @@ import {
   Divider,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import APIClient from "../util/ApiClient";
 
 export default function LoginPromptModal({ open, onClose, onGuestLogin }) {
   const navigate = useNavigate();
-  const [guestLoading, setGuestLoading] = useState(false);
-
-  const handleContinueAsGuest = async () => {
-    setGuestLoading(true);
-    try {
-      const data = await APIClient.createGuestSession();
-      if (data?.success && data?.user) {
-        onGuestLogin?.(data.user);
-      }
-    } catch {
-      // Guest creation failed — user can retry or pick another option
-    } finally {
-      setGuestLoading(false);
-    }
-  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -36,6 +20,10 @@ export default function LoginPromptModal({ open, onClose, onGuestLogin }) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Create a free account to sync your Islamic calendar events across
           devices and keep them backed up securely.
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+          If you continue as guest, your events stay local in your browser and
+          are temporary until you sign in.
         </Typography>
         <Button
           variant="outlined"
@@ -61,10 +49,9 @@ export default function LoginPromptModal({ open, onClose, onGuestLogin }) {
         <Button
           variant="text"
           fullWidth
-          onClick={handleContinueAsGuest}
-          disabled={guestLoading}
+          onClick={() => onGuestLogin?.()}
         >
-          {guestLoading ? "Setting up…" : "Continue as Guest"}
+          Continue as Guest
         </Button>
       </DialogContent>
       <DialogActions>

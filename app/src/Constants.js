@@ -37,3 +37,5 @@ export const EventTypeId = Object.freeze({
   JUMAH: 3,
   CUSTOM: 4,
 }); // TODO: maybe will remove later
+
+export const OFFLINE_GUEST_KEY = "offline_guest_mode";

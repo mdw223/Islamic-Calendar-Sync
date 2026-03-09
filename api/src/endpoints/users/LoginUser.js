@@ -3,15 +3,6 @@ import { signToken } from '../../Passport.js';
 import { sendJson } from '../SendJson.js';
 
 /**
- * If the request has a guest session user, return it for merging.
- * @param {import('express').Request} req
- * @returns {Object|null}
- */
-function getGuestUser(req) {
-  return req.user?.isGuest ? req.user : null;
-}
-
-/**
  * POST /users/send-code
  * Send a verification code to the user's email.
  * In a real implementation, this would send an email with a code.
@@ -71,14 +62,7 @@ export async function VerifyCode(req, res) {
         // For now, we'll just check if the user exists and create/login them
         let user = await UserDOA.getUserByEmail(email);
 
-        // If the request has a guest session and no existing user with this email,
-        // upgrade the guest record so all their events are preserved.
-        const guestUser = getGuestUser(req);
-
-        if (!user && guestUser) {
-            const name = email.split('@')[0];
-            user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
-        } else if (!user) {
+        if (!user) {
             const name = email.split('@')[0];
             user = await UserDOA.createUser({ email, name });
         }

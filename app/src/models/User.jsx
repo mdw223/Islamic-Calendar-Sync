@@ -14,7 +14,7 @@ function fromApiRow(row) {
     updatedAt: row.updatedat ?? null,
     lastLogin: row.lastlogin ?? null,
     isAdmin: row.isadmin ?? false,
-    isGuest: row.isguest ?? false,
+    isOfflineGuest: false,
     timezone: row.timezone ?? null,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
@@ -37,7 +37,7 @@ export const defaultUser = {
   updatedAt: null,
   lastLogin: null,
   isAdmin: false,
-  isGuest: false,
+  isOfflineGuest: false,
   timezone: null,
   latitude: null,
   longitude: null,
@@ -64,7 +64,7 @@ export class User {
     this.updatedAt = normalized.updatedAt ?? null;
     this.lastLogin = normalized.lastLogin ?? null;
     this.isAdmin = normalized.isAdmin ?? false;
-    this.isGuest = normalized.isGuest ?? false;
+    this.isOfflineGuest = normalized.isOfflineGuest ?? false;
     this.timezone = normalized.timezone ?? null;
     this.latitude = normalized.latitude ?? null;
     this.longitude = normalized.longitude ?? null;
@@ -96,7 +96,7 @@ export class User {
       this.updatedAt = normalized.updatedAt ?? this.updatedAt;
       this.lastLogin = normalized.lastLogin ?? new Date().toISOString();
       this.isAdmin = normalized.isAdmin ?? this.isAdmin;
-      this.isGuest = normalized.isGuest ?? false;
+      this.isOfflineGuest = normalized.isOfflineGuest ?? false;
       this.timezone = normalized.timezone ?? this.timezone;
       this.latitude = normalized.latitude ?? this.latitude;
       this.longitude = normalized.longitude ?? this.longitude;
@@ -157,6 +157,7 @@ export class User {
       updatedAt: this.updatedAt,
       lastLogin: this.lastLogin,
       isAdmin: this.isAdmin,
+      isOfflineGuest: this.isOfflineGuest,
       timezone: this.timezone,
       latitude: this.latitude,
       longitude: this.longitude,
@@ -167,7 +168,6 @@ export class User {
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
-      isGuest: this.isGuest,
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,
@@ -177,7 +177,7 @@ export class User {
 
 export const createUser = (data = {}) => new User(data);
 
-export const createGuestUser = () => new User(defaultUser);
+export const createAnonymousUser = () => new User(defaultUser);
 
 /** Session-based: user is logged in if they have a userId (from API/cookie). */
 export const isUserLoggedIn = (user) =>
@@ -185,7 +185,7 @@ export const isUserLoggedIn = (user) =>
 
 export const userFromApiResponse = (response) => {
   const raw = response?.user ?? response;
-  return raw ? new User(raw) : createGuestUser();
+  return raw ? new User(raw) : createAnonymousUser();
 };
 
 export const validateUserEmail = (email) => {

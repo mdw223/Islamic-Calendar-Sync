@@ -73,7 +73,7 @@ passport.use(
           expires_in: params?.expires_in,
           scope: params?.scope,
         };
-        const user = await findOrCreateUserFromGoogleProfile(profile, tokens, req);
+        const user = await findOrCreateUserFromGoogleProfile(profile, tokens);
         req.googleTokens = tokens;
         verified(null, user);
       } catch (err) {
@@ -162,7 +162,7 @@ export const googleRedirect = [
    * @param {Object} tokens - OAuth tokens: { access_token, refresh_token?, expires_in, scope }
    * @returns {Promise<Object>} user object
    */
-export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, req = null) {
+export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) {
     const email =
         profile.emails && profile.emails[0] ? profile.emails[0].value : null;
     const name = profile.displayName || email;
@@ -170,10 +170,6 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, 
     if (!email) {
         throw new Error("Google profile did not include an email address");
     }
-
-    // Check if the current request has a guest user that should be upgraded
-    // instead of creating a new user. This preserves all guest events.
-    const guestUser = req?.user?.isGuest ? req.user : null;
 
     // Calculate expiration time if tokens provided
     const expiresAt = tokens?.expires_in
@@ -183,19 +179,7 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null, 
     // Find or create user with Google auth provider
     let user = await UserDOA.getUserByEmail(email);
 
-    if (!user && guestUser) {
-        // Upgrade the guest user to a registered user with Google auth
-        user = await UserDOA.upgradeGuestUser(guestUser.userId, { email, name });
-        // Set auth provider and tokens
-        await UserDOA.updateUser(user.userId, {
-            authprovidertypeid: AuthProviderTypeId.GOOGLE,
-            accesstoken: tokens?.access_token || null,
-            refreshtoken: tokens?.refresh_token || null,
-            expiresat: expiresAt,
-            scopes: tokens?.scope || null,
-            isexpired: false,
-        });
-    } else if (!user) {
+    if (!user) {
         // Create new user with Google auth
         user = await UserDOA.createUser({
             email,

@@ -5,10 +5,9 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import LoginPromptModal from "../components/LoginPromptModal";
 import { useUser } from "../contexts/UserContext";
-import { createUser } from "../models/User";
 
 const MainLayout = () => {
-  const { showAuthPrompt, setUser } = useUser();
+  const { showAuthPrompt, startOfflineGuestSession } = useUser();
   const location = useLocation();
   const isHome = location.pathname === "/";
   const [dismissed, setDismissed] = useState(false);
@@ -17,10 +16,6 @@ const MainLayout = () => {
   useEffect(() => {
     setDismissed(false);
   }, [location.pathname]);
-
-  const handleGuestLogin = (userData) => {
-    setUser(createUser(userData));
-  };
 
   return (
     <Box
@@ -38,7 +33,7 @@ const MainLayout = () => {
       <LoginPromptModal
         open={showAuthPrompt && !isHome && !dismissed}
         onClose={() => setDismissed(true)}
-        onGuestLogin={handleGuestLogin}
+        onGuestLogin={startOfflineGuestSession}
       />
     </Box>
   );

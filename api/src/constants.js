@@ -3,7 +3,6 @@ export const AuthUser = Object.freeze({
     SAME_USER: 1, 
     ADMIN: 2, 
     VALID_USER: 4, // authenticated
-    GUEST_USER: 8,
     SUBSCRIBED_USER: 16 // additional features
 });
 
@@ -16,7 +15,6 @@ export const AuthProviderTypeId = Object.freeze({
   MICROSOFT: 2,
   APPLE: 3,
   EMAIL: 4,
-  GUEST: 5,
 });
 
 /**

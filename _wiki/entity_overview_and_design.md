@@ -28,11 +28,11 @@ Can login via email or OAuth, configure settings, generate personal Islamic cale
 Users contain an event configuration such as the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
 Users contain location and language settings (`Timezone`, `Latitude`, `Longitude`, `Language`) stored directly on the user record to determine prayer time accuracy. Always asks the user to confirm their current location and language.
 Users contain a prayer configuration for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
-Users contain authentication provider information (`AuthProviderTypeId`) to specify which authentication method the user account uses (Google, Microsoft, Apple, Email, or Guest). OAuth credentials (access tokens, refresh tokens, expiry, scopes) are stored directly on the User for authentication purposes.
+Users contain authentication provider information (`AuthProviderTypeId`) to specify which authentication method the user account uses (Google, Microsoft, Apple, or Email). OAuth credentials (access tokens, refresh tokens, expiry, scopes) are stored directly on the User for authentication purposes.
 
 ### AuthProviderType
 
-The authentication method used by a user to log in (enum): Google, Microsoft, Apple, Email, or Guest. This specifies how the user authenticates with the application, separate from calendar integration providers.
+The authentication method used by a user to log in (enum): Google, Microsoft, Apple, or Email. This specifies how the user authenticates with the application, separate from calendar integration providers.
 
 ### CalendarProvider
 
@@ -226,7 +226,7 @@ erDiagram
 
 ## 4. Entity Interaction Flow
 
-1. **User** authenticates via **AuthProviderType** (Google, Microsoft, Apple, Email, or Guest). OAuth credentials (access tokens, refresh tokens) are stored directly on the **User** for authentication purposes. User can optionally connect with a **CalendarProvider** for calendar API integration (separate from authentication), then specifies language and location in **Settings**.
+1. **User** authenticates via **AuthProviderType** (Google, Microsoft, Apple, or Email). OAuth credentials (access tokens, refresh tokens) are stored directly on the **User** for authentication purposes. User can optionally connect with a **CalendarProvider** for calendar API integration (separate from authentication), then specifies language and location in **Settings**.
 
 2. **User** triggers calendar generation which creates **Prayer** times and **Event** entries based on their configurations.
 
@@ -238,28 +238,12 @@ erDiagram
 
 ## 5. User Roles and Permissions
 
-### Guest User
-
-**Description**: Unauthenticated user with limited features and temporary data storage.
-
-**Permissions**:
-
-- Can configure settings, event and prayer configurations temporarily
-- Can generate and edit prayer times and Islamic calendar events
-- Preview calendar generation (but not with calendar provider events)
-- Download ICS files (limited to current session)
-- Generate a URL for calendar subscription
-- **Cannot** save settings or create custom events permanently
-
----
-
 ### Registered User
 
 **Description**: Authenticated user with full access to personal features with persistence.
 
 **Permissions**:
 
-- Everything Guest User can do
 - Save prayer settings permanently
 - Create and manage custom events and prayers
 - Create calendar subscriptions
@@ -292,6 +276,6 @@ erDiagram
 
 - **Flexibility**: Users can choose to use the system without connecting a calendar provider by downloading ICS files or using subscription URLs.
 - **Customization**: Both prayers and events can be customized with descriptions, times, and visibility settings.
-- **Privacy**: Guest users have temporary storage, while registered users have persistent, secure storage of their preferences.
+- **Privacy**: Offline guest mode uses temporary browser-local storage, while registered users have persistent, server-backed storage of their preferences.
 - **Scalability**: The enum-based approach for types allows easy addition of new prayer types, event types, authentication provider types, and calendar provider types.
 - **Separation of Concerns**: Authentication (via AuthProviderType) is separate from calendar integration (via CalendarProvider). OAuth credentials are stored on the User for authentication, while CalendarProvider is specifically for calendar API access.

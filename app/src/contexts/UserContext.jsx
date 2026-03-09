@@ -8,6 +8,7 @@ import React, {
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
 import { setToken, clearToken } from "../util/AuthToken";
+import { OFFLINE_GUEST_KEY } from "../Constants";
 
 const UserContext = createContext(undefined);
 
@@ -33,11 +34,20 @@ export const UserProvider = ({ children }) => {
     }
 
     let cancelled = false;
+
+    const offlineGuestEnabled = localStorage.getItem(OFFLINE_GUEST_KEY) === "1";
+    if (offlineGuestEnabled) {
+      setUser(createUser({ ...defaultUser, isOfflineGuest: true }));
+      setReady(true);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     APIClient.getCurrentUser()
       .then((data) => {
         if (cancelled) return;
         if (data?.success && data?.user) {
-          // Always set the user — even if isGuest is true (guest users now have a userId).
           setUser(createUser(data.user));
         } else {
           setUser(createUser(defaultUser));
@@ -55,6 +65,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const login = useCallback((userData) => {
+    localStorage.removeItem(OFFLINE_GUEST_KEY);
     const newUser = createUser(userData);
     newUser.login(userData);
     setUser(newUser);
@@ -64,6 +75,7 @@ export const UserProvider = ({ children }) => {
     try {
       await APIClient.logout();
     } finally {
+      localStorage.removeItem(OFFLINE_GUEST_KEY);
       clearToken();
       setUser(createUser(defaultUser));
       setSubscriptions([]);
@@ -82,20 +94,14 @@ export const UserProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
-  /**
-   * Explicitly create a guest session via POST /auth/guest.
-   * Called when the user clicks "Continue as Guest" in the auth prompt.
-   */
-  const startGuestSession = useCallback(async () => {
-    const data = await APIClient.createGuestSession();
-    if (data?.success && data?.user) {
-      setUser(createUser(data.user));
-    }
+  const startOfflineGuestSession = useCallback(() => {
+    localStorage.setItem(OFFLINE_GUEST_KEY, "1");
+    setUser(createUser({ ...defaultUser, isOfflineGuest: true }));
   }, []);
 
   // True when the initial session check is done and no user was found.
   // Used to show the auth prompt modal.
-  const showAuthPrompt = ready && !user?.userId;
+  const showAuthPrompt = ready && !user?.userId && !user?.isOfflineGuest;
 
   return (
     <UserContext.Provider
@@ -110,7 +116,7 @@ export const UserProvider = ({ children }) => {
         setSubscriptions,
         ready,
         showAuthPrompt,
-        startGuestSession,
+        startOfflineGuestSession,
       }}
     >
       {children}

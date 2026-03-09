@@ -3,7 +3,6 @@
  *
  * Shared service used by:
  *   - POST /events/generate  (explicit generation for a year)
- *   - GuestSessionMiddleware  (auto-generate for new guests)
  *   - passport.js             (auto-generate after Google OAuth / new user)
  *
  * Loads definitions from islamicEvents.json, merges user preferences from the
@@ -65,7 +64,7 @@ export async function generateForUser(userId, year) {
 
 /**
  * Generate Islamic events for a new user (current year, all definitions enabled).
- * Called from GuestSessionMiddleware and passport.js after user creation.
+ * Called after user creation to preload baseline event data.
  * The upsert makes this idempotent — calling it redundantly is harmless.
  *
  * @param {number} userId

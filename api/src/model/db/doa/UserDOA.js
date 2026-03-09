@@ -40,7 +40,7 @@ export default class UserDOA {
    * @param {{ email: string, name: string, authProviderTypeId?: number }} userData
    * @returns {Promise<ReturnType<User.fromRow>>}
    */
-  static async createUser({ email, name, authProviderTypeId = 4 }) { // TODO: remove 4 for guest
+  static async createUser({ email, name, authProviderTypeId = 4 }) {
     const result = await query(
       `INSERT INTO "User" (email, name, authprovidertypeid, createdat, updatedat)
        VALUES ($1, $2, $3, NOW(), NOW())
@@ -115,49 +115,4 @@ export default class UserDOA {
     return this.updateUser(userId, { salt });
   }
 
-  /**
-   * Create a guest user with only a session ID (no email/name).
-   * Sets authProviderTypeId to Guest (5).
-   * @param {string} sessionId - Cryptographically random session ID
-   * @returns {Promise<ReturnType<User.fromRow>>}
-   */
-  static async createGuestUser(sessionId) {
-    const result = await query(
-      `INSERT INTO "User" (isguest, sessionid, authprovidertypeid, createdat, updatedat)
-       VALUES (true, $1, 5, NOW(), NOW())
-       RETURNING *`,
-      [sessionId],
-    );
-    return User.fromRow(result.rows[0]);
-  }
-
-  /**
-   * Find a user by their guest session ID.
-   * @param {string} sessionId
-   * @returns {Promise<ReturnType<User.fromRow>|null>}
-   */
-  static async findBySessionId(sessionId) {
-    const result = await query(
-      `SELECT * FROM "User" WHERE sessionid = $1`,
-      [sessionId],
-    );
-    const row = result.rows[0];
-    return row ? User.fromRow(row) : null;
-  }
-
-  /**
-   * Upgrade a guest user to a registered user (set email, name, clear guest flag).
-   * Preserves the existing UserId so all events remain associated.
-   * @param {number} userId
-   * @param {{ email: string, name: string }} data
-   * @returns {Promise<ReturnType<User.fromRow>|null>}
-   */
-  static async upgradeGuestUser(userId, { email, name }) {
-    return this.updateUser(userId, {
-      isguest: false,
-      sessionid: null,
-      email,
-      name,
-    });
-  }
 }

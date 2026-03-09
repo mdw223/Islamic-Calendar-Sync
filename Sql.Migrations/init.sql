@@ -43,8 +43,6 @@ CREATE TABLE "User" (
     UpdatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     LastLogin TIMESTAMP,
     IsAdmin BOOLEAN DEFAULT FALSE,
-    IsGuest BOOLEAN NOT NULL DEFAULT FALSE,
-    SessionID VARCHAR(255) NULL UNIQUE,
     Timezone VARCHAR(100),
     Latitude VARCHAR(50),
     Longitude VARCHAR(50),
@@ -239,8 +237,7 @@ INSERT INTO AuthProviderType (Name) VALUES
     ('Google'),
     ('Microsoft'),
     ('Apple'),
-    ('Email'),
-    ('Guest');
+    ('Email');
 
 -- Insert default calendar provider types (calendar integration providers)
 INSERT INTO CalendarProviderType (Name) VALUES 

@@ -7,8 +7,7 @@ const REDACT_KEYS = new Set([
   "accessToken",
   "refreshToken",
   "accesstoken",
-  "refreshtoken",
-  "sessionId"
+  "refreshtoken"
 ]);
 
 /**

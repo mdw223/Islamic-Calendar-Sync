@@ -1,16 +1,17 @@
 /**
  * CalendarContext.jsx
  *
- * API-first calendar state management. All events are persisted server-side.
- * Both guest users (HMAC-signed session cookie) and registered users (JWT)
- * have a userId, so all API calls work for everyone.
+ * Calendar state management.
+ * - Authenticated users use API-backed persistence.
+ * - Offline guest users do not call the backend.
  *
  * Data flow:
- *   1. On mount (once user is available), events + definitions are loaded from
- *      the API.
+ *   1. On mount (once user is available), authenticated users load events +
+ *      definitions from the API.
  *   2. Islamic events are generated server-side via POST /events/generate.
  *      The backend's upsert guarantees idempotency.
- *   3. All CRUD operations go through the API — no localStorage for events.
+ *   3. Offline guest writes are intentionally not implemented in this layer.
+ *      (IndexedDB/local persistence will be added separately.)
  *   4. Definition show/hide preferences are stored server-side in the
  *      UserIslamicDefinitionPreference table.
  *   5. Providers are fetched in the background.
@@ -35,7 +36,7 @@ import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
 const CalendarContext = createContext(null);
 
 export function CalendarProvider({ children }) {
-  // ── User (guest or registered — always has a userId after mount) ────────
+  // ── User (authenticated or offline guest) ───────────────────────────────
   const { user } = useUser();
 
   // ── Events state ────────────────────────────────────────────────────────
@@ -69,7 +70,14 @@ export function CalendarProvider({ children }) {
 
   // ── On mount (and when user changes): load events + definitions from API ─
   useEffect(() => {
-    if (!user?.userId) return;
+    if (!user?.userId) {
+      setLoading(false);
+      setEvents([]);
+      eventsRef.current = [];
+      setIslamicEventDefs([]);
+      setCalendarProviders([]);
+      return;
+    }
 
     let cancelled = false;
     setLoading(true);
@@ -115,6 +123,16 @@ export function CalendarProvider({ children }) {
       cancelled = true;
     };
   }, [user?.userId]);
+
+  function assertBackendAvailable() {
+    if (user?.isOfflineGuest) {
+      const err = new Error(
+        "Offline guest mode is active. Browser persistence is not implemented yet.",
+      );
+      setError(err.message);
+      throw err;
+    }
+  }
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -180,6 +198,7 @@ export function CalendarProvider({ children }) {
    * @returns {Promise<Object>} The created event object.
    */
   async function addEvent(eventData) {
+    assertBackendAvailable();
     try {
       const res = await APIClient.createEvent(eventData);
       const created = res?.event ?? res;
@@ -200,6 +219,7 @@ export function CalendarProvider({ children }) {
    * @returns {Promise<Object>} The refreshed event object.
    */
   async function refreshEventData(eventId) {
+    assertBackendAvailable();
     try {
       const res = await APIClient.getEventById(eventId);
       const updated = res?.event ?? res;
@@ -222,6 +242,7 @@ export function CalendarProvider({ children }) {
    * @returns {Promise<Object>} The updated event object.
    */
   async function updateEvent(eventId, updates) {
+    assertBackendAvailable();
     try {
       const res = await APIClient.updateEvent(eventId, updates);
       const updated = res?.event ?? res;
@@ -242,6 +263,7 @@ export function CalendarProvider({ children }) {
    * @param {number} eventId
    */
   async function removeEvent(eventId) {
+    assertBackendAvailable();
     try {
       await APIClient.deleteEvent(eventId);
       const next = eventsRef.current.filter((e) => e.eventId !== eventId);
@@ -257,6 +279,7 @@ export function CalendarProvider({ children }) {
    * With API-first architecture all writes already go through the API.
    */
   async function syncToBackend() {
+    assertBackendAvailable();
     return { ok: true };
   }
 
@@ -264,6 +287,7 @@ export function CalendarProvider({ children }) {
    * Reload events from the server (manual refresh).
    */
   async function refreshFromBackend() {
+    assertBackendAvailable();
     setIsRefreshing(true);
     setError(null);
     try {
@@ -288,6 +312,7 @@ export function CalendarProvider({ children }) {
    * @param {string} definitionId - The `id` field from the definition.
    */
   async function toggleIslamicEvent(definitionId) {
+    assertBackendAvailable();
     const target = islamicEventDefs.find((d) => d.id === definitionId);
     if (!target) return;
 
@@ -329,6 +354,7 @@ export function CalendarProvider({ children }) {
    * definitions, then re-generates Islamic events.
    */
   async function resetCalendar() {
+    assertBackendAvailable();
     // Delete all current events from the server.
     await Promise.allSettled(
       eventsRef.current

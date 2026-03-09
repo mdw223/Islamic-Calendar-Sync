@@ -29,9 +29,6 @@ export function AuthMiddleware(req, res, next) {
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
     }
-    if (user.isGuest) {
-      userRoles |= AuthUser.GUEST_USER;
-    }
     if (requestedUserId && user.userId == requestedUserId) {
       userRoles |= AuthUser.SAME_USER;
     }
