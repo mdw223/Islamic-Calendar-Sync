@@ -15,6 +15,8 @@ import UpdateEvent from './events/UpdateEvent.js';
 import DeleteEvent from './events/DeleteEvent.js';
 import GetDefinitions from './definitions/GetDefinitions.js';
 import UpdateDefinitionPreference from './definitions/UpdateDefinitionPreference.js';
+import SyncOfflineEvents from './events/SyncOfflineEvents.js';
+import SyncOfflinePreferences from './definitions/SyncOfflinePreferences.js';
 
 const router = express.Router();
 
@@ -39,6 +41,10 @@ router.get("/events/:eventId", Auth(AuthUser.VALID_USER), GetEventById);
 router.post("/events", Auth(AuthUser.VALID_USER), CreateEvent);
 router.put("/events/:eventId", Auth(AuthUser.VALID_USER), UpdateEvent);
 router.delete("/events/:eventId", Auth(AuthUser.VALID_USER), DeleteEvent);
+
+// Offline-to-server sync (called once after login when IndexedDB data exists)
+router.post("/events/sync", Auth(AuthUser.VALID_USER), SyncOfflineEvents);
+router.post("/definitions/sync", Auth(AuthUser.VALID_USER), SyncOfflinePreferences);
 
 // Islamic event definitions routes
 router.get("/definitions", Auth(AuthUser.ANY), GetDefinitions);

@@ -1,0 +1,182 @@
+/**
+ * IslamicEventService.js  (client-side)
+ *
+ * Port of the backend's IslamicEventService + HijriUtils.generateIslamicEventsForYear.
+ * Used by OfflineClient to generate Islamic calendar events entirely in the
+ * browser for unauthenticated / offline guest users.
+ *
+ * The algorithm is identical to api/src/util/HijriUtils.js — it builds lookup
+ * maps keyed by (hijriDay, hijriMonth), iterates every day of the Gregorian
+ * year, and emits event objects with `islamicEventKey` dedup keys.
+ */
+
+import islamicEventsData from "../data/islamicEvents.json";
+import { EventTypeId } from "../Constants";
+import db from "../util/OfflineDb";
+
+// ── Hijri formatter ─────────────────────────────────────────────────────────
+const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
+  "en-u-ca-islamic-umalqura",
+  { day: "numeric", month: "numeric", year: "numeric" },
+);
+
+// ── Base definitions ────────────────────────────────────────────────────────
+
+export function getBaseDefinitions() {
+  return islamicEventsData.events;
+}
+
+// ── Merged definitions (base + Dexie preferences) ───────────────────────────
+
+export async function getMergedDefinitions() {
+  const baseDefs = getBaseDefinitions();
+  const prefs = await db.definitionPreferences.toArray();
+  const prefMap = new Map(prefs.map((p) => [p.definitionId, p.isHidden]));
+
+  return baseDefs.map((def) => ({
+    ...def,
+    isHidden: prefMap.has(def.id) ? prefMap.get(def.id) : def.isHidden ?? false,
+  }));
+}
+
+// ── Event generation (pure, no I/O) ─────────────────────────────────────────
+
+export function generateIslamicEventsForYear(gregorianYear, definitions) {
+  const events = [];
+  const seen = new Set();
+
+  const byDayMonth = new Map();
+  const byDayOnly = [];
+
+  for (const def of definitions) {
+    if (def.isHidden) continue;
+
+    if (def.repeatsEachMonth === true) {
+      byDayOnly.push(def);
+    } else {
+      const key = `${def.hijriDay}_${def.hijriMonth}`;
+      if (!byDayMonth.has(key)) byDayMonth.set(key, []);
+      byDayMonth.get(key).push(def);
+    }
+  }
+
+  if (byDayMonth.size === 0 && byDayOnly.length === 0) return events;
+
+  const isLeap =
+    (gregorianYear % 4 === 0 && gregorianYear % 100 !== 0) ||
+    gregorianYear % 400 === 0;
+  const daysInYear = isLeap ? 366 : 365;
+
+  const dayData = new Array(daysInYear);
+  for (let i = 0; i < daysInYear; i++) {
+    const date = new Date(gregorianYear, 0, i + 1);
+    if (date.getFullYear() !== gregorianYear) break;
+
+    const parts = HIJRI_NUMERIC_FORMATTER.formatToParts(date);
+    dayData[i] = {
+      date,
+      hijriDay: parseInt(
+        parts.find((p) => p.type === "day")?.value ?? "0",
+        10,
+      ),
+      hijriMonth: parseInt(
+        parts.find((p) => p.type === "month")?.value ?? "0",
+        10,
+      ),
+      hijriYear: parseInt(
+        parts.find((p) => p.type === "year")?.value ?? "0",
+        10,
+      ),
+    };
+  }
+
+  for (let i = 0; i < dayData.length; i++) {
+    const d = dayData[i];
+    if (!d) break;
+
+    const key = `${d.hijriDay}_${d.hijriMonth}`;
+    const exactMatches = byDayMonth.get(key);
+    const monthlyMatches =
+      byDayOnly.length > 0
+        ? byDayOnly.filter((def) => def.hijriDay === d.hijriDay)
+        : undefined;
+
+    if (!exactMatches && (!monthlyMatches || monthlyMatches.length === 0)) {
+      continue;
+    }
+
+    const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
+
+    for (const def of candidates) {
+      const islamicEventKey = def.repeatsEachMonth
+        ? `${def.id}_${d.hijriMonth}_${d.hijriYear}`
+        : `${def.id}_${d.hijriYear}`;
+
+      if (seen.has(islamicEventKey)) continue;
+      seen.add(islamicEventKey);
+
+      const startDate = new Date(d.date);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(d.date);
+      endDate.setDate(endDate.getDate() + (def.durationDays ?? 1) - 1);
+      endDate.setHours(23, 59, 59, 999);
+
+      events.push({
+        islamicDefinitionId: def.id,
+        islamicEventKey,
+        name: `${def.titleAr} | ${def.titleEn}`,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        isAllDay: def.isAllDay ?? true,
+        description: def.description ?? null,
+        eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
+        isCustom: false,
+        isTask: false,
+        hide: false,
+      });
+    }
+  }
+
+  return events;
+}
+
+// ── Generate + persist to Dexie ─────────────────────────────────────────────
+
+/**
+ * Generate Islamic events for `year` and upsert them into IndexedDB.
+ * Deduplicates on `islamicEventKey` — safe to call multiple times.
+ *
+ * @param {number} year - Gregorian year
+ * @returns {Promise<{ events: Object[], generatedCount: number }>}
+ */
+export async function generateForOfflineUser(year) {
+  const mergedDefs = await getMergedDefinitions();
+  const generated = generateIslamicEventsForYear(year, mergedDefs);
+
+  if (generated.length === 0) {
+    return { events: [], generatedCount: 0 };
+  }
+
+  // Fetch existing islamicEventKeys to avoid duplicates.
+  const existing = await db.events
+    .where("islamicEventKey")
+    .anyOf(generated.map((e) => e.islamicEventKey))
+    .toArray();
+  const existingKeys = new Set(existing.map((e) => e.islamicEventKey));
+
+  const toInsert = generated.filter(
+    (e) => !existingKeys.has(e.islamicEventKey),
+  );
+
+  if (toInsert.length > 0) {
+    const now = new Date().toISOString();
+    await db.events.bulkAdd(
+      toInsert.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
+    );
+  }
+
+  // Return all events for this year (both existing + newly created).
+  const allEvents = await db.events.toArray();
+  return { events: allEvents, generatedCount: toInsert.length };
+}

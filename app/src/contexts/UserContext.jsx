@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
+import OfflineClient from "../util/OfflineClient";
 import { setToken, clearToken } from "../util/AuthToken";
 import { OFFLINE_GUEST_KEY } from "../Constants";
 
@@ -16,6 +17,22 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
   const [subscriptions, setSubscriptions] = useState([]);
   const [ready, setReady] = useState(false);
+
+  // Sync any IndexedDB guest data to the backend, then clear local stores.
+  const syncOfflineData = async () => {
+    try {
+      const hasData = await OfflineClient.hasData();
+      if (!hasData) return;
+      const { events, preferences } = await OfflineClient.getAllDataForSync();
+      if (events.length > 0) await APIClient.syncOfflineEvents(events);
+      if (preferences.length > 0) await APIClient.syncOfflinePreferences(preferences);
+      await OfflineClient.clearAll();
+    } catch (err) {
+      console.error("Offline sync failed:", err);
+    } finally {
+      localStorage.removeItem(OFFLINE_GUEST_KEY);
+    }
+  };
 
   // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
   useEffect(() => {
@@ -45,9 +62,10 @@ export const UserProvider = ({ children }) => {
     }
 
     APIClient.getCurrentUser()
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return;
         if (data?.success && data?.user) {
+          await syncOfflineData();
           setUser(createUser(data.user));
         } else {
           setUser(createUser(defaultUser));
@@ -64,8 +82,8 @@ export const UserProvider = ({ children }) => {
     };
   }, []);
 
-  const login = useCallback((userData) => {
-    localStorage.removeItem(OFFLINE_GUEST_KEY);
+  const login = useCallback(async (userData) => {
+    await syncOfflineData();
     const newUser = createUser(userData);
     newUser.login(userData);
     setUser(newUser);

@@ -131,4 +131,27 @@ export default class APIClient {
   static async updateDefinitionPreference(definitionId, isHidden) {
     return HTTPClient.put(`/definitions/${definitionId}`, { isHidden });
   }
+
+  // ── Offline → Server sync ─────────────────────────────────────────────────
+
+  /**
+   * Bulk-sync events from IndexedDB to the server.
+   * Called once after login when offline guest data exists.
+   *
+   * @param {Array<Object>} events
+   * @returns {Promise<{ success: boolean, syncedCount: number }>}
+   */
+  static async syncOfflineEvents(events) {
+    return HTTPClient.post("/events/sync", { events });
+  }
+
+  /**
+   * Bulk-sync definition preferences from IndexedDB to the server.
+   *
+   * @param {Array<{ definitionId: string, isHidden: boolean }>} preferences
+   * @returns {Promise<{ success: boolean, syncedCount: number }>}
+   */
+  static async syncOfflinePreferences(preferences) {
+    return HTTPClient.post("/definitions/sync", { preferences });
+  }
 }
