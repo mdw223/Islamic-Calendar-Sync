@@ -8,6 +8,16 @@ import { Event } from "../../models/Event.js";
  */
 export default class EventDOA {
   /**
+   * Get all system events (IsSystemEvent = true).
+   * @returns {Promise<Event[]>}
+   */
+  static async findAllSystemEvents() {
+    const result = await query(
+      "SELECT * FROM event WHERE issystemevent = TRUE ORDER BY eventid ASC"
+    );
+    return result.rows.map(Event.fromRow);
+  }
+  /**
    * Get a single event by ID, scoped to the owning user.
    * @param {number} eventId
    * @param {number} userId
