@@ -126,7 +126,6 @@ const LoginPage = () => {
               fullWidth
               sx={{ borderRadius: 2 }}
               onClick={() => {
-                console.log(window.location.href);
                 window.location.href = APIClient.getGoogleLoginUrl();
               }}
             >

@@ -42,6 +42,7 @@ export const UserProvider = ({ children }) => {
       const token = params.get("token");
       if (token) {
         setToken(decodeURIComponent(token));
+        localStorage.removeItem(OFFLINE_GUEST_KEY);
         window.history.replaceState(
           null,
           "",
