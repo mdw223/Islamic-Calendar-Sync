@@ -1,8 +1,8 @@
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES } from "../../constants";
+import { DAY_NAMES } from "../../Constants";
 import { toDateKey, sameDay, EventChip } from "./CalendarHelpers.jsx";
-import { getHijriParts } from "../../util/hijriUtils";
+import { getHijriParts } from "../../util/HijriUtils";
 import { Moon } from "lucide-react";
 
 /**

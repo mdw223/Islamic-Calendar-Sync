@@ -1,6 +1,6 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
-import { HOURS } from "../../constants";
+import { HOURS } from "../../Constants";
 import { toDateKey, EventChip } from "./CalendarHelpers.jsx";
 
 /**

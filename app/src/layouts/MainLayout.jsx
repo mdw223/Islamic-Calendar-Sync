@@ -7,7 +7,7 @@ import LoginPromptModal from "../components/LoginPromptModal";
 import { useUser } from "../contexts/UserContext";
 
 const MainLayout = () => {
-  const { showAuthPrompt, startOfflineGuestSession } = useUser();
+  const { showAuthPrompt } = useUser();
   const location = useLocation();
   const isHome = location.pathname === "/";
   const [dismissed, setDismissed] = useState(false);
@@ -33,7 +33,6 @@ const MainLayout = () => {
       <LoginPromptModal
         open={showAuthPrompt && !isHome && !dismissed}
         onClose={() => setDismissed(true)}
-        onGuestLogin={startOfflineGuestSession}
       />
     </Box>
   );

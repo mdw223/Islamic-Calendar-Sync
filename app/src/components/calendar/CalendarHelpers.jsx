@@ -1,7 +1,7 @@
 import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES, MONTH_NAMES } from "../../constants";
-import { getHijriMonthRangeLabel, getHijriParts } from "../../util/hijriUtils";
+import { DAY_NAMES, MONTH_NAMES } from "../../Constants";
+import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
 
 /**
  * Returns a YYYY-MM-DD string for a given Date, used as a stable map key

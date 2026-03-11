@@ -9,7 +9,6 @@ import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
 import OfflineClient from "../util/OfflineClient";
 import { setToken, clearToken } from "../util/AuthToken";
-import { OFFLINE_GUEST_KEY } from "../Constants";
 
 const UserContext = createContext(undefined);
 
@@ -18,19 +17,19 @@ export const UserProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [ready, setReady] = useState(false);
 
-  // Sync any IndexedDB guest data to the backend, then clear local stores.
+  // Sync any IndexedDB data to the backend, then clear local stores.
   const syncOfflineData = async () => {
     try {
       const hasData = await OfflineClient.hasData();
       if (!hasData) return;
-      const { events, preferences } = await OfflineClient.getAllDataForSync();
+      const data = await OfflineClient.getAllDataForSync();
+      if (!data) return;
+      const { events, preferences } = data;
       if (events.length > 0) await APIClient.syncOfflineEvents(events);
       if (preferences.length > 0) await APIClient.syncOfflinePreferences(preferences);
       await OfflineClient.clearAll();
     } catch (err) {
       console.error("Offline sync failed:", err);
-    } finally {
-      localStorage.removeItem(OFFLINE_GUEST_KEY);
     }
   };
 
@@ -42,7 +41,6 @@ export const UserProvider = ({ children }) => {
       const token = params.get("token");
       if (token) {
         setToken(decodeURIComponent(token));
-        localStorage.removeItem(OFFLINE_GUEST_KEY);
         window.history.replaceState(
           null,
           "",
@@ -52,15 +50,6 @@ export const UserProvider = ({ children }) => {
     }
 
     let cancelled = false;
-
-    const offlineGuestEnabled = localStorage.getItem(OFFLINE_GUEST_KEY) === "1";
-    if (offlineGuestEnabled) {
-      setUser(createUser({ ...defaultUser, isOfflineGuest: true }));
-      setReady(true);
-      return () => {
-        cancelled = true;
-      };
-    }
 
     APIClient.getCurrentUser()
       .then(async (data) => {
@@ -72,7 +61,7 @@ export const UserProvider = ({ children }) => {
           setUser(createUser(defaultUser));
         }
       })
-      .catch((err) => {
+      .catch(() => {
         if (!cancelled) setUser(createUser(defaultUser));
       })
       .finally(() => {
@@ -94,7 +83,6 @@ export const UserProvider = ({ children }) => {
     try {
       await APIClient.logout();
     } finally {
-      localStorage.removeItem(OFFLINE_GUEST_KEY);
       clearToken();
       setUser(createUser(defaultUser));
       setSubscriptions([]);
@@ -113,14 +101,9 @@ export const UserProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
-  const startOfflineGuestSession = useCallback(() => {
-    localStorage.setItem(OFFLINE_GUEST_KEY, "1");
-    setUser(createUser({ ...defaultUser, isOfflineGuest: true }));
-  }, []);
-
   // True when the initial session check is done and no user was found.
   // Used to show the auth prompt modal.
-  const showAuthPrompt = ready && !user?.userId && !user?.isOfflineGuest;
+  const showAuthPrompt = ready && !user?.userId;
 
   return (
     <UserContext.Provider
@@ -135,7 +118,6 @@ export const UserProvider = ({ children }) => {
         setSubscriptions,
         ready,
         showAuthPrompt,
-        startOfflineGuestSession,
       }}
     >
       {children}

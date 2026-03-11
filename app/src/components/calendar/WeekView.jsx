@@ -1,8 +1,8 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES, HOURS } from "../../constants";
+import { DAY_NAMES, HOURS } from "../../Constants";
 import { toDateKey, sameDay, addDays, EventChip } from "./CalendarHelpers.jsx";
-import { getHijriParts } from "../../util/hijriUtils";
+import { getHijriParts } from "../../util/HijriUtils";
 
 /**
  * Renders a 7-column time grid for the week beginning at `weekStart`. Each

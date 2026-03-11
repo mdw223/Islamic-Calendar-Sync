@@ -2,7 +2,9 @@ import { getToken } from "./AuthToken.js";
 
 function handleResponse(response) {
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const err = new Error(`HTTP error! status: ${response.status}`);
+    err.status = response.status;
+    throw err;
   }
   return response.json();
 }

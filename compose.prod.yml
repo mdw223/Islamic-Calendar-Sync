@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api_service_prod
+    env_file:
+      - .env.prod
+    restart: unless-stopped
+    depends_on:
+      - database
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    container_name: react_app_prod
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  proxy:
+    image: nginx:latest
+    container_name: nginx_proxy_prod
+    ports:
+      - "5000:80"
+      - "443:443"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/templates/default.conf.template
+    depends_on:
+      - api
+      - app
+
+  database:
+    image: postgres:15
+    container_name: ics_postgres_db_prod
+    env_file:
+      - .env.prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./Sql.Migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_prod_data:
+    driver: local

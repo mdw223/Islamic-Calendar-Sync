@@ -5,7 +5,7 @@
  * Uses Node.js built-in Intl.DateTimeFormat with "islamic-umalqura" calendar
  * (Node 22 ships full ICU by default).
  *
- * Ported from app/src/util/hijriUtils.js — same algorithm, but returns
+ * Ported from app/src/util/HijriUtils.js — same algorithm, but returns
  * plain objects instead of validated Event model instances (the DOA handles
  * persistence and validation).
  */
