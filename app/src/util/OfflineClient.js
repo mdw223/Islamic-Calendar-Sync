@@ -46,7 +46,6 @@ export default class OfflineClient {
       isCustom: rest.isCustom ?? true,
       isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
-      islamicEventKey: rest.islamicEventKey ?? null,
       islamicDefinitionId: rest.islamicDefinitionId ?? null,
       createdAt: now,
       updatedAt: now,

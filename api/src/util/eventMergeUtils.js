@@ -1,4 +1,3 @@
-// eventMergeUtils.js
 // Utility to merge system events and user overrides (child events)
 
 /**

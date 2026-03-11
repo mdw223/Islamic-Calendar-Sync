@@ -1,4 +1,3 @@
-// rruleUtils.js
 // Utility to generate event occurrences from RRULEs, including Hijri-based recurrence.
 
 import { getHijriNumericParts } from "./HijriUtils.js";

@@ -7,7 +7,7 @@
  *
  * The algorithm is identical to api/src/util/HijriUtils.js — it builds lookup
  * maps keyed by (hijriDay, hijriMonth), iterates every day of the Gregorian
- * year, and emits event objects with `islamicEventKey` dedup keys.
+ * year
  */
 
 import islamicEventsData from "../data/islamicEvents.json";
@@ -43,7 +43,6 @@ export async function getMergedDefinitions() {
 
 export function generateIslamicEventsForYear(gregorianYear, definitions) {
   const events = [];
-  const seen = new Set();
 
   const byDayMonth = new Map();
   const byDayOnly = [];
@@ -108,13 +107,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
     const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
 
     for (const def of candidates) {
-      const islamicEventKey = def.repeatsEachMonth
-        ? `${def.id}_${d.hijriMonth}_${d.hijriYear}`
-        : `${def.id}_${d.hijriYear}`;
-
-      if (seen.has(islamicEventKey)) continue;
-      seen.add(islamicEventKey);
-
       const startDate = new Date(d.date);
       startDate.setHours(0, 0, 0, 0);
 
@@ -124,7 +116,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
 
       events.push({
         islamicDefinitionId: def.id,
-        islamicEventKey,
         name: `${def.titleAr} | ${def.titleEn}`,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
@@ -145,7 +136,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
 
 /**
  * Generate Islamic events for `year` and upsert them into IndexedDB.
- * Deduplicates on `islamicEventKey` — safe to call multiple times.
  *
  * @param {number} year - Gregorian year
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
@@ -158,28 +148,20 @@ export async function generateForOfflineUser(year) {
     return { events: [], generatedCount: 0 };
   }
 
-  // Fetch existing islamicEventKeys to avoid duplicates.
-  const existing = await db.events
-    .where("islamicEventKey")
-    .anyOf(generated.map((e) => e.islamicEventKey))
-    .toArray();
-  const existingKeys = new Set(existing.map((e) => e.islamicEventKey));
+  // Remove all existing Islamic events for this year before inserting new ones
+  const yearStart = new Date(year, 0, 1).toISOString();
+  const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999).toISOString();
+  await db.events.where("startDate").between(yearStart, yearEnd, true, true).delete();
 
-  const toInsert = generated.filter(
-    (e) => !existingKeys.has(e.islamicEventKey),
+  const now = new Date().toISOString();
+  await db.events.bulkAdd(
+    generated.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
   );
 
-  if (toInsert.length > 0) {
-    const now = new Date().toISOString();
-    await db.events.bulkAdd(
-      toInsert.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
-    );
-  }
-
-  // Return all events for this year (both existing + newly created).
+  // Return all events for this year (newly created only).
   const allEvents = await db.events.toArray();
   return {
     events: allEvents.map(({ id, ...rest }) => ({ ...rest, eventId: id })),
-    generatedCount: toInsert.length,
+    generatedCount: generated.length,
   };
 }

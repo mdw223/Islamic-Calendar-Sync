@@ -192,15 +192,7 @@ export function CalendarProvider({ children }) {
 
       const generated = res?.events ?? [];
       if (generated.length > 0) {
-        const existingKeys = new Set(
-          eventsRef.current.map((e) => e.islamicEventKey).filter(Boolean),
-        );
-        const newEvents = generated.filter(
-          (e) => e.islamicEventKey && !existingKeys.has(e.islamicEventKey),
-        );
-        if (newEvents.length > 0) {
-          saveEvents([...eventsRef.current, ...newEvents]);
-        }
+        saveEvents([...eventsRef.current, ...generated]);
       }
     } catch {
       // Don't mark year as generated so it retries next time.

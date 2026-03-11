@@ -4,14 +4,12 @@
  * Bulk-import events from an offline guest's IndexedDB into the authenticated
  * user's server-side data.  Called once on login when local data exists.
  *
- * - Islamic events (those with an `islamicEventKey`) are upserted via
- *   EventDOA.bulkUpsert — the backend's partial unique index on
- *   (UserId, IslamicEventKey) prevents duplicates.
- * - Custom events (no `islamicEventKey`) are inserted as new rows.
+ * - Islamic events are upserted via EventDOA.bulkUpsert — the backend's partial unique index on (UserId, IslamicDefinitionId) prevents duplicates.
+ * - Custom events are inserted as new rows.
  *
  * Request body:
  *   { events: Array<{ name, startDate, endDate, isAllDay, description,
- *       hide, eventTypeId, isCustom, isTask, islamicEventKey?,
+ *       hide, eventTypeId, isCustom, isTask, islamicDefinitionId?
  *       islamicDefinitionId? }> }
  *
  * Success response (201):

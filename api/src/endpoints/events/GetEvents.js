@@ -1,7 +1,7 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { sendJson } from '../SendJson.js';
-import { generateOccurrencesFromRRule } from '../../util/rruleUtils.js';
-import { mergeSystemAndUserEvents } from '../../util/eventMergeUtils.js';
+import { generateOccurrencesFromRRule } from '../../util/RruleUtils.js';
+import { mergeSystemAndUserEvents } from '../../util/EventMergeUtils.js';
 
 /**
  * GET /events

@@ -15,8 +15,12 @@ export class Event {
     this.eventTypeId = null;
     this.isCustom = null;
     this.isTask = null;
-    this.islamicEventKey = null;
     this.islamicDefinitionId = null;
+    this.hijiriMonth = null,
+    this.hijiriDay = null,
+    this.durationDays = null,
+    this.rrule = null,
+    this.isSystemEvent = null,
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -35,13 +39,15 @@ export class Event {
     event.endDate = body.endDate ?? null;
     event.isAllDay = body.isAllDay ?? false;
     event.description = sanitizeDescription(body.description);
-    event.hide = body.hide ?? false;
     event.eventTypeId = body.eventTypeId ?? null;
     event.isCustom = body.isCustom ?? false;
     event.isTask = body.isTask ?? false;
-    // Optional — present only for Islamic-calendar events from the frontend.
-    event.islamicEventKey = body.islamicEventKey ?? null;
     event.islamicDefinitionId = body.islamicDefinitionId ?? null;
+    event.hijiriMonth = body.hijiriMonth ?? null;
+    event.hijiriDay = body.hijiriDay ?? null;
+    event.durationDays = body.durationDays ?? null;
+    event.rrule = body.rrule ?? null;
+    event.isSystemEvent = body.isSystemEvent ?? null;
     return event;
   }
 
@@ -62,8 +68,12 @@ export class Event {
     event.eventTypeId = row.eventtypeid;
     event.isCustom = row.iscustom;
     event.isTask = row.istask;
-    event.islamicEventKey = row.islamiceventkey ?? null;
     event.islamicDefinitionId = row.islamicdefinitionid ?? null;
+    event.hijiriMonth = row.hijirimonth ?? null;
+    event.hijiriDay = row.hijiriday ?? null;
+    event.durationDays = row.durationdays ?? null;
+    event.rrule = row.rrule ?? null;
+    event.isSystemEvent = row.isSystemEvent ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -82,8 +92,12 @@ export class Event {
       eventTypeId: this.eventTypeId,
       isCustom: this.isCustom,
       isTask: this.isTask,
-      islamicEventKey: this.islamicEventKey,
       islamicDefinitionId: this.islamicDefinitionId,
+      hijiriMonth: this.hijiriMonth,
+      hijiriDay: this.hijiriDay,
+      durationDays: this.durationDays,
+      rrule: this.rrule,
+      isSystemEvent: this.isSystemEvent,
       userId: this.userId,
     }
   }

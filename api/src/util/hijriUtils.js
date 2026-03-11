@@ -106,12 +106,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
     const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
 
     for (const def of candidates) {
-      const islamicEventKey = def.repeatsEachMonth
-        ? `${def.id}_${d.hijriMonth}_${d.hijriYear}`
-        : `${def.id}_${d.hijriYear}`;
-
-      if (seen.has(islamicEventKey)) continue;
-      seen.add(islamicEventKey);
+      // ...existing code...
 
       const startDate = new Date(d.date);
       startDate.setHours(0, 0, 0, 0);
@@ -122,7 +117,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
 
       events.push({
         islamicDefinitionId: def.id,
-        islamicEventKey,
         name: `${def.titleAr} | ${def.titleEn}`,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),

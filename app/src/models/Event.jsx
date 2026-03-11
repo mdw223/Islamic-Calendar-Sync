@@ -31,8 +31,13 @@ export const defaultEvent = Object.freeze({
   eventTypeId: EventTypeId.CUSTOM,
   isCustom: false,
   isTask: false,
-  islamicEventKey: null,
   islamicDefinitionId: null,
+  hijriMonth: null,
+  hijriDay: null,
+  durationDays: null,
+  rrule: null,
+  isSystemEvent: false,
+  parentEventId: null,
 });
 
 // ── Normalise a raw API row (lowercase keys) ───────────────────────────────
@@ -50,8 +55,13 @@ export function fromApiRow(row) {
     eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
     isCustom: row.iscustom ?? false,
     isTask: row.istask ?? false,
-    islamicEventKey: row.islamiceventkey ?? null,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
+    hijriMonth: row.hijrimonth ?? null,
+    hijriDay: row.hijriday ?? null,
+    durationDays: row.durationdays ?? null,
+    rrule: row.rrule ?? null,
+    isSystemEvent: row.issystemevent ?? false,
+    parentEventId: row.parenteventid ?? null,
   };
 }
 
@@ -78,7 +88,12 @@ export class Event {
     this.eventTypeId = normalized.eventTypeId ?? EventTypeId.CUSTOM;
     this.isCustom = normalized.isCustom ?? false;
     this.isTask = normalized.isTask ?? false;
-    this.islamicEventKey = normalized.islamicEventKey ?? null;
+    this.hijriMonth = normalized.hijriMonth ?? null;
+    this.hijriDay = normalized.hijriDay ?? null;
+    this.durationDays = normalized.durationDays ?? null;
+    this.rrule = normalized.rrule ?? null;
+    this.isSystemEvent = normalized.isSystemEvent ?? false;
+    this.parentEventId = normalized.parentEventId ?? null;
     this.islamicDefinitionId = normalized.islamicDefinitionId ?? null;
   }
 
@@ -165,8 +180,13 @@ export class Event {
       eventTypeId: this.eventTypeId,
       isCustom: this.isCustom,
       isTask: this.isTask,
-      islamicEventKey: this.islamicEventKey,
       islamicDefinitionId: this.islamicDefinitionId,
+      hijriMonth: this.hijriMonth,
+      hijriDay: this.hijriDay,
+      durationDays: this.durationDays,
+      rrule: this.rrule,
+      isSystemEvent: this.isSystemEvent,
+      parentEventId: this.parentEventId,
     };
   }
 }
