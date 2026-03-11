@@ -76,7 +76,8 @@ export default class APIClient {
    * @param {{ name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }} eventData
    */
   static async createEvent(eventData) {
-    return HTTPClient.post("/events", eventData);
+    const { eventId, ...payload } = eventData;
+    return HTTPClient.post("/events", payload);
   }
 
   /**

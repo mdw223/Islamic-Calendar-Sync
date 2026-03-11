@@ -225,7 +225,7 @@ export function CalendarProvider({ children }) {
     try {
       const res = await client.getEventById(eventId);
       const updated = res?.event ?? res;
-      const idField = isGuest ? "id" : "eventId";
+      const idField = "eventId";
       const next = eventsRef.current.map((e) =>
         e[idField] === eventId ? updated : e,
       );
@@ -249,9 +249,8 @@ export function CalendarProvider({ children }) {
     try {
       const res = await client.updateEvent(eventId, updates);
       const updated = res?.event ?? res;
-      const idField = isGuest ? "id" : "eventId";
       const next = eventsRef.current.map((e) =>
-        e[idField] === eventId ? updated : e,
+        e.eventId === eventId ? updated : e,
       );
       saveEvents(next);
       return updated;
@@ -270,8 +269,7 @@ export function CalendarProvider({ children }) {
     const client = isGuest ? OfflineClient : APIClient;
     try {
       await client.deleteEvent(eventId);
-      const idField = isGuest ? "id" : "eventId";
-      const next = eventsRef.current.filter((e) => e[idField] !== eventId);
+      const next = eventsRef.current.filter((e) => e.eventId !== eventId);
       saveEvents(next);
     } catch (err) {
       setError(err.message ?? "Failed to delete event");

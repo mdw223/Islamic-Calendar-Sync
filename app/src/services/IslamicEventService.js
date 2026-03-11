@@ -178,5 +178,8 @@ export async function generateForOfflineUser(year) {
 
   // Return all events for this year (both existing + newly created).
   const allEvents = await db.events.toArray();
-  return { events: allEvents, generatedCount: toInsert.length };
+  return {
+    events: allEvents.map(({ id, ...rest }) => ({ ...rest, eventId: id })),
+    generatedCount: toInsert.length,
+  };
 }

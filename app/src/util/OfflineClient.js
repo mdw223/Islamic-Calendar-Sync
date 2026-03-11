@@ -15,40 +15,51 @@ import {
   generateForOfflineUser,
 } from "../services/IslamicEventService";
 
+/**
+ * Map a raw Dexie record (auto-increment `id`) to the shape the frontend
+ * expects (`eventId`), so all code can use `eventId` uniformly.
+ */
+function mapDexieEvent(record) {
+  if (!record) return null;
+  const { id, ...rest } = record;
+  return { ...rest, eventId: id };
+}
+
 export default class OfflineClient {
   // ── Events ─────────────────────────────────────────────────────────────
 
   static async getEvents() {
-    const events = await db.events.toArray();
-    return { success: true, events };
+    const raw = await db.events.toArray();
+    return { success: true, events: raw.map(mapDexieEvent) };
   }
 
   static async getEventById(eventId) {
     const event = await db.events.get(eventId);
-    return { success: true, event: event ?? null };
+    return { success: true, event: mapDexieEvent(event) };
   }
 
   static async createEvent(eventData) {
+    const { eventId: _strip, ...rest } = eventData;
     const now = new Date().toISOString();
     const record = {
-      ...eventData,
-      isCustom: eventData.isCustom ?? true,
-      isTask: eventData.isTask ?? false,
-      hide: eventData.hide ?? false,
-      islamicEventKey: eventData.islamicEventKey ?? null,
-      islamicDefinitionId: eventData.islamicDefinitionId ?? null,
+      ...rest,
+      isCustom: rest.isCustom ?? true,
+      isTask: rest.isTask ?? false,
+      hide: rest.hide ?? false,
+      islamicEventKey: rest.islamicEventKey ?? null,
+      islamicDefinitionId: rest.islamicDefinitionId ?? null,
       createdAt: now,
       updatedAt: now,
     };
     const id = await db.events.add(record);
-    return { success: true, event: { ...record, id } };
+    return { success: true, event: { ...record, eventId: id } };
   }
 
   static async updateEvent(eventId, updates) {
     const now = new Date().toISOString();
     await db.events.update(eventId, { ...updates, updatedAt: now });
     const event = await db.events.get(eventId);
-    return { success: true, event };
+    return { success: true, event: mapDexieEvent(event) };
   }
 
   static async deleteEvent(eventId) {
@@ -108,8 +119,8 @@ export default class OfflineClient {
     if (events.length === 0 && preferences.length === 0) return null;
 
     return {
-      // Strip local auto-increment `id` — backend assigns real EventId.
-      events: events.map(({ id, createdAt, updatedAt, ...rest }) => rest),
+      // Strip local auto-increment `id` and any `eventId` — backend assigns real EventId.
+      events: events.map(({ id, eventId, createdAt, updatedAt, ...rest }) => rest),
       preferences,
     };
   }

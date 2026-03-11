@@ -19,7 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { useCalendar } from "../../contexts/CalendarContext";
-import { EventTypeId } from "../../constants";
+import { EventTypeId } from "../../Constants";
 import RichTextEditor from "../RichTextEditor";
 
 /** Map enum entries to {id, name} pairs for the dropdown. */
@@ -69,7 +69,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           description: event?.description ?? "",
           hide: event?.hide ?? false,
         });
-        console.log(event);
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
         // "YYYY-MM-DDThh:mm" (from WeekView / DayView slot clicks).
