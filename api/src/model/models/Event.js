@@ -16,8 +16,8 @@ export class Event {
     this.isCustom = null;
     this.isTask = null;
     this.islamicDefinitionId = null;
-    this.hijiriMonth = null,
-    this.hijiriDay = null,
+    this.hijriMonth = null,
+    this.hijriDay = null,
     this.durationDays = null,
     this.rrule = null,
     this.isSystemEvent = null,
@@ -43,8 +43,8 @@ export class Event {
     event.isCustom = body.isCustom ?? false;
     event.isTask = body.isTask ?? false;
     event.islamicDefinitionId = body.islamicDefinitionId ?? null;
-    event.hijiriMonth = body.hijiriMonth ?? null;
-    event.hijiriDay = body.hijiriDay ?? null;
+    event.hijriMonth = body.hijriMonth ?? null;
+    event.hijriDay = body.hijriDay ?? null;
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
     event.isSystemEvent = body.isSystemEvent ?? null;
@@ -69,8 +69,8 @@ export class Event {
     event.isCustom = row.iscustom;
     event.isTask = row.istask;
     event.islamicDefinitionId = row.islamicdefinitionid ?? null;
-    event.hijiriMonth = row.hijirimonth ?? null;
-    event.hijiriDay = row.hijiriday ?? null;
+    event.hijriMonth = row.hijrimonth ?? null;
+    event.hijriDay = row.hijriday ?? null;
     event.durationDays = row.durationdays ?? null;
     event.rrule = row.rrule ?? null;
     event.isSystemEvent = row.isSystemEvent ?? null;
@@ -93,8 +93,8 @@ export class Event {
       isCustom: this.isCustom,
       isTask: this.isTask,
       islamicDefinitionId: this.islamicDefinitionId,
-      hijiriMonth: this.hijiriMonth,
-      hijiriDay: this.hijiriDay,
+      hijriMonth: this.hijriMonth,
+      hijriDay: this.hijriDay,
       durationDays: this.durationDays,
       rrule: this.rrule,
       isSystemEvent: this.isSystemEvent,

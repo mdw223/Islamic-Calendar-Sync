@@ -5,7 +5,7 @@ import { sendJson } from '../SendJson.js';
  * DELETE /events/:eventId
  * Delete an event owned by the current user.
  */
-export default async function RemoveAllEvents(req, res) {
+export default async function DeleteAllEvents(req, res) {
     try {
         const deleted = await EventDOA.deleteAllEvents(req.user.userId);
 

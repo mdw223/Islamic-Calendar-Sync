@@ -63,8 +63,8 @@ export default class EventDOA {
     isCustom = false,
     isTask = false,
     islamicDefinitionId = null,
-      hijiriMonth = null,
-      hijiriDay = null,
+      hijriMonth = null,
+      hijriDay = null,
       durationDays = null,
       rrule = null,
       isSystemEvent = null,
@@ -73,11 +73,11 @@ export default class EventDOA {
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
          description, hide, eventtypeid, iscustom, istask,
-         islamicdefinitionid, hijirimonth, hijiriday, durationdays, rrule, isSystemEvent, createdat, updatedat
+         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, createdat, updatedat
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
        RETURNING *`,
-      [userId, name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask, islamicDefinitionId, hijiriMonth, hijiriDay, durationDays, rrule, isSystemEvent],
+      [userId, name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
     );
     return Event.fromRow(result.rows[0]);
   }
@@ -102,8 +102,8 @@ export default class EventDOA {
       isCustom: "iscustom",
       isTask: "istask",
       islamicDefinitionId: "islamicdefinitionid",
-      hijiriMonth: "hijirimonth",
-      hijiriDay: "hijiriday",
+      hijriMonth: "hijrimonth",
+      hijriDay: "hijriday",
       durationDays: "durationdays",
       rrule: "rrule",
       isSystemEvent: "isSystemEvent"
@@ -204,8 +204,8 @@ export default class EventDOA {
           isCustom = false,
           isTask = false,
           islamicDefinitionId = null,
-          hijiriMonth = null,
-          hijiriDay = null,
+          hijriMonth = null,
+          hijriDay = null,
           durationDays = null,
           rrule = null,
           isSystemEvent = null
@@ -216,12 +216,12 @@ export default class EventDOA {
             `INSERT INTO event (
                userid, name, startdate, enddate, isallday,
                description, hide, eventtypeid, iscustom, istask,
-               islamicdefinitionid, hijirimonth, hijiriday, durationdays, rrule, isSystemEvent, createdat, updatedat
+               islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, createdat, updatedat
              )
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
              RETURNING *`,
             [userId, name, startDate, endDate, isAllDay, description, hide,
-             eventTypeId, isCustom, isTask, islamicDefinitionId, hijiriMonth, hijiriDay, durationDays, rrule, isSystemEvent],
+             eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
           );
 
         if (result.rows[0]) {

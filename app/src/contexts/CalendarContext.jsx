@@ -393,7 +393,7 @@ export function CalendarProvider({ children }) {
    */
   async function resetCalendar() {
     try {
-      await APIClient.removeAllEvents();
+      await APIClient.deleteAllEvents();
     } catch {
       await OfflineClient.clearAll();
     }

@@ -244,7 +244,7 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     // Auto-generate Islamic events for the current year if this is a new or
     // upgraded user. The upsert makes this idempotent so calling it
     // redundantly is harmless.
-    generateForNewUser(user.userId).catch(() => {});
+    // generateForNewUser(user.userId).catch(() => {});
 
     return user;
 }

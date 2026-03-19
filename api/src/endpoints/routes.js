@@ -13,7 +13,7 @@ import CreateEvent from './events/CreateEvent.js';
 import GenerateEvents from './events/GenerateEvents.js';
 import UpdateEvent from './events/UpdateEvent.js';
 import DeleteEvent from './events/DeleteEvent.js';
-import RemoveAllEvents from './events/RemoveAllEvents.js'
+import DeleteAllEvents from './events/DeleteAllEvents.js'
 import GetDefinitions from './definitions/GetDefinitions.js';
 import UpdateDefinitionPreference from './definitions/UpdateDefinitionPreference.js';
 import SyncOfflineEvents from './events/SyncOfflineEvents.js';
@@ -42,7 +42,7 @@ router.get("/events/:eventId", Auth(AuthUser.VALID_USER), GetEventById);
 router.post("/events", Auth(AuthUser.VALID_USER), CreateEvent);
 router.put("/events/:eventId", Auth(AuthUser.VALID_USER), UpdateEvent);
 router.delete("/events/:eventId", Auth(AuthUser.VALID_USER), DeleteEvent);
-router.delete("/events", Auth(AuthUser.VALID_USER), RemoveAllEvents);
+router.delete("/events", Auth(AuthUser.VALID_USER), DeleteAllEvents);
 
 // Offline-to-server sync (called once after login when IndexedDB data exists)
 router.post("/events/sync", Auth(AuthUser.VALID_USER), SyncOfflineEvents);

@@ -75,7 +75,7 @@ export default function CalendarActionBar({
     >
       {/* Generate Button */}
       <Button
-        variant="outlined"
+        variant="contained"
         size="small"
         startIcon={<CalendarDays size={16} />}
         disabled={isGenerating}

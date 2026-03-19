@@ -100,7 +100,7 @@ export default class APIClient {
   /**
    * Delete all events for the current user.
    */
-  static async removeAllEvents() {
+  static async deleteAllEvents() {
     return HTTPClient.delete("/events");
   }
 
