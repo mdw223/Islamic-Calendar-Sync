@@ -108,7 +108,6 @@ export function CalendarProvider({ children }) {
           eventsRef.current = loaded;
           setIslamicEventDefs(defsRes?.definitions ?? []);
 
-          await ensureIslamicEventsForYearInternal(new Date().getFullYear());
         } else {
           // Not authenticated — check IndexedDB for cached data.
           const hasData = await OfflineClient.hasData();
@@ -124,7 +123,7 @@ export function CalendarProvider({ children }) {
             eventsRef.current = loaded;
             setIslamicEventDefs(defsRes?.definitions ?? []);
 
-            await ensureIslamicEventsForYearInternal(new Date().getFullYear());
+            // await ensureIslamicEventsForYearInternal(new Date().getFullYear());
           } else {
             if (cancelled) return;
             setEvents([]);
@@ -175,8 +174,6 @@ export function CalendarProvider({ children }) {
    * Tries API first, falls back to OfflineClient on failure.
    */
   async function ensureIslamicEventsForYearInternal(year) {
-    if (generatedYearsRef.current.has(year)) return;
-
     try {
       let res;
       try {
@@ -368,7 +365,10 @@ export function CalendarProvider({ children }) {
         await APIClient.updateDefinitionPreference(definitionId, newHidden);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          await OfflineClient.updateDefinitionPreference(definitionId, newHidden);
+          await OfflineClient.updateDefinitionPreference(
+            definitionId,
+            newHidden,
+          );
         } else {
           throw err;
         }
@@ -389,15 +389,11 @@ export function CalendarProvider({ children }) {
 
   /**
    * Reset the calendar — deletes all events, reloads fresh definitions,
-   * then re-generates Islamic events. Tries API first; falls back to IndexedDB.
+   * Tries API first; falls back to IndexedDB.
    */
   async function resetCalendar() {
     try {
-      await Promise.allSettled(
-        eventsRef.current
-          .filter((e) => typeof e.eventId === "number")
-          .map((e) => APIClient.deleteEvent(e.eventId)),
-      );
+      await APIClient.removeAllEvents();
     } catch {
       await OfflineClient.clearAll();
     }
@@ -422,9 +418,6 @@ export function CalendarProvider({ children }) {
     } catch {
       setIslamicEventDefs([]);
     }
-
-    // Re-generate for the current year.
-    await ensureIslamicEventsForYearInternal(new Date().getFullYear());
   }
 
   // ── Derived state ───────────────────────────────────────────────────────

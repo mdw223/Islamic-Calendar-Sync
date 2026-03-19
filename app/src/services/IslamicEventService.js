@@ -148,11 +148,6 @@ export async function generateForOfflineUser(year) {
     return { events: [], generatedCount: 0 };
   }
 
-  // Remove all existing Islamic events for this year before inserting new ones
-  const yearStart = new Date(year, 0, 1).toISOString();
-  const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999).toISOString();
-  await db.events.where("startDate").between(yearStart, yearEnd, true, true).delete();
-
   const now = new Date().toISOString();
   await db.events.bulkAdd(
     generated.map((e) => ({ ...e, createdAt: now, updatedAt: now })),

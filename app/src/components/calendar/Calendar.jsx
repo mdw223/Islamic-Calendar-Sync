@@ -88,11 +88,6 @@ export default function Calendar() {
     refreshTimer.current = setTimeout(() => setRefreshFeedback(null), 2500);
   }, [refreshFromBackend]);
 
-  // ── Year-change detection ─────────────────────────────────────────────────
-  useEffect(() => {
-    ensureIslamicEventsForYear(cursor.getFullYear());
-  }, [cursor.getFullYear()]);
-
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   function goToday() {

@@ -144,6 +144,19 @@ export default class EventDOA {
   }
 
   /**
+   * Delete all events for a user.
+   * @param {number} userId
+   * @returns {Promise<boolean>} true if any rows were deleted
+   */
+  static async removeAllEvets(userId) {
+    const result = await query(
+      "DELETE FROM event WHERE userid = $2",
+      [eventId, userId],
+    );
+    return result.rowCount > 0;
+  }
+
+  /**
    * Update the hide flag on all events matching a given Islamic definition ID
    * for a specific user. Used when toggling a definition's visibility.
    * @param {number} userId

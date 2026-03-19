@@ -5,6 +5,7 @@ import {
   X as XIcon,
   RotateCcw as ResetIcon,
   Check as CheckIcon,
+  CalendarDays
 } from "lucide-react";
 import { Button, CircularProgress, Paper, Tooltip, Box } from "@mui/material";
 import { useCallback, useRef, useState } from "react";
@@ -29,6 +30,19 @@ export default function CalendarActionBar({
   // ── Reset button feedback state ─────────────────────────────────────────
   const [resetFeedback, setResetFeedback] = useState(null); // 'success' | null
   const resetTimer = useRef(null);
+
+  const { ensureIslamicEventsForYear } = useCalendar();
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateEvents = useCallback(async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      await ensureIslamicEventsForYear(new Date().getFullYear());
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [ensureIslamicEventsForYear, isGenerating]);
 
   const handleReset = useCallback(() => {
     resetCalendar();
@@ -59,6 +73,17 @@ export default function CalendarActionBar({
         zIndex: { sm: 20 },
       }}
     >
+      {/* Generate Button */}
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<CalendarDays size={16} />}
+        disabled={isGenerating}
+        onClick={handleGenerateEvents}
+        sx={{ whiteSpace: "nowrap" }}
+      >
+        {isGenerating ? "Generating..." : "Generate Events"}
+      </Button>
       {/* ── Reset button ──────────────────────────────────────────────────── */}
       <Button
         variant="outlined"

@@ -97,6 +97,13 @@ export default class APIClient {
     return HTTPClient.delete(`/events/${eventId}`);
   }
 
+  /**
+   * Delete all events for the current user.
+   */
+  static async removeAllEvents() {
+    return HTTPClient.delete("/events");
+  }
+
   // ── Islamic event generation (server-side) ────────────────────────────────
 
   /**

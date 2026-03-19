@@ -15,10 +15,10 @@ import Dexie from "dexie";
 
 const db = new Dexie("IslamicCalendarSync");
 
-db.version(1).stores({
+db.version(2).stores({
   // ++id  = auto-increment primary key
   // Indexed fields after the PK allow efficient querying / upsert-by-key.
-  events: "++id, islamicDefinitionId, eventTypeId",
+  events: "++id, islamicDefinitionId, eventTypeId, startDate",
 
   // definitionId is the primary key (matches islamicEvents.json `id`).
   definitionPreferences: "definitionId",
