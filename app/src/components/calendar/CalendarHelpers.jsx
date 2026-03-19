@@ -100,6 +100,30 @@ export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
 }
 
 /**
+ * Returns inclusive ISO date keys (YYYY-MM-DD) for the event range.
+ * Falls back `endKey` to `startKey` when `endDate` is missing.
+ */
+export function getEventStartEndDateKeys(event) {
+  const startKey = (event?.startDate ?? "").slice(0, 10);
+  if (!startKey) return { startKey: null, endKey: null };
+
+  const endKeyRaw = (event?.endDate ?? event?.startDate ?? "").slice(0, 10);
+  const endKey = endKeyRaw || startKey;
+  return { startKey, endKey };
+}
+
+/**
+ * True when an event should be treated as a multi-day all-day range for
+ * connected UI rendering (spans more than one day).
+ */
+export function eventIsAllDayMultiDay(event) {
+  if (!event?.isAllDay) return false;
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
+  if (!startKey || !endKey) return false;
+  return endKey > startKey;
+}
+
+/**
  * Maps an event's `eventTypeId` to a colour from the theme palette so that
  * different Islamic event types are visually distinct on the calendar.
  */
