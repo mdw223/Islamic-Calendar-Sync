@@ -1,7 +1,12 @@
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 import { DAY_NAMES } from "../../Constants";
-import { toDateKey, sameDay, EventChip } from "./CalendarHelpers.jsx";
+import {
+  toDateKey,
+  sameDay,
+  EventChip,
+  getEventDayKeysInRange,
+} from "./CalendarHelpers.jsx";
 import { getHijriParts } from "../../util/HijriUtils";
 import { Moon } from "lucide-react";
 
@@ -40,13 +45,17 @@ export default function MonthView({
 
   const eventsByDay = useMemo(() => {
     const map = {};
+    const rangeStartKey = toDateKey(new Date(year, month, 1));
+    const rangeEndKey = toDateKey(new Date(year, month + 1, 0));
     events.forEach((ev) => {
-      const key = (ev.startDate ?? "").slice(0, 10);
-      if (!map[key]) map[key] = [];
-      map[key].push(ev);
+      const dayKeys = getEventDayKeysInRange(ev, rangeStartKey, rangeEndKey);
+      dayKeys.forEach((key) => {
+        if (!map[key]) map[key] = [];
+        map[key].push(ev);
+      });
     });
     return map;
-  }, [events]);
+  }, [events, year, month]);
 
   const cells = useMemo(() => {
     const result = [];
@@ -172,7 +181,7 @@ export default function MonthView({
               >
                 {dayEvents.slice(0, 3).map((ev) => (
                   <EventChip
-                    key={ev.eventId}
+                    key={`${ev.eventId}-${ev.startDate ?? ""}`}
                     event={ev}
                     onClick={onEventClick}
                     theme={theme}

@@ -1,7 +1,7 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 import { HOURS } from "../../Constants";
-import { toDateKey, EventChip } from "./CalendarHelpers.jsx";
+import { toDateKey, EventChip, eventOverlapsDateKey } from "./CalendarHelpers.jsx";
 
 /**
  * Renders a 24-row hourly grid for a single `date`. Each row shows a time
@@ -14,7 +14,7 @@ export default function DayView({ date, events, onSlotClick, onEventClick }) {
   const key = toDateKey(date);
 
   const dayEvents = useMemo(
-    () => events.filter((ev) => (ev.startDate ?? "").slice(0, 10) === key),
+    () => events.filter((ev) => eventOverlapsDateKey(ev, key)),
     [events, key],
   );
 
@@ -73,7 +73,7 @@ export default function DayView({ date, events, onSlotClick, onEventClick }) {
             >
               {slotEvents.map((ev) => (
                 <EventChip
-                  key={ev.eventId}
+                  key={`${ev.eventId}-${ev.startDate ?? ""}`}
                   event={ev}
                   onClick={onEventClick}
                   theme={theme}

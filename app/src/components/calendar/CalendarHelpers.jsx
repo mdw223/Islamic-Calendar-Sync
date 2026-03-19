@@ -44,6 +44,62 @@ export function sameDay(a, b) {
 }
 
 /**
+ * Returns true if the given event overlaps the provided day key (YYYY-MM-DD).
+ * The overlap check is inclusive of both `startDate` and `endDate`.
+ */
+export function eventOverlapsDateKey(event, dateKey) {
+  if (!event || !dateKey) return false;
+  const startKey = (event.startDate ?? "").slice(0, 10);
+  if (!startKey) return false;
+
+  let endKey = (event.endDate ?? event.startDate ?? "").slice(0, 10);
+  if (!endKey) endKey = startKey;
+  if (endKey < startKey) endKey = startKey;
+
+  // ISO date keys are lexicographically sortable (YYYY-MM-DD).
+  return startKey <= dateKey && dateKey <= endKey;
+}
+
+function addDaysUTC(date, n) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+/**
+ * Returns an array of YYYY-MM-DD keys for every day the event overlaps,
+ * clamped to the provided range keys (inclusive).
+ */
+export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
+  if (!event || !rangeStartKey || !rangeEndKey) return [];
+
+  const startKey = (event.startDate ?? "").slice(0, 10);
+  if (!startKey) return [];
+
+  let endKey = (event.endDate ?? event.startDate ?? "").slice(0, 10);
+  if (!endKey) endKey = startKey;
+  if (endKey < startKey) endKey = startKey;
+
+  const clampedStartKey = startKey < rangeStartKey ? rangeStartKey : startKey;
+  const clampedEndKey = endKey > rangeEndKey ? rangeEndKey : endKey;
+  if (clampedEndKey < clampedStartKey) return [];
+
+  const startDateUTC = new Date(`${clampedStartKey}T00:00:00.000Z`);
+  const endDateUTC = new Date(`${clampedEndKey}T00:00:00.000Z`);
+
+  const keys = [];
+  for (
+    let d = startDateUTC;
+    d.getTime() <= endDateUTC.getTime();
+    d = addDaysUTC(d, 1)
+  ) {
+    keys.push(d.toISOString().slice(0, 10));
+  }
+
+  return keys;
+}
+
+/**
  * Maps an event's `eventTypeId` to a colour from the theme palette so that
  * different Islamic event types are visually distinct on the calendar.
  */
