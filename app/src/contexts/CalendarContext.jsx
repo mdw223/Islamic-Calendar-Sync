@@ -107,7 +107,6 @@ export function CalendarProvider({ children }) {
           setEvents(loaded);
           eventsRef.current = loaded;
           setIslamicEventDefs(defsRes?.definitions ?? []);
-
         } else {
           // Not authenticated — check IndexedDB for cached data.
           const hasData = await OfflineClient.hasData();
@@ -170,34 +169,35 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Internal helper — generate Islamic events for `year`.
+   * Generate Islamic events for the given years (skipping already-generated ones).
    * Tries API first, falls back to OfflineClient on failure.
+   *
+   * @param {number[]} years - Array of Gregorian years.
    */
-  async function ensureIslamicEventsForYearInternal(year) {
+  async function ensureIslamicEventsForYears(years) {
+    const needed = years.filter((y) => !generatedYearsRef.current.has(y));
+    if (needed.length === 0) return;
+
     try {
       let res;
       try {
-        res = await APIClient.generateEvents(year);
+        res = await APIClient.generateEvents(needed);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.generateEvents(year);
+          res = await OfflineClient.generateEvents(needed);
         } else {
           throw err;
         }
       }
-      generatedYearsRef.current.add(year);
+      for (const y of needed) generatedYearsRef.current.add(y);
 
       const generated = res?.events ?? [];
       if (generated.length > 0) {
         saveEvents([...eventsRef.current, ...generated]);
       }
     } catch {
-      // Don't mark year as generated so it retries next time.
+      // Don't mark years as generated so they retry next time.
     }
-  }
-
-  async function ensureIslamicEventsForYear(year) {
-    await ensureIslamicEventsForYearInternal(year);
   }
 
   /**
@@ -445,7 +445,7 @@ export function CalendarProvider({ children }) {
         // Islamic event definitions (with isHidden flags)
         islamicEventDefs,
         toggleIslamicEvent,
-        ensureIslamicEventsForYear,
+        ensureIslamicEventsForYears,
 
         // Backend sync / refresh (syncToBackend is now a no-op)
         syncToBackend,

@@ -135,28 +135,32 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
 // ── Generate + persist to Dexie ─────────────────────────────────────────────
 
 /**
- * Generate Islamic events for `year` and upsert them into IndexedDB.
+ * Generate Islamic events for one or more years and upsert them into IndexedDB.
  *
- * @param {number} year - Gregorian year
+ * @param {number[]} years - Array of Gregorian years
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForOfflineUser(year) {
+export async function generateForOfflineUser(years) {
   const mergedDefs = await getMergedDefinitions();
-  const generated = generateIslamicEventsForYear(year, mergedDefs);
 
-  if (generated.length === 0) {
+  const allGenerated = [];
+  for (const year of years) {
+    const generated = generateIslamicEventsForYear(year, mergedDefs);
+    allGenerated.push(...generated);
+  }
+
+  if (allGenerated.length === 0) {
     return { events: [], generatedCount: 0 };
   }
 
   const now = new Date().toISOString();
   await db.events.bulkAdd(
-    generated.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
+    allGenerated.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
   );
 
-  // Return all events for this year (newly created only).
   const allEvents = await db.events.toArray();
   return {
     events: allEvents.map(({ id, ...rest }) => ({ ...rest, eventId: id })),
-    generatedCount: generated.length,
+    generatedCount: allGenerated.length,
   };
 }

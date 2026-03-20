@@ -7,6 +7,7 @@ export class Event {
   constructor() {
     this.eventId = null;
     this.name = null;
+    this.location = null;
     this.startDate = null;
     this.endDate = null;
     this.isAllDay = null;
@@ -36,6 +37,7 @@ export class Event {
   static fromRequest(body) {
     const event = new Event();
     event.name = body.name ?? null;
+    event.location = body.location ?? null;
     event.startDate = body.startDate ?? null;
     event.endDate = body.endDate ?? null;
     event.isAllDay = body.isAllDay ?? false;
@@ -62,6 +64,7 @@ export class Event {
     const event = new Event();
     event.eventId = row.eventid;
     event.name = row.name;
+    event.location = row.location ?? null;
     event.startDate = row.startdate;
     event.endDate = row.enddate;
     event.isAllDay = row.isallday;
@@ -87,6 +90,7 @@ export class Event {
     return {
       eventId: this.eventId,
       name: this.name,
+      location: this.location,
       startDate: this.startDate,
       endDate: this.endDate,
       isAllDay: this.isAllDay,

@@ -43,6 +43,7 @@ export default class OfflineClient {
     const now = new Date().toISOString();
     const record = {
       ...rest,
+      location: rest.location ?? null,
       isCustom: rest.isCustom ?? true,
       isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
@@ -68,8 +69,8 @@ export default class OfflineClient {
 
   // ── Islamic event generation ───────────────────────────────────────────
 
-  static async generateEvents(year) {
-    return generateForOfflineUser(year);
+  static async generateEvents(years) {
+    return generateForOfflineUser(years);
   }
 
   // ── Definitions ────────────────────────────────────────────────────────

@@ -8,7 +8,6 @@ import EventModal from "./EventModal";
 import MonthView from "./MonthView";
 import WeekView from "./WeekView";
 import DayView from "./DayView";
-import LoginPromptModal from "../LoginPromptModal";
 import { toDateKey, startOfWeek, useToolbarLabel } from "./CalendarHelpers.jsx";
 
 /**
@@ -24,11 +23,9 @@ export default function Calendar() {
     changeView,
     loading,
     error,
-    syncToBackend,
     refreshFromBackend,
-    isSyncing,
     isRefreshing,
-    ensureIslamicEventsForYear,
+    ensureIslamicEventsForYears,
   } = useCalendar();
 
   const { user } = useUser();
@@ -41,39 +38,16 @@ export default function Calendar() {
   const [modalInitialDate, setModalInitialDate] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
 
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-
-  // ── Sync / Refresh feedback state ─────────────────────────────────────────
-  const [syncFeedback, setSyncFeedback] = useState(null); // 'success' | 'error' | null
+  // ── Refresh feedback state ────────────────────────────────────────────────
   const [refreshFeedback, setRefreshFeedback] = useState(null);
-  const [feedbackError, setFeedbackError] = useState(null); // error message string
-  const syncTimer = useRef(null);
+  const [feedbackError, setFeedbackError] = useState(null);
   const refreshTimer = useRef(null);
 
-  // Clean up timers on unmount
   useEffect(() => {
     return () => {
-      clearTimeout(syncTimer.current);
       clearTimeout(refreshTimer.current);
     };
   }, []);
-
-  const handleSync = useCallback(async () => {
-    if (!user.isLoggedIn) {
-      setLoginDialogOpen(true);
-      return;
-    }
-    setFeedbackError(null);
-    const result = await syncToBackend();
-    if (result?.ok) {
-      setSyncFeedback("success");
-    } else {
-      setSyncFeedback("error");
-      setFeedbackError(result?.error ?? "Failed to sync events");
-    }
-    clearTimeout(syncTimer.current);
-    syncTimer.current = setTimeout(() => setSyncFeedback(null), 2500);
-  }, [user.isLoggedIn, syncToBackend]);
 
   const handleRefresh = useCallback(async () => {
     setFeedbackError(null);
@@ -163,12 +137,7 @@ export default function Calendar() {
         goNext={goNext}
       />
 
-      <LoginPromptModal
-        open={loginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
-      />
-
-      {/* Sync / Refresh error banner */}
+      {/* Refresh error banner */}
       <Collapse in={feedbackError != null}>
         <Alert
           severity="error"
@@ -215,9 +184,6 @@ export default function Calendar() {
       <CalendarActionBar
         onAddEvent={() => openCreate(null)}
         user={user}
-        isSyncing={isSyncing}
-        syncFeedback={syncFeedback}
-        onSync={handleSync}
         isRefreshing={isRefreshing}
         refreshFeedback={refreshFeedback}
         onRefresh={handleRefresh}

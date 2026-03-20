@@ -46,6 +46,7 @@ export default async function UpdateEvent(req, res) {
         const overrideData = {
             userId,
             name: req.body.name ?? systemEvent.name,
+            location: req.body.location ?? systemEvent.location,
             startDate: req.body.startDate ?? systemEvent.startDate,
             endDate: req.body.endDate ?? systemEvent.endDate,
             isAllDay: req.body.isAllDay ?? systemEvent.isAllDay,

@@ -5,44 +5,114 @@ import {
   X as XIcon,
   RotateCcw as ResetIcon,
   Check as CheckIcon,
-  CalendarDays
+  CalendarDays,
 } from "lucide-react";
-import { Button, CircularProgress, Paper, Tooltip, Box } from "@mui/material";
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  TextField,
+  Tooltip,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 import { useCallback, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
+import SyncModal from "./SyncModal";
 
 /**
  * CalendarActionBar
  *
- * Renders the Add Event, Sync, and Refresh action buttons below the calendar.
+ * Renders the Add Event, Sync, Generate, Reset, and Refresh action buttons
+ * below the calendar.
  */
 export default function CalendarActionBar({
   onAddEvent,
   user,
-  isSyncing,
-  syncFeedback,
-  onSync,
   isRefreshing,
   refreshFeedback,
   onRefresh,
 }) {
-  const { resetCalendar } = useCalendar();
+  const { resetCalendar, ensureIslamicEventsForYears } = useCalendar();
+  const currentYear = new Date().getFullYear();
+  const MAX_GENERATE_YEARS = 5;
+
   // ── Reset button feedback state ─────────────────────────────────────────
-  const [resetFeedback, setResetFeedback] = useState(null); // 'success' | null
+  const [resetFeedback, setResetFeedback] = useState(null);
   const resetTimer = useRef(null);
 
-  const { ensureIslamicEventsForYear } = useCalendar();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [startYear, setStartYear] = useState(String(currentYear));
+  const [endYear, setEndYear] = useState(String(currentYear));
+  const [generateError, setGenerateError] = useState("");
+  const [thisYearOnly, setThisYearOnly] = useState(true);
 
-  const handleGenerateEvents = useCallback(async () => {
+  // ── Sync modal state ────────────────────────────────────────────────────
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+
+  const handleOpenGeneratePopup = useCallback(() => {
     if (isGenerating) return;
+    setStartYear(String(currentYear));
+    setEndYear(String(currentYear));
+    setGenerateError("");
+    setGenerateModalOpen(true);
+  }, [currentYear, isGenerating]);
+
+  const handleCloseGeneratePopup = useCallback(() => {
+    if (isGenerating) return;
+    setGenerateModalOpen(false);
+    setGenerateError("");
+  }, [isGenerating]);
+
+  const handleConfirmGenerateEvents = useCallback(async () => {
+    if (isGenerating) return;
+
+    const parsedStartYear = Number.parseInt(startYear, 10);
+    const parsedEndYear = Number.parseInt(endYear, 10);
+
+    if (Number.isNaN(parsedStartYear) || Number.isNaN(parsedEndYear)) {
+      setGenerateError("Please enter valid numeric years.");
+      return;
+    }
+    if (parsedStartYear > parsedEndYear) {
+      setGenerateError("Start year must be less than or equal to end year.");
+      return;
+    }
+
+    const totalYears = parsedEndYear - parsedStartYear + 1;
+    if (totalYears > MAX_GENERATE_YEARS) {
+      setGenerateError(
+        `Please choose a range of ${MAX_GENERATE_YEARS} years or fewer.`,
+      );
+      return;
+    }
+
+    const yearsToGenerate = Array.from(
+      { length: totalYears },
+      (_, index) => parsedStartYear + index,
+    );
+
+    setGenerateError("");
     setIsGenerating(true);
     try {
-      await ensureIslamicEventsForYear(new Date().getFullYear());
+      await ensureIslamicEventsForYears(yearsToGenerate);
+      setGenerateModalOpen(false);
     } finally {
       setIsGenerating(false);
     }
-  }, [ensureIslamicEventsForYear, isGenerating]);
+  }, [
+    endYear,
+    ensureIslamicEventsForYears,
+    isGenerating,
+    startYear,
+    MAX_GENERATE_YEARS,
+  ]);
 
   const handleReset = useCallback(() => {
     resetCalendar();
@@ -79,12 +149,13 @@ export default function CalendarActionBar({
         size="small"
         startIcon={<CalendarDays size={16} />}
         disabled={isGenerating}
-        onClick={handleGenerateEvents}
+        onClick={handleOpenGeneratePopup}
         sx={{ whiteSpace: "nowrap" }}
       >
         {isGenerating ? "Generating..." : "Generate Events"}
       </Button>
-      {/* ── Reset button ──────────────────────────────────────────────────── */}
+
+      {/* ── Reset button ──────────────────────────────────────────────── */}
       <Button
         variant="outlined"
         size="small"
@@ -118,66 +189,15 @@ export default function CalendarActionBar({
         {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
       </Button>
 
-      <Tooltip
-        title={
-          user.isLoggedIn
-            ? "Sync Islamic events to your account"
-            : "Sign in to sync your calendar"
-        }
+      {/* ── Sync button (opens modal) ─────────────────────────────────── */}
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<SyncIcon size={14} />}
+        onClick={() => setSyncModalOpen(true)}
       >
-        <span>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={
-              isSyncing ? (
-                <CircularProgress size={14} />
-              ) : syncFeedback === "success" ? (
-                <CheckIcon
-                  size={14}
-                  style={{
-                    color: "#10b981",
-                    animation: "popIn 0.3s ease-out",
-                  }}
-                />
-              ) : syncFeedback === "error" ? (
-                <XIcon
-                  size={14}
-                  style={{
-                    color: "#ef4444",
-                    animation: "popIn 0.3s ease-out",
-                  }}
-                />
-              ) : (
-                <SyncIcon size={14} />
-              )
-            }
-            disabled={isSyncing || syncFeedback != null}
-            onClick={onSync}
-            sx={{
-              ...(syncFeedback === "success" && {
-                borderColor: "#10b981",
-                color: "#10b981",
-              }),
-              ...(syncFeedback === "error" && {
-                borderColor: "#ef4444",
-                color: "#ef4444",
-              }),
-              "@keyframes popIn": {
-                "0%": { transform: "scale(0)" },
-                "60%": { transform: "scale(1.3)" },
-                "100%": { transform: "scale(1)" },
-              },
-            }}
-          >
-            {syncFeedback === "success"
-              ? "Synced!"
-              : syncFeedback === "error"
-                ? "Failed"
-                : "Sync"}
-          </Button>
-        </span>
-      </Tooltip>
+        Sync
+      </Button>
 
       {user.isLoggedIn && (
         <Tooltip title="Refresh events from your account">
@@ -244,6 +264,73 @@ export default function CalendarActionBar({
       >
         Add Event
       </Button>
+
+      <Dialog
+        open={generateModalOpen}
+        onClose={handleCloseGeneratePopup}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Generate Islamic Events</DialogTitle>
+        <DialogContent sx={{ pt: 1.5, display: "grid", gap: 1.5 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={thisYearOnly}
+                sx={{ py: 0.5 }}
+                onChange={(event) => setThisYearOnly(event.target.checked)}
+              />
+            }
+            label="This Year Only"
+          />
+
+          {!thisYearOnly && (
+            <>
+              <TextField
+                label="Start year"
+                type="number"
+                size="small"
+                value={startYear}
+                onChange={(event) => setStartYear(event.target.value)}
+                inputProps={{ step: 1 }}
+                disabled={isGenerating}
+                autoFocus
+              />
+              <TextField
+                label="End year"
+                type="number"
+                size="small"
+                value={endYear}
+                onChange={(event) => setEndYear(event.target.value)}
+                inputProps={{ step: 1 }}
+                disabled={isGenerating}
+              />
+            </>
+          )}
+
+          {!!generateError && <Alert severity="error">{generateError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseGeneratePopup} disabled={isGenerating}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmGenerateEvents}
+            disabled={isGenerating}
+          >
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Sync modal */}
+      <SyncModal
+        open={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        user={user}
+      />
     </Paper>
   );
 }

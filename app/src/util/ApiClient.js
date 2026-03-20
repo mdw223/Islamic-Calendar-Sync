@@ -73,7 +73,7 @@ export default class APIClient {
 
   /**
    * Create a new event.
-   * @param {{ name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }} eventData
+   * @param {{ name, location?, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }} eventData
    */
   static async createEvent(eventData) {
     const { eventId, ...payload } = eventData;
@@ -83,7 +83,7 @@ export default class APIClient {
   /**
    * Update an existing event by its ID.
    * @param {number} eventId
-   * @param {{ name?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isCustom?, isTask? }} updates
+   * @param {{ name?, location?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isCustom?, isTask? }} updates
    */
   static async updateEvent(eventId, updates) {
     return HTTPClient.put(`/events/${eventId}`, updates);
@@ -107,15 +107,15 @@ export default class APIClient {
   // ── Islamic event generation (server-side) ────────────────────────────────
 
   /**
-   * Generate Islamic events for a Gregorian year on the backend.
+   * Generate Islamic events for one or more Gregorian years on the backend.
    * The backend's upsert handles idempotency — calling this for the same
-   * year is harmless.
+   * years is harmless.
    *
-   * @param {number} year - Gregorian year, e.g. 2026
+   * @param {number[]} years - Array of Gregorian years, e.g. [2025, 2026]
    * @returns {Promise<{ success: boolean, events: Object[], generatedCount: number }>}
    */
-  static async generateEvents(year) {
-    return HTTPClient.post("/events/generate", { year });
+  static async generateEvents(years) {
+    return HTTPClient.post("/events/generate", { years });
   }
 
   // ── Definitions ────────────────────────────────────────────────────────────

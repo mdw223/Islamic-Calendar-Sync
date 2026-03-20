@@ -455,7 +455,7 @@ export default function MonthView({
               gridColumn: `${seg.startColIndex + 1} / ${seg.endColIndex + 2}`,
               zIndex: 2,
               mt: `calc(30px + ${seg.lane * 22}px)`,
-              px: { xs: 0.5, sm: 0.25 },
+              px: { xs: 0.5, sm: 1 },
               pointerEvents: "auto",
               position: "relative",
               width: "100%",

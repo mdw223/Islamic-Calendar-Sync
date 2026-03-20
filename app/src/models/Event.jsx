@@ -1,4 +1,4 @@
-import { EventTypeId } from "../constants";
+import { EventTypeId } from "../Constants";
 
 // ── Allowed eventTypeId values ──────────────────────────────────────────────
 const VALID_EVENT_TYPE_IDS = new Set(Object.values(EventTypeId));
@@ -23,6 +23,7 @@ function toDate(v) {
 export const defaultEvent = Object.freeze({
   eventId: null,
   name: null,
+  location: null,
   startDate: null,
   endDate: null,
   isAllDay: true,
@@ -47,6 +48,7 @@ export function fromApiRow(row) {
   return {
     eventId: row.eventid ?? null,
     name: row.name ?? null,
+    location: row.location ?? null,
     startDate: row.startdate ?? null,
     endDate: row.enddate ?? null,
     isAllDay: row.isallday ?? true,
@@ -80,6 +82,7 @@ export class Event {
     // ── Assign fields ────────────────────────────────────────────────────
     this.eventId = normalized.eventId ?? null;
     this.name = normalized.name ?? null;
+    this.location = normalized.location ?? null;
     this.startDate = normalized.startDate ?? null;
     this.endDate = normalized.endDate ?? null;
     this.isAllDay = normalized.isAllDay ?? true;
@@ -172,6 +175,7 @@ export class Event {
     return {
       eventId: this.eventId,
       name: this.name,
+      location: this.location,
       startDate: this.startDate,
       endDate: this.endDate,
       isAllDay: this.isAllDay,

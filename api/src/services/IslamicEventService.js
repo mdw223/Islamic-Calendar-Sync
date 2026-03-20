@@ -43,22 +43,27 @@ export async function getMergedDefinitions(userId) {
 }
 
 /**
- * Generate Islamic events for a given user and year.
- * Loads preferences, generates events, upserts to DB.
+ * Generate Islamic events for a given user across one or more years.
+ * Loads preferences, generates events for each year, upserts to DB in one batch.
  *
  * @param {number} userId
- * @param {number} year - Gregorian year.
+ * @param {number[]} years - Array of Gregorian years.
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForUser(userId, year) {
+export async function generateForUser(userId, years) {
   const mergedDefs = await getMergedDefinitions(userId);
-  const generated = generateIslamicEventsForYear(year, mergedDefs);
 
-  if (generated.length === 0) {
+  const allGenerated = [];
+  for (const year of years) {
+    const generated = generateIslamicEventsForYear(year, mergedDefs);
+    allGenerated.push(...generated);
+  }
+
+  if (allGenerated.length === 0) {
     return { events: [], generatedCount: 0 };
   }
 
-  const persisted = await EventDOA.bulkUpsert(generated, userId);
+  const persisted = await EventDOA.bulkUpsert(allGenerated, userId);
   return { events: persisted, generatedCount: persisted.length };
 }
 
@@ -71,5 +76,5 @@ export async function generateForUser(userId, year) {
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
 export async function generateForNewUser(userId) {
-  return generateForUser(userId, new Date().getFullYear());
+  return generateForUser(userId, [new Date().getFullYear()]);
 }

@@ -31,6 +31,13 @@ export default async function CreateEvent(req, res) {
             }, 400);
         }
 
+        if (eventData.location && eventData.location.length > 1024) {
+            return sendJson(res, {
+                success: false,
+                message: 'Event location must be 1024 characters or fewer.',
+            }, 400);
+        }
+
         const event = await EventDOA.createEvent({ ...eventData, userId: req.user.userId });
 
         return sendJson(res, {

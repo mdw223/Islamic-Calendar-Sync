@@ -30,6 +30,7 @@ const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
 
 const DEFAULT_FORM = {
   name: "",
+  location: "",
   startDate: "",
   endDate: "",
   isAllDay: false,
@@ -60,6 +61,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       if (isEdit) {
         setForm({
           name: event?.name ?? "",
+          location: event?.location ?? "",
           startDate: toDatetimeLocal(event?.startDate),
           endDate: toDatetimeLocal(event?.endDate),
           isAllDay: event?.isAllDay ?? false,
@@ -174,6 +176,14 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             required
             fullWidth
             autoFocus
+            inputProps={{ maxLength: 1024 }}
+          />
+
+          <TextField
+            label="Location"
+            value={form.location}
+            onChange={(e) => handleChange("location", e.target.value)}
+            fullWidth
             inputProps={{ maxLength: 1024 }}
           />
 
