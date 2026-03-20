@@ -12,8 +12,8 @@ export class User {
     this.lastLogin = null;
     this.isAdmin = null;
     this.language = null;
-    this.eventConfigurationStart = null;
-    this.eventConfigurationEnd = null;
+    this.generatedYearsStart = null;
+    this.generatedYearsEnd = null;
     this.prayerConfigurationStart = null;
     this.prayerConfigurationEnd = null;
     this.calculationMethodId = null;
@@ -44,8 +44,8 @@ export class User {
     user.lastLogin = row.lastlogin;
     user.isAdmin = row.isadmin;
     user.language = row.language;
-    user.eventConfigurationStart = row.eventconfigurationstart;
-    user.eventConfigurationEnd = row.eventconfigurationend;
+    user.generatedYearsStart = row.generatedyearsstart;
+    user.generatedYearsEnd = row.generatedyearsend;
     user.prayerConfigurationStart = row.prayerconfigurationstart;
     user.prayerConfigurationEnd = row.prayerconfigurationend;
     user.calculationMethodId = row.calculationmethodid;
@@ -69,8 +69,8 @@ export class User {
       name: this.name,
       isAdmin: this.isAdmin,
       language: this.language,
-      eventConfigurationStart: this.eventConfigurationStart,
-      eventConfigurationEnd: this.eventConfigurationEnd,
+      generatedYearsStart: this.generatedYearsStart,
+      generatedYearsEnd: this.generatedYearsEnd,
       prayerConfigurationStart: this.prayerConfigurationStart,
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,

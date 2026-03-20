@@ -53,7 +53,6 @@ export default async function UpdateEvent(req, res) {
             description: req.body.description ?? systemEvent.description,
             hide: req.body.hide ?? systemEvent.hide,
             eventTypeId: req.body.eventTypeId ?? systemEvent.eventTypeId,
-            isCustom: req.body.isCustom ?? systemEvent.isCustom,
             isTask: req.body.isTask ?? systemEvent.isTask,
             islamicDefinitionId: req.body.islamicDefinitionId ?? systemEvent.islamicDefinitionId,
             hijriMonth: req.body.hijriMonth ?? systemEvent.hijriMonth,

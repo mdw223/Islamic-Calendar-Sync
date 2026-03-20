@@ -36,12 +36,13 @@ import { shouldFallbackToOffline } from "../util/ApiErrorHelper";
 import { useUser } from "./UserContext";
 import { getSavedView } from "../util/LocalStorage";
 import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
+import { createUser } from "../models/User";
 
 const CalendarContext = createContext(null);
 
 export function CalendarProvider({ children }) {
   // ── User ────────────────────────────────────────────────────────────────
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   // ── Events state ────────────────────────────────────────────────────────
   const [events, setEvents] = useState([]);
@@ -62,8 +63,11 @@ export function CalendarProvider({ children }) {
   // ── Islamic event definitions (loaded from API) ─────────────────────────
   const [islamicEventDefs, setIslamicEventDefs] = useState([]);
 
-  // ── Track which years have been generated this session ──────────────────
-  const generatedYearsRef = useRef(new Set());
+  // ── Persisted generated-year coverage range ─────────────────────────────
+  const [generatedYearsRange, setGeneratedYearsRange] = useState({
+    start: null,
+    end: null,
+  });
 
   // ── Ref to always-current events (avoids stale closures in callbacks) ───
   const eventsRef = useRef(events);
@@ -79,7 +83,10 @@ export function CalendarProvider({ children }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    generatedYearsRef.current = new Set();
+    setGeneratedYearsRange({
+      start: user?.generatedYearsStart ?? null,
+      end: user?.generatedYearsEnd ?? null,
+    });
 
     (async () => {
       try {
@@ -107,13 +114,18 @@ export function CalendarProvider({ children }) {
           setEvents(loaded);
           eventsRef.current = loaded;
           setIslamicEventDefs(defsRes?.definitions ?? []);
+          setGeneratedYearsRange({
+            start: user?.generatedYearsStart ?? null,
+            end: user?.generatedYearsEnd ?? null,
+          });
         } else {
           // Not authenticated — check IndexedDB for cached data.
           const hasData = await OfflineClient.hasData();
           if (hasData) {
-            const [eventsRes, defsRes] = await Promise.all([
+            const [eventsRes, defsRes, yearsRange] = await Promise.all([
               OfflineClient.getEvents(),
               OfflineClient.getDefinitions(),
+              OfflineClient.getGeneratedYearsRange(),
             ]);
             if (cancelled) return;
 
@@ -121,6 +133,10 @@ export function CalendarProvider({ children }) {
             setEvents(loaded);
             eventsRef.current = loaded;
             setIslamicEventDefs(defsRes?.definitions ?? []);
+            setGeneratedYearsRange({
+              start: yearsRange?.generatedYearsStart ?? null,
+              end: yearsRange?.generatedYearsEnd ?? null,
+            });
 
             // await ensureIslamicEventsForYearInternal(new Date().getFullYear());
           } else {
@@ -129,12 +145,14 @@ export function CalendarProvider({ children }) {
             eventsRef.current = [];
             setIslamicEventDefs([]);
             setCalendarProviders([]);
+            setGeneratedYearsRange({ start: null, end: null });
           }
         }
       } catch {
         if (!cancelled) {
           setEvents([]);
           eventsRef.current = [];
+          setGeneratedYearsRange({ start: null, end: null });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -175,28 +193,53 @@ export function CalendarProvider({ children }) {
    * @param {number[]} years - Array of Gregorian years.
    */
   async function ensureIslamicEventsForYears(years) {
-    const needed = years.filter((y) => !generatedYearsRef.current.has(y));
-    if (needed.length === 0) return;
+    const requestedYears = [...new Set(years)].filter((y) =>
+      Number.isInteger(y),
+    );
+    if (requestedYears.length === 0) return;
 
     try {
       let res;
       try {
-        res = await APIClient.generateEvents(needed);
+        res = await APIClient.generateEvents(requestedYears);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.generateEvents(needed);
+          res = await OfflineClient.generateEvents(requestedYears);
         } else {
           throw err;
         }
       }
-      for (const y of needed) generatedYearsRef.current.add(y);
+
+      const minRequestedYear = Math.min(...requestedYears);
+      const maxRequestedYear = Math.max(...requestedYears);
+      const nextStart =
+        generatedYearsRange.start == null
+          ? minRequestedYear
+          : Math.min(generatedYearsRange.start, minRequestedYear);
+      const nextEnd =
+        generatedYearsRange.end == null
+          ? maxRequestedYear
+          : Math.max(generatedYearsRange.end, maxRequestedYear);
+      setGeneratedYearsRange({ start: nextStart, end: nextEnd });
+
+      if (isAuth) {
+        setUser((prev) => {
+          const base = prev?.toJSON ? prev.toJSON() : prev;
+          const updated = createUser(base);
+          updated.updateProfile({
+            generatedYearsStart: nextStart,
+            generatedYearsEnd: nextEnd,
+          });
+          return updated;
+        });
+      }
 
       const generated = res?.events ?? [];
       if (generated.length > 0) {
         saveEvents([...eventsRef.current, ...generated]);
       }
     } catch {
-      // Don't mark years as generated so they retry next time.
+      // Keep generatedYearsRange unchanged on failure.
     }
   }
 
@@ -400,7 +443,18 @@ export function CalendarProvider({ children }) {
 
     // Reset local state.
     saveEvents([]);
-    generatedYearsRef.current = new Set();
+    setGeneratedYearsRange({ start: null, end: null });
+    if (isAuth) {
+      setUser((prev) => {
+        const base = prev?.toJSON ? prev.toJSON() : prev;
+        const updated = createUser(base);
+        updated.updateProfile({
+          generatedYearsStart: null,
+          generatedYearsEnd: null,
+        });
+        return updated;
+      });
+    }
 
     // Reload definitions.
     try {
@@ -446,6 +500,7 @@ export function CalendarProvider({ children }) {
         islamicEventDefs,
         toggleIslamicEvent,
         ensureIslamicEventsForYears,
+        generatedYearsRange,
 
         // Backend sync / refresh (syncToBackend is now a no-op)
         syncToBackend,

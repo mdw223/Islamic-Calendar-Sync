@@ -9,7 +9,7 @@
  *
  * Request body:
  *   { events: Array<{ name, startDate, endDate, isAllDay, description,
- *       hide, eventTypeId, isCustom, isTask, islamicDefinitionId?
+ *       hide, eventTypeId, isTask, islamicDefinitionId?
  *       islamicDefinitionId? }> }
  *
  * Success response (201):

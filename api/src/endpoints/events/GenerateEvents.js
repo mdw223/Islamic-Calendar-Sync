@@ -22,16 +22,19 @@ import { sendJson } from "../SendJson.js";
 export default async function GenerateEvents(req, res) {
   try {
     const { years } = req.body;
+    const currentYear = new Date().getFullYear();
 
     if (
       !Array.isArray(years) ||
       years.length === 0 ||
-      !years.every((y) => Number.isInteger(y) && y >= 2000 && y <= 2100)
+      !years.every(
+        (y) => Number.isInteger(y) && y >= currentYear && y <= 2100,
+      )
     ) {
       return sendJson(res, {
         success: false,
         message:
-          "Request body must contain a \"years\" field with a non-empty array of integers between 2000 and 2100.",
+          `Request body must contain a "years" field with a non-empty array of integers between ${currentYear} and 2100.`,
       }, 400);
     }
 

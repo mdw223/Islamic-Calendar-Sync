@@ -17,6 +17,7 @@ const islamicEventsData = require("../data/islamicEvents.json");
 import { generateIslamicEventsForYear } from "../util/HijriUtils.js";
 import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../model/db/doa/EventDOA.js";
+import UserDOA from "../model/db/doa/UserDOA.js";
 
 /**
  * Get the base definitions from the JSON file.
@@ -64,6 +65,20 @@ export async function generateForUser(userId, years) {
   }
 
   const persisted = await EventDOA.bulkUpsert(allGenerated, userId);
+  const user = await UserDOA.findById(userId);
+  if (user) {
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const nextStart =
+      user.generatedYearsStart == null
+        ? minYear
+        : Math.min(user.generatedYearsStart, minYear);
+    const nextEnd =
+      user.generatedYearsEnd == null
+        ? maxYear
+        : Math.max(user.generatedYearsEnd, maxYear);
+    await UserDOA.updateGeneratedYearsRange(userId, nextStart, nextEnd);
+  }
   return { events: persisted, generatedCount: persisted.length };
 }
 

@@ -18,8 +18,8 @@ function fromApiRow(row) {
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     language: row.language ?? null,
-    eventConfigurationStart: row.eventconfigurationstart ?? null,
-    eventConfigurationEnd: row.eventconfigurationend ?? null,
+    generatedYearsStart: row.generatedyearsstart ?? null,
+    generatedYearsEnd: row.generatedyearsend ?? null,
     prayerConfigurationStart: row.prayerconfigurationstart ?? null,
     prayerConfigurationEnd: row.prayerconfigurationend ?? null,
     calculationMethodId: row.calculationmethodid ?? null,
@@ -40,8 +40,8 @@ export const defaultUser = {
   latitude: null,
   longitude: null,
   language: null,
-  eventConfigurationStart: null,
-  eventConfigurationEnd: null,
+  generatedYearsStart: null,
+  generatedYearsEnd: null,
   prayerConfigurationStart: null,
   prayerConfigurationEnd: null,
   calculationMethodId: null,
@@ -66,8 +66,8 @@ export class User {
     this.latitude = normalized.latitude ?? null;
     this.longitude = normalized.longitude ?? null;
     this.language = normalized.language ?? null;
-    this.eventConfigurationStart = normalized.eventConfigurationStart ?? null;
-    this.eventConfigurationEnd = normalized.eventConfigurationEnd ?? null;
+    this.generatedYearsStart = normalized.generatedYearsStart ?? null;
+    this.generatedYearsEnd = normalized.generatedYearsEnd ?? null;
     this.prayerConfigurationStart = normalized.prayerConfigurationStart ?? null;
     this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
     this.calculationMethodId = normalized.calculationMethodId ?? null;
@@ -97,10 +97,9 @@ export class User {
       this.latitude = normalized.latitude ?? this.latitude;
       this.longitude = normalized.longitude ?? this.longitude;
       this.language = normalized.language ?? this.language;
-      this.eventConfigurationStart =
-        normalized.eventConfigurationStart ?? this.eventConfigurationStart;
-      this.eventConfigurationEnd =
-        normalized.eventConfigurationEnd ?? this.eventConfigurationEnd;
+      this.generatedYearsStart =
+        normalized.generatedYearsStart ?? this.generatedYearsStart;
+      this.generatedYearsEnd = normalized.generatedYearsEnd ?? this.generatedYearsEnd;
       this.prayerConfigurationStart =
         normalized.prayerConfigurationStart ?? this.prayerConfigurationStart;
       this.prayerConfigurationEnd =
@@ -131,8 +130,8 @@ export class User {
       "latitude",
       "longitude",
       "language",
-      "eventConfigurationStart",
-      "eventConfigurationEnd",
+      "generatedYearsStart",
+      "generatedYearsEnd",
       "prayerConfigurationStart",
       "prayerConfigurationEnd",
       "calculationMethodId",
@@ -157,8 +156,8 @@ export class User {
       latitude: this.latitude,
       longitude: this.longitude,
       language: this.language,
-      eventConfigurationStart: this.eventConfigurationStart,
-      eventConfigurationEnd: this.eventConfigurationEnd,
+      generatedYearsStart: this.generatedYearsStart,
+      generatedYearsEnd: this.generatedYearsEnd,
       prayerConfigurationStart: this.prayerConfigurationStart,
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,

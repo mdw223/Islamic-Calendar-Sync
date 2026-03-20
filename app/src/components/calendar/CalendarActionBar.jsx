@@ -21,7 +21,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from "@mui/material";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import SyncModal from "./SyncModal";
 
@@ -38,7 +38,8 @@ export default function CalendarActionBar({
   refreshFeedback,
   onRefresh,
 }) {
-  const { resetCalendar, ensureIslamicEventsForYears } = useCalendar();
+  const { resetCalendar, ensureIslamicEventsForYears, generatedYearsRange } =
+    useCalendar();
   const currentYear = new Date().getFullYear();
   const MAX_GENERATE_YEARS = 5;
 
@@ -73,11 +74,19 @@ export default function CalendarActionBar({
   const handleConfirmGenerateEvents = useCallback(async () => {
     if (isGenerating) return;
 
-    const parsedStartYear = Number.parseInt(startYear, 10);
-    const parsedEndYear = Number.parseInt(endYear, 10);
+    const parsedStartYear = thisYearOnly
+      ? currentYear
+      : Number.parseInt(startYear, 10);
+    const parsedEndYear = thisYearOnly
+      ? currentYear
+      : Number.parseInt(endYear, 10);
 
     if (Number.isNaN(parsedStartYear) || Number.isNaN(parsedEndYear)) {
       setGenerateError("Please enter valid numeric years.");
+      return;
+    }
+    if (parsedStartYear < currentYear || parsedEndYear < currentYear) {
+      setGenerateError("Years must be the current year or later.");
       return;
     }
     if (parsedStartYear > parsedEndYear) {
@@ -107,11 +116,44 @@ export default function CalendarActionBar({
       setIsGenerating(false);
     }
   }, [
+    currentYear,
     endYear,
     ensureIslamicEventsForYears,
     isGenerating,
     startYear,
+    thisYearOnly,
     MAX_GENERATE_YEARS,
+  ]);
+
+  const duplicateYears = useMemo(() => {
+    const generatedStart = generatedYearsRange?.start;
+    const generatedEnd = generatedYearsRange?.end;
+    if (generatedStart == null || generatedEnd == null) return [];
+
+    const selectedStart = thisYearOnly
+      ? currentYear
+      : Number.parseInt(startYear, 10);
+    const selectedEnd = thisYearOnly
+      ? currentYear
+      : Number.parseInt(endYear, 10);
+    if (Number.isNaN(selectedStart) || Number.isNaN(selectedEnd)) return [];
+    if (selectedStart > selectedEnd) return [];
+
+    const overlapStart = Math.max(selectedStart, generatedStart);
+    const overlapEnd = Math.min(selectedEnd, generatedEnd);
+    if (overlapStart > overlapEnd) return [];
+
+    return Array.from(
+      { length: overlapEnd - overlapStart + 1 },
+      (_, index) => overlapStart + index,
+    );
+  }, [
+    currentYear,
+    endYear,
+    generatedYearsRange?.end,
+    generatedYearsRange?.start,
+    startYear,
+    thisYearOnly,
   ]);
 
   const handleReset = useCallback(() => {
@@ -293,7 +335,7 @@ export default function CalendarActionBar({
                 size="small"
                 value={startYear}
                 onChange={(event) => setStartYear(event.target.value)}
-                inputProps={{ step: 1 }}
+                inputProps={{ step: 1, min: currentYear }}
                 disabled={isGenerating}
                 autoFocus
               />
@@ -303,13 +345,19 @@ export default function CalendarActionBar({
                 size="small"
                 value={endYear}
                 onChange={(event) => setEndYear(event.target.value)}
-                inputProps={{ step: 1 }}
+                inputProps={{ step: 1, min: currentYear }}
                 disabled={isGenerating}
               />
             </>
           )}
 
           {!!generateError && <Alert severity="error">{generateError}</Alert>}
+          {duplicateYears.length > 0 && (
+            <Alert severity="warning">
+              Already generated years: {duplicateYears.join(", ")}. Continuing
+              will submit the full selected range.
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseGeneratePopup} disabled={isGenerating}>

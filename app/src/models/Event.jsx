@@ -30,7 +30,6 @@ export const defaultEvent = Object.freeze({
   description: null,
   hide: false,
   eventTypeId: EventTypeId.CUSTOM,
-  isCustom: false,
   isTask: false,
   islamicDefinitionId: null,
   hijriMonth: null,
@@ -55,7 +54,6 @@ export function fromApiRow(row) {
     description: row.description ?? null,
     hide: row.hide ?? false,
     eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
-    isCustom: row.iscustom ?? false,
     isTask: row.istask ?? false,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
     hijriMonth: row.hijrimonth ?? null,
@@ -89,7 +87,6 @@ export class Event {
     this.description = normalized.description ?? null;
     this.hide = normalized.hide ?? false;
     this.eventTypeId = normalized.eventTypeId ?? EventTypeId.CUSTOM;
-    this.isCustom = normalized.isCustom ?? false;
     this.isTask = normalized.isTask ?? false;
     this.hijriMonth = normalized.hijriMonth ?? null;
     this.hijriDay = normalized.hijriDay ?? null;
@@ -138,7 +135,7 @@ export class Event {
     }
 
     // Boolean coercion sanity — catch accidental string / number values.
-    for (const flag of ["isAllDay", "hide", "isCustom", "isTask"]) {
+    for (const flag of ["isAllDay", "hide", "isTask"]) {
       if (typeof this[flag] !== "boolean") {
         errors.push(`${flag} must be a boolean, got ${typeof this[flag]}.`);
       }
@@ -182,7 +179,6 @@ export class Event {
       description: this.description,
       hide: this.hide,
       eventTypeId: this.eventTypeId,
-      isCustom: this.isCustom,
       isTask: this.isTask,
       islamicDefinitionId: this.islamicDefinitionId,
       hijriMonth: this.hijriMonth,

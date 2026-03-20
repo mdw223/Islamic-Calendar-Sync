@@ -123,7 +123,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
         eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
-        isCustom: false,
         isTask: false,
         hide: false,
       });

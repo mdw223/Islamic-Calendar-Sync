@@ -582,7 +582,7 @@ GET /users/{userId}/prayers
     "prayerTypeName": "Fard",
     "description": "The pre-dawn prayer...",
     "hide": false,
-    "isCustom": false
+    "isTask": false
   }
 ]
 ```
@@ -750,7 +750,7 @@ GET /users/{userId}/events
     "hide": false,
     "eventTypeId": 1,
     "eventTypeName": "Ramadan",
-    "isCustom": false
+    "isTask": false
   }
 ]
 ```

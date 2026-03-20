@@ -44,7 +44,6 @@ export default class OfflineClient {
     const record = {
       ...rest,
       location: rest.location ?? null,
-      isCustom: rest.isCustom ?? true,
       isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
       islamicDefinitionId: rest.islamicDefinitionId ?? null,
@@ -70,7 +69,32 @@ export default class OfflineClient {
   // ── Islamic event generation ───────────────────────────────────────────
 
   static async generateEvents(years) {
-    return generateForOfflineUser(years);
+    const result = await generateForOfflineUser(years);
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const existing = await db.generationMeta.get("generatedYearsRange");
+    const nextStart =
+      existing?.generatedYearsStart == null
+        ? minYear
+        : Math.min(existing.generatedYearsStart, minYear);
+    const nextEnd =
+      existing?.generatedYearsEnd == null
+        ? maxYear
+        : Math.max(existing.generatedYearsEnd, maxYear);
+    await db.generationMeta.put({
+      key: "generatedYearsRange",
+      generatedYearsStart: nextStart,
+      generatedYearsEnd: nextEnd,
+    });
+    return result;
+  }
+
+  static async getGeneratedYearsRange() {
+    const row = await db.generationMeta.get("generatedYearsRange");
+    return {
+      generatedYearsStart: row?.generatedYearsStart ?? null,
+      generatedYearsEnd: row?.generatedYearsEnd ?? null,
+    };
   }
 
   // ── Definitions ────────────────────────────────────────────────────────
@@ -111,17 +135,26 @@ export default class OfflineClient {
    * Returns null if there is nothing to sync.
    */
   static async getAllDataForSync() {
-    const [events, preferences] = await Promise.all([
+    const [events, preferences, generationMeta] = await Promise.all([
       db.events.toArray(),
       db.definitionPreferences.toArray(),
+      db.generationMeta.get("generatedYearsRange"),
     ]);
 
-    if (events.length === 0 && preferences.length === 0) return null;
+    if (
+      events.length === 0 &&
+      preferences.length === 0 &&
+      generationMeta == null
+    ) {
+      return null;
+    }
 
     return {
       // Strip local auto-increment `id` and any `eventId` — backend assigns real EventId.
       events: events.map(({ id, eventId, createdAt, updatedAt, ...rest }) => rest),
       preferences,
+      generatedYearsStart: generationMeta?.generatedYearsStart ?? null,
+      generatedYearsEnd: generationMeta?.generatedYearsEnd ?? null,
     };
   }
 
@@ -132,6 +165,7 @@ export default class OfflineClient {
     await Promise.all([
       db.events.clear(),
       db.definitionPreferences.clear(),
+      db.generationMeta.clear(),
     ]);
   }
 
@@ -142,6 +176,8 @@ export default class OfflineClient {
     const count = await db.events.count();
     if (count > 0) return true;
     const prefCount = await db.definitionPreferences.count();
-    return prefCount > 0;
+    if (prefCount > 0) return true;
+    const generationMeta = await db.generationMeta.get("generatedYearsRange");
+    return generationMeta != null;
   }
 }

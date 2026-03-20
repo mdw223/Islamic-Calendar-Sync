@@ -24,4 +24,10 @@ db.version(2).stores({
   definitionPreferences: "definitionId",
 });
 
+db.version(3).stores({
+  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  definitionPreferences: "definitionId",
+  generationMeta: "key",
+});
+
 export default db;

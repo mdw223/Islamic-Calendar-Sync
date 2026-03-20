@@ -86,10 +86,10 @@ export default class UserDOA {
     return this.updateUser(userId, { language });
   }
 
-  static async updateEventConfiguration(userId, start, end) {
+  static async updateGeneratedYearsRange(userId, start, end) {
     return this.updateUser(userId, {
-      eventconfigurationstart: start,
-      eventconfigurationend: end,
+      generatedyearsstart: start,
+      generatedyearsend: end,
     });
   }
 

@@ -171,7 +171,6 @@ erDiagram
         text Description
         boolean Hide
         int EventTypeId FK
-        boolean IsCustom
         boolean IsTask
         timestamp CreatedAt
         timestamp UpdatedAt
@@ -205,7 +204,6 @@ erDiagram
         int PrayerTypeId FK
         text Description
         boolean Hide
-        boolean IsCustom
         timestamp CreatedAt
         timestamp UpdatedAt
     }

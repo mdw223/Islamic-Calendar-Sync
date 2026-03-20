@@ -25,16 +25,12 @@ import { useCallback, useMemo, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import ics from "../../util/Ics";
 
-const YEAR_RANGE_OFFSET = 2;
+const YEAR_RANGE_OFFSET = 5;
 
 function buildYearChoices() {
   const current = new Date().getFullYear();
   const choices = [];
-  for (
-    let y = current - YEAR_RANGE_OFFSET;
-    y <= current + YEAR_RANGE_OFFSET;
-    y++
-  ) {
+  for (let y = current; y <= current + YEAR_RANGE_OFFSET; y++) {
     choices.push(y);
   }
   return choices;

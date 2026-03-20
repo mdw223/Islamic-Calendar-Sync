@@ -75,7 +75,7 @@ export default class EventDOA {
    * Create a new event for a user.
    * @param {{ userId: number, name: string, location?: string, startDate: string, endDate: string,
    *           isAllDay?: boolean, description?: string, hide?: boolean,
-   *           eventTypeId: number, isCustom?: boolean, isTask?: boolean }} data
+   *           eventTypeId: number, isTask?: boolean }} data
    * @returns {Promise<Event>}
    */
   static async createEvent({
@@ -88,7 +88,6 @@ export default class EventDOA {
     description = null,
     hide = false,
     eventTypeId,
-    isCustom = false,
     isTask = false,
     islamicDefinitionId = null,
     hijriMonth = null,
@@ -101,15 +100,15 @@ export default class EventDOA {
     const result = await query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
-         description, location, hide, eventtypeid, iscustom, istask,
+         description, location, hide, eventtypeid, istask,
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
          issystemevent, parenteventid, createdat, updatedat
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-               $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
+               $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
        RETURNING *`,
       [userId, name, startDate, endDate, isAllDay, description, location, hide,
-       eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth,
+       eventTypeId, isTask, islamicDefinitionId, hijriMonth,
        hijriDay, durationDays, rrule, isSystemEvent, parentEventId],
     );
     return Event.fromRow(result.rows[0]);
@@ -120,7 +119,7 @@ export default class EventDOA {
    * Scopes by userId so a user cannot modify another user's events.
    * @param {number} eventId
    * @param {number} userId
-   * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask }>} fields
+   * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide, eventTypeId, isTask }>} fields
    * @returns {Promise<Event | null>}
    */
   static async updateEvent(eventId, userId, fields) {
@@ -133,7 +132,6 @@ export default class EventDOA {
       description: "description",
       hide: "hide",
       eventTypeId: "eventtypeid",
-      isCustom: "iscustom",
       isTask: "istask",
       islamicDefinitionId: "islamicdefinitionid",
       hijriMonth: "hijrimonth",
@@ -217,7 +215,7 @@ export default class EventDOA {
    *
    * @param {Array<{ name: string, location?: string, startDate: string, endDate: string,
    *   isAllDay?: boolean, description?: string, hide?: boolean,
-   *   eventTypeId: number, isCustom?: boolean, isTask?: boolean }>} eventsData
+   *   eventTypeId: number, isTask?: boolean }>} eventsData
    * @param {number} userId
    * @returns {Promise<Event[]>} The persisted events, each with its integer eventId.
    */
@@ -237,7 +235,6 @@ export default class EventDOA {
           description = null,
           hide = false,
           eventTypeId,
-          isCustom = false,
           isTask = false,
           islamicDefinitionId = null,
           hijriMonth = null,
@@ -251,13 +248,13 @@ export default class EventDOA {
         result = await client.query(
             `INSERT INTO event (
                userid, name, startdate, enddate, isallday,
-               description, location, hide, eventtypeid, iscustom, istask,
+               description, location, hide, eventtypeid, istask,
                islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, createdat, updatedat
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
              RETURNING *`,
             [userId, name, startDate, endDate, isAllDay, description, location, hide,
-             eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
+             eventTypeId, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
           );
 
         if (result.rows[0]) {

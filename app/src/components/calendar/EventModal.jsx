@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +14,7 @@ import {
   Switch,
   TextField,
   Typography,
+  Checkbox,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
@@ -35,7 +35,6 @@ const DEFAULT_FORM = {
   endDate: "",
   isAllDay: false,
   eventTypeId: EventTypeId.RAMADAN,
-  isCustom: false,
   isTask: false,
   description: "",
   hide: false,
@@ -48,7 +47,8 @@ function toDatetimeLocal(isoString) {
 }
 
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent, refreshEventData } = useCalendar();
+  const { addEvent, updateEvent, removeEvent, refreshEventData } =
+    useCalendar();
   const isEdit = Boolean(event);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
@@ -66,7 +66,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           endDate: toDatetimeLocal(event?.endDate),
           isAllDay: event?.isAllDay ?? false,
           eventTypeId: event?.eventTypeId ?? EventTypeId.CUSTOM,
-          isCustom: event?.isCustom ?? false,
           isTask: event?.isTask ?? false,
           description: event?.description ?? "",
           hide: event?.hide ?? false,
@@ -248,15 +247,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           </FormControl>
 
           <Box sx={{ display: "flex", gap: 2 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={form.isCustom}
-                  onChange={(e) => handleChange("isCustom", e.target.checked)}
-                />
-              }
-              label="Custom"
-            />
             <FormControlLabel
               control={
                 <Checkbox
