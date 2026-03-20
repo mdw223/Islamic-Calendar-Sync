@@ -32,6 +32,33 @@ export default class EventDOA {
   }
 
   /**
+   * Get a single system event by ID (no user scoping).
+   * @param {number} eventId
+   * @returns {Promise<Event | null>}
+   */
+  static async findSystemEventById(eventId) {
+    const result = await query(
+      "SELECT * FROM event WHERE eventid = $1 AND issystemevent = TRUE",
+      [eventId],
+    );
+    return result.rows[0] ? Event.fromRow(result.rows[0]) : null;
+  }
+
+  /**
+   * Find a user's override for a given system event.
+   * @param {number} parentEventId - The system event's ID
+   * @param {number} userId
+   * @returns {Promise<Event | null>}
+   */
+  static async findUserOverrideByParent(parentEventId, userId) {
+    const result = await query(
+      "SELECT * FROM event WHERE parenteventid = $1 AND userid = $2",
+      [parentEventId, userId],
+    );
+    return result.rows[0] ? Event.fromRow(result.rows[0]) : null;
+  }
+
+  /**
    * Get all events belonging to a user.
    * @param {number} userId
    * @returns {Promise<Event[]>}
@@ -63,21 +90,26 @@ export default class EventDOA {
     isCustom = false,
     isTask = false,
     islamicDefinitionId = null,
-      hijriMonth = null,
-      hijriDay = null,
-      durationDays = null,
-      rrule = null,
-      isSystemEvent = null,
+    hijriMonth = null,
+    hijriDay = null,
+    durationDays = null,
+    rrule = null,
+    isSystemEvent = null,
+    parentEventId = null,
   }) {
     const result = await query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
          description, hide, eventtypeid, iscustom, istask,
-         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, createdat, updatedat
+         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
+         issystemevent, parenteventid, createdat, updatedat
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+               $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
        RETURNING *`,
-      [userId, name, startDate, endDate, isAllDay, description, hide, eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
+      [userId, name, startDate, endDate, isAllDay, description, hide,
+       eventTypeId, isCustom, isTask, islamicDefinitionId, hijriMonth,
+       hijriDay, durationDays, rrule, isSystemEvent, parentEventId],
     );
     return Event.fromRow(result.rows[0]);
   }
@@ -106,7 +138,8 @@ export default class EventDOA {
       hijriDay: "hijriday",
       durationDays: "durationdays",
       rrule: "rrule",
-      isSystemEvent: "isSystemEvent"
+      isSystemEvent: "issystemevent",
+      parentEventId: "parenteventid",
     };
 
     const entries = Object.entries(fields).filter(([k]) => columnMap[k] !== undefined);

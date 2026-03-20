@@ -21,6 +21,7 @@ export class Event {
     this.durationDays = null,
     this.rrule = null,
     this.isSystemEvent = null,
+    this.parentEventId = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -48,6 +49,7 @@ export class Event {
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
     event.isSystemEvent = body.isSystemEvent ?? null;
+    event.parentEventId = body.parentEventId ?? null;
     return event;
   }
 
@@ -73,7 +75,8 @@ export class Event {
     event.hijriDay = row.hijriday ?? null;
     event.durationDays = row.durationdays ?? null;
     event.rrule = row.rrule ?? null;
-    event.isSystemEvent = row.isSystemEvent ?? null;
+    event.isSystemEvent = row.issystemevent ?? null;
+    event.parentEventId = row.parenteventid ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -98,6 +101,7 @@ export class Event {
       durationDays: this.durationDays,
       rrule: this.rrule,
       isSystemEvent: this.isSystemEvent,
+      parentEventId: this.parentEventId,
       userId: this.userId,
     }
   }
