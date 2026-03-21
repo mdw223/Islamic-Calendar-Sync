@@ -44,6 +44,48 @@ function getHijriFormatterForTimezone(timezone) {
 }
 
 /**
+ * Build RRULE + Hijri metadata for persistence / .ics export, aligned with legacy
+ * system-event template strings (Hijri month/day in BYMONTH / BYMONTHDAY).
+ *
+ * @param {Object} def — definition from islamicEvents.json
+ * @returns {{ rrule: string | null, hijriMonth: number | null, hijriDay: number | null, durationDays: number }}
+ */
+export function buildIslamicRecurrenceFields(def) {
+  const durationDays = def.durationDays ?? 1;
+  const hijriDay = def.hijriDay ?? null;
+  const hijriMonth = def.hijriMonth ?? null;
+
+  if (def.repeatsEachMonth === true) {
+    let rrule = null;
+    if (hijriDay === 13 && durationDays === 3) {
+      rrule = "FREQ=MONTHLY;BYMONTHDAY=13,14,15";
+    } else if (hijriDay != null && durationDays >= 1) {
+      const days = [];
+      for (let d = hijriDay; d < hijriDay + durationDays; d++) {
+        days.push(d);
+      }
+      rrule = `FREQ=MONTHLY;BYMONTHDAY=${days.join(",")}`;
+    }
+    return {
+      rrule,
+      hijriMonth,
+      hijriDay,
+      durationDays,
+    };
+  }
+
+  if (hijriMonth == null || hijriDay == null) {
+    return { rrule: null, hijriMonth, hijriDay, durationDays };
+  }
+
+  let rrule = `FREQ=YEARLY;BYMONTH=${hijriMonth};BYMONTHDAY=${hijriDay}`;
+  if (durationDays > 1) {
+    rrule += `;INTERVAL=${durationDays}`;
+  }
+  return { rrule, hijriMonth, hijriDay, durationDays };
+}
+
+/**
  * Generate Islamic event objects for every enabled definition that falls
  * within the specified Gregorian year.
  *
@@ -57,7 +99,6 @@ function getHijriFormatterForTimezone(timezone) {
  */
 export function generateIslamicEventsForYear(gregorianYear, definitions, timezone = null) {
   const events = [];
-  const seen = new Set();
   const formatter = getHijriFormatterForTimezone(timezone);
 
   // Build lookup maps
@@ -117,7 +158,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
     const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
 
     for (const def of candidates) {
-      // ...existing code...
+      const recurrence = buildIslamicRecurrenceFields(def);
 
       const startDate = new Date(d.date);
       startDate.setHours(0, 0, 0, 0);
@@ -137,6 +178,10 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         isTask: false,
         hide: false,
         eventTimezone: timezone,
+        rrule: recurrence.rrule,
+        hijriMonth: recurrence.hijriMonth,
+        hijriDay: recurrence.hijriDay,
+        durationDays: recurrence.durationDays,
       });
     }
   }

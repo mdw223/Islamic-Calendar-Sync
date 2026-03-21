@@ -180,8 +180,6 @@ CREATE TABLE Event (
     HijriDay INTEGER,
     DurationDays INTEGER,
     RRule VARCHAR(512) NULL,
-    IsSystemEvent BOOLEAN NOT NULL DEFAULT FALSE,
-    ParentEventId INTEGER NULL REFERENCES Event(EventId) ON DELETE CASCADE,
     EventTimezone VARCHAR(100) NULL,
     IslamicDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -190,8 +188,6 @@ CREATE TABLE Event (
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
 );
-
-CREATE UNIQUE INDEX idx_event_user_parent ON Event(UserId, ParentEventId) WHERE ParentEventId IS NOT NULL;
 
 -- User-level show/hide preferences for Islamic event definitions.
 -- Stores which definitions a user has hidden in the sidebar panel.
@@ -277,34 +273,3 @@ INSERT INTO EventType (Name) VALUES
     ('Eid'),
     ('Jumah'),
     ('Custom');
-
-INSERT INTO Event (
-  Name, Description, HijriMonth, HijriDay, DurationDays, IsAllDay, EventTypeId, RRule, IsSystemEvent
-) VALUES
-  ('Islamic New Year', 'رأس السنة الهجرية', 1, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1', TRUE),
-  ('Ashura', 'يوم عاشوراء', 1, 10, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=10', TRUE),
-  ('Eid Mawlid un-Nabi', 'عيد المولد النبوي', 3, 12, 1, TRUE, 2, 'FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=12', TRUE),
-  ('Isra and Miraj', 'الإسراء والمعراج', 7, 27, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=7;BYMONTHDAY=27', TRUE),
-  ('Shab-e-Barat', 'ليلة البراءة', 8, 15, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=8;BYMONTHDAY=15', TRUE),
-  ('Last 10 Nights of Ramadan Begin', 'بداية العشر الأواخر من رمضان', 9, 21, 1, TRUE, 1, 'FREQ=YEARLY;BYMONTH=9;BYMONTHDAY=21', TRUE),
-  ('Laylatul Qadr', 'ليلة القدر', 9, 27, 1, TRUE, 1, 'FREQ=YEARLY;BYMONTH=9;BYMONTHDAY=27', TRUE),
-  ('Eid ul-Fitr', 'عيد الفطر', 10, 1, 1, TRUE, 2, 'FREQ=YEARLY;BYMONTH=10;BYMONTHDAY=1', TRUE),
-  ('Dhul Hijjah Begins', 'بداية ذو الحجة', 12, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=1', TRUE),
-  ('First 10 Days of Dhul Hijjah', 'أيام العشر من ذو الحجة', 12, 1, 10, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=1;INTERVAL=10', TRUE),
-  ('Hajj', 'موسم الحج', 12, 8, 6, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=8;INTERVAL=6', TRUE),
-  ('Day of Arafah', 'يوم عرفة', 12, 9, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=9', TRUE),
-  ('Eid al-Adha', 'عيد الأضحى', 12, 10, 1, TRUE, 2, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=10', TRUE),
-  ('Days of Tashreeq', 'أيام التشريق', 12, 11, 3, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=11;INTERVAL=3', TRUE),
-  ('White Days (Fasting)', 'الأيام البيض', NULL, 13, 3, TRUE, 4, 'FREQ=MONTHLY;BYMONTHDAY=13,14,15', TRUE),
-  ('Month Start Muharram', 'محرم – شهر الله', 1, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1', TRUE),
-  ('Month Start Safar', 'صفر – شهر التمييز', 2, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=1', TRUE),
-  ('Month Start Rabi al-Awwal', 'ربيع الأول – مولد الحبيب', 3, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=1', TRUE),
-  ('Month Start Rabi al-Thani', 'ربيع الثاني', 4, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=1', TRUE),
-  ('Month Start Jumada al-Awwal', 'جمادى الأولى', 5, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=5;BYMONTHDAY=1', TRUE),
-  ('Month Start Jumada al-Thani', 'جمادى الآخرة', 6, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=6;BYMONTHDAY=1', TRUE),
-  ('Month Start Rajab', 'رجب – الشهر الحرام', 7, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=7;BYMONTHDAY=1', TRUE),
-  ('Month Start Shaaban', 'شعبان – الشهر المهمل', 8, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=8;BYMONTHDAY=1', TRUE),
-  ('Month Start Ramadan', 'رمضان – شهر الصيام', 9, 1, 1, TRUE, 1, 'FREQ=YEARLY;BYMONTH=9;BYMONTHDAY=1', TRUE),
-  ('Month Start Shawwal', 'شوال – شهر الجزاء', 10, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=10;BYMONTHDAY=1', TRUE),
-  ('Month Start Dhul Qadah', 'ذو القعدة – الشهر الحرام', 11, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=11;BYMONTHDAY=1', TRUE),
-  ('Month Start Dhul Hijjah', 'ذو الحجة – أيام الحج', 12, 1, 1, TRUE, 4, 'FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=1', TRUE);

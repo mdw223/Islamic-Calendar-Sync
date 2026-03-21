@@ -24,48 +24,15 @@ export default async function UpdateEvent(req, res) {
         const userId = req.user.userId;
 
         const userEvent = await EventDOA.findById(eventId, userId);
-        if (userEvent) {
-            const updated = await EventDOA.updateEvent(eventId, userId, req.body);
-            return sendJson(res, { success: true, event: updated });
-        }
-
-        const systemEvent = await EventDOA.findSystemEventById(eventId);
-        if (!systemEvent) {
+        if (!userEvent) {
             return sendJson(res, {
                 success: false,
                 message: 'Event not found',
             }, 404);
         }
 
-        const existingOverride = await EventDOA.findUserOverrideByParent(eventId, userId);
-        if (existingOverride) {
-            const updated = await EventDOA.updateEvent(existingOverride.eventId, userId, req.body);
-            return sendJson(res, { success: true, event: updated });
-        }
-
-        const overrideData = {
-            userId,
-            name: req.body.name ?? systemEvent.name,
-            location: req.body.location ?? systemEvent.location,
-            startDate: req.body.startDate ?? systemEvent.startDate,
-            endDate: req.body.endDate ?? systemEvent.endDate,
-            isAllDay: req.body.isAllDay ?? systemEvent.isAllDay,
-            description: req.body.description ?? systemEvent.description,
-            hide: req.body.hide ?? systemEvent.hide,
-            eventTypeId: req.body.eventTypeId ?? systemEvent.eventTypeId,
-            isTask: req.body.isTask ?? systemEvent.isTask,
-            islamicDefinitionId: req.body.islamicDefinitionId ?? systemEvent.islamicDefinitionId,
-            hijriMonth: req.body.hijriMonth ?? systemEvent.hijriMonth,
-            hijriDay: req.body.hijriDay ?? systemEvent.hijriDay,
-            durationDays: req.body.durationDays ?? systemEvent.durationDays,
-            rrule: req.body.rrule ?? systemEvent.rrule,
-            eventTimezone: req.body.eventTimezone ?? systemEvent.eventTimezone,
-            isSystemEvent: false,
-            parentEventId: eventId,
-        };
-
-        const created = await EventDOA.createEvent(overrideData);
-        return sendJson(res, { success: true, event: created }, 201);
+        const updated = await EventDOA.updateEvent(eventId, userId, req.body);
+        return sendJson(res, { success: true, event: updated });
     } catch (error) {
         return sendJson(res, {
             success: false,

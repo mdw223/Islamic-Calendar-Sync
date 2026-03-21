@@ -40,6 +40,42 @@ export async function getMergedDefinitions() {
 }
 
 // ── Event generation (pure, no I/O) ─────────────────────────────────────────
+// Mirrors api/src/util/HijriUtils.js buildIslamicRecurrenceFields.
+
+function buildIslamicRecurrenceFields(def) {
+  const durationDays = def.durationDays ?? 1;
+  const hijriDay = def.hijriDay ?? null;
+  const hijriMonth = def.hijriMonth ?? null;
+
+  if (def.repeatsEachMonth === true) {
+    let rrule = null;
+    if (hijriDay === 13 && durationDays === 3) {
+      rrule = "FREQ=MONTHLY;BYMONTHDAY=13,14,15";
+    } else if (hijriDay != null && durationDays >= 1) {
+      const days = [];
+      for (let d = hijriDay; d < hijriDay + durationDays; d++) {
+        days.push(d);
+      }
+      rrule = `FREQ=MONTHLY;BYMONTHDAY=${days.join(",")}`;
+    }
+    return {
+      rrule,
+      hijriMonth,
+      hijriDay,
+      durationDays,
+    };
+  }
+
+  if (hijriMonth == null || hijriDay == null) {
+    return { rrule: null, hijriMonth, hijriDay, durationDays };
+  }
+
+  let rrule = `FREQ=YEARLY;BYMONTH=${hijriMonth};BYMONTHDAY=${hijriDay}`;
+  if (durationDays > 1) {
+    rrule += `;INTERVAL=${durationDays}`;
+  }
+  return { rrule, hijriMonth, hijriDay, durationDays };
+}
 
 function getHijriFormatterForTimezone(timezone) {
   if (!timezone) return HIJRI_NUMERIC_FORMATTER;
@@ -118,6 +154,8 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
     const candidates = [...(exactMatches ?? []), ...(monthlyMatches ?? [])];
 
     for (const def of candidates) {
+      const recurrence = buildIslamicRecurrenceFields(def);
+
       const startDate = new Date(d.date);
       startDate.setHours(0, 0, 0, 0);
 
@@ -136,6 +174,10 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         isTask: false,
         hide: false,
         eventTimezone: timezone,
+        rrule: recurrence.rrule,
+        hijriMonth: recurrence.hijriMonth,
+        hijriDay: recurrence.hijriDay,
+        durationDays: recurrence.durationDays,
       });
     }
   }

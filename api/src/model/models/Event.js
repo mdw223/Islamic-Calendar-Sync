@@ -16,12 +16,10 @@ export class Event {
     this.eventTypeId = null;
     this.isTask = null;
     this.islamicDefinitionId = null;
-    this.hijriMonth = null,
-    this.hijriDay = null,
-    this.durationDays = null,
-    this.rrule = null,
-    this.isSystemEvent = null,
-    this.parentEventId = null;
+    this.hijriMonth = null;
+    this.hijriDay = null;
+    this.durationDays = null;
+    this.rrule = null;
     this.eventTimezone = null;
     this.userId = null;
     this.createdAt = null;
@@ -49,8 +47,6 @@ export class Event {
     event.hijriDay = body.hijriDay ?? null;
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
-    event.isSystemEvent = body.isSystemEvent ?? null;
-    event.parentEventId = body.parentEventId ?? null;
     event.eventTimezone = body.eventTimezone ?? null;
     return event;
   }
@@ -77,8 +73,6 @@ export class Event {
     event.hijriDay = row.hijriday ?? null;
     event.durationDays = row.durationdays ?? null;
     event.rrule = row.rrule ?? null;
-    event.isSystemEvent = row.issystemevent ?? null;
-    event.parentEventId = row.parenteventid ?? null;
     event.eventTimezone = row.eventtimezone ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
@@ -103,8 +97,6 @@ export class Event {
       hijriDay: this.hijriDay,
       durationDays: this.durationDays,
       rrule: this.rrule,
-      isSystemEvent: this.isSystemEvent,
-      parentEventId: this.parentEventId,
       eventTimezone: this.eventTimezone,
       userId: this.userId,
     }
