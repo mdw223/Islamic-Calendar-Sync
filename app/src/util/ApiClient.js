@@ -11,6 +11,10 @@ export default class APIClient {
     return HTTPClient.get("/users/me");
   }
 
+  static async updateCurrentUser(updates) {
+    return HTTPClient.put("/users/me", updates);
+  }
+
   /**
    * Get the URL to initiate Google OAuth2 login via the backend.
    * Always targets /api/auth/google/login (required when behind a proxy that strips /api).
@@ -114,8 +118,8 @@ export default class APIClient {
    * @param {number[]} years - Array of Gregorian years, e.g. [2025, 2026]
    * @returns {Promise<{ success: boolean, events: Object[], generatedCount: number }>}
    */
-  static async generateEvents(years) {
-    return HTTPClient.post("/events/generate", { years });
+  static async generateEvents(years, timezone = null) {
+    return HTTPClient.post("/events/generate", { years, timezone });
   }
 
   // ── Definitions ────────────────────────────────────────────────────────────
@@ -161,5 +165,25 @@ export default class APIClient {
    */
   static async syncOfflinePreferences(preferences) {
     return HTTPClient.post("/definitions/sync", { preferences });
+  }
+
+  static async getUserLocations() {
+    return HTTPClient.get("/user-locations");
+  }
+
+  static async createUserLocation(userLocation) {
+    return HTTPClient.post("/user-locations", userLocation);
+  }
+
+  static async updateUserLocation(userLocationId, updates) {
+    return HTTPClient.put(`/user-locations/${userLocationId}`, updates);
+  }
+
+  static async deleteUserLocation(userLocationId) {
+    return HTTPClient.delete(`/user-locations/${userLocationId}`);
+  }
+
+  static async syncOfflineUserLocations(userLocations) {
+    return HTTPClient.post("/user-locations/sync", { userLocations });
   }
 }

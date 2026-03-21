@@ -96,20 +96,21 @@ export default class EventDOA {
     rrule = null,
     isSystemEvent = null,
     parentEventId = null,
+    eventTimezone = null,
   }) {
     const result = await query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
          description, location, hide, eventtypeid, istask,
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
-         issystemevent, parenteventid, createdat, updatedat
+         issystemevent, parenteventid, eventtimezone, createdat, updatedat
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-               $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+               $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
        RETURNING *`,
       [userId, name, startDate, endDate, isAllDay, description, location, hide,
        eventTypeId, isTask, islamicDefinitionId, hijriMonth,
-       hijriDay, durationDays, rrule, isSystemEvent, parentEventId],
+       hijriDay, durationDays, rrule, isSystemEvent, parentEventId, eventTimezone],
     );
     return Event.fromRow(result.rows[0]);
   }
@@ -140,6 +141,7 @@ export default class EventDOA {
       rrule: "rrule",
       isSystemEvent: "issystemevent",
       parentEventId: "parenteventid",
+      eventTimezone: "eventtimezone",
     };
 
     const entries = Object.entries(fields).filter(([k]) => columnMap[k] !== undefined);
@@ -181,11 +183,11 @@ export default class EventDOA {
    * @param {number} userId
    * @returns {Promise<boolean>} true if any rows were deleted
    */
-  static async removeAllEvets(userId) {
+  static async deleteAllEvents(userId) {
     const result = await query(
-      "DELETE FROM event WHERE userid = $2",
-      [eventId, userId],
-    );
+      "DELETE FROM event WHERE userid = $1",
+      [userId],
+    );  
     return result.rowCount > 0;
   }
 
@@ -241,7 +243,8 @@ export default class EventDOA {
           hijriDay = null,
           durationDays = null,
           rrule = null,
-          isSystemEvent = null
+          isSystemEvent = null,
+          eventTimezone = null,
         } = data;
 
 
@@ -249,12 +252,12 @@ export default class EventDOA {
             `INSERT INTO event (
                userid, name, startdate, enddate, isallday,
                description, location, hide, eventtypeid, istask,
-               islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, createdat, updatedat
+               islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, isSystemEvent, eventtimezone, createdat, updatedat
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
              RETURNING *`,
             [userId, name, startDate, endDate, isAllDay, description, location, hide,
-             eventTypeId, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent],
+             eventTypeId, isTask, islamicDefinitionId, hijriMonth, hijriDay, durationDays, rrule, isSystemEvent, eventTimezone],
           );
 
         if (result.rows[0]) {

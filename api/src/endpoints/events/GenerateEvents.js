@@ -21,7 +21,7 @@ import { sendJson } from "../SendJson.js";
 
 export default async function GenerateEvents(req, res) {
   try {
-    const { years } = req.body;
+    const { years, timezone = null } = req.body;
     const currentYear = new Date().getFullYear();
 
     if (
@@ -38,9 +38,17 @@ export default async function GenerateEvents(req, res) {
       }, 400);
     }
 
+    if (timezone != null && (typeof timezone !== "string" || timezone.length > 100)) {
+      return sendJson(res, {
+        success: false,
+        message: 'Optional "timezone" must be a valid IANA timezone string.',
+      }, 400);
+    }
+
     const { events, generatedCount } = await generateForUser(
       req.user.userId,
       years,
+      timezone,
     );
 
     return sendJson(res, {

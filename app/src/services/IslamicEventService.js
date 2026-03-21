@@ -41,7 +41,17 @@ export async function getMergedDefinitions() {
 
 // ── Event generation (pure, no I/O) ─────────────────────────────────────────
 
-export function generateIslamicEventsForYear(gregorianYear, definitions) {
+function getHijriFormatterForTimezone(timezone) {
+  if (!timezone) return HIJRI_NUMERIC_FORMATTER;
+  return new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: timezone,
+  });
+}
+
+export function generateIslamicEventsForYear(gregorianYear, definitions, timezone = null) {
   const events = [];
 
   const byDayMonth = new Map();
@@ -66,12 +76,13 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
     gregorianYear % 400 === 0;
   const daysInYear = isLeap ? 366 : 365;
 
+  const formatter = getHijriFormatterForTimezone(timezone);
   const dayData = new Array(daysInYear);
   for (let i = 0; i < daysInYear; i++) {
     const date = new Date(gregorianYear, 0, i + 1);
     if (date.getFullYear() !== gregorianYear) break;
 
-    const parts = HIJRI_NUMERIC_FORMATTER.formatToParts(date);
+    const parts = formatter.formatToParts(date);
     dayData[i] = {
       date,
       hijriDay: parseInt(
@@ -124,6 +135,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
         eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
         isTask: false,
         hide: false,
+        eventTimezone: timezone,
       });
     }
   }
@@ -139,12 +151,12 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
  * @param {number[]} years - Array of Gregorian years
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForOfflineUser(years) {
+export async function generateForOfflineUser(years, timezone = null) {
   const mergedDefs = await getMergedDefinitions();
 
   const allGenerated = [];
   for (const year of years) {
-    const generated = generateIslamicEventsForYear(year, mergedDefs);
+    const generated = generateIslamicEventsForYear(year, mergedDefs, timezone);
     allGenerated.push(...generated);
   }
 

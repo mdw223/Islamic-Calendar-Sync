@@ -30,4 +30,11 @@ db.version(3).stores({
   generationMeta: "key",
 });
 
+db.version(4).stores({
+  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  definitionPreferences: "definitionId",
+  generationMeta: "key",
+  userLocations: "++id, name, timezone, isDefault",
+});
+
 export default db;

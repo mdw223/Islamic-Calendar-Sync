@@ -137,8 +137,6 @@ export function CalendarProvider({ children }) {
               start: yearsRange?.generatedYearsStart ?? null,
               end: yearsRange?.generatedYearsEnd ?? null,
             });
-
-            // await ensureIslamicEventsForYearInternal(new Date().getFullYear());
           } else {
             if (cancelled) return;
             setEvents([]);
@@ -192,19 +190,21 @@ export function CalendarProvider({ children }) {
    *
    * @param {number[]} years - Array of Gregorian years.
    */
-  async function ensureIslamicEventsForYears(years) {
+  async function ensureIslamicEventsForYears(years, options = {}) {
     const requestedYears = [...new Set(years)].filter((y) =>
       Number.isInteger(y),
     );
     if (requestedYears.length === 0) return;
 
+    const timezone = options?.timezone ?? null;
+
     try {
       let res;
       try {
-        res = await APIClient.generateEvents(requestedYears);
+        res = await APIClient.generateEvents(requestedYears, timezone);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.generateEvents(requestedYears);
+          res = await OfflineClient.generateEvents(requestedYears, timezone);
         } else {
           throw err;
         }

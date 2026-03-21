@@ -14,9 +14,6 @@ function fromApiRow(row) {
     updatedAt: row.updatedat ?? null,
     lastLogin: row.lastlogin ?? null,
     isAdmin: row.isadmin ?? false,
-    timezone: row.timezone ?? null,
-    latitude: row.latitude ?? null,
-    longitude: row.longitude ?? null,
     language: row.language ?? null,
     generatedYearsStart: row.generatedyearsstart ?? null,
     generatedYearsEnd: row.generatedyearsend ?? null,
@@ -24,6 +21,9 @@ function fromApiRow(row) {
     prayerConfigurationEnd: row.prayerconfigurationend ?? null,
     calculationMethodId: row.calculationmethodid ?? null,
     hanafi: row.hanafi ?? false,
+    authProviderTypeId: row.authprovidertypeid ?? null,
+    authProviderName: row.authprovidername ?? row.authProviderName ?? null,
+    userLocations: row.userlocations ?? row.userLocations ?? [],
   };
 }
 
@@ -36,9 +36,6 @@ export const defaultUser = {
   updatedAt: null,
   lastLogin: null,
   isAdmin: false,
-  timezone: null,
-  latitude: null,
-  longitude: null,
   language: null,
   generatedYearsStart: null,
   generatedYearsEnd: null,
@@ -48,6 +45,9 @@ export const defaultUser = {
   hanafi: false,
   notifications: true,
   emailUpdates: false,
+  authProviderTypeId: null,
+  authProviderName: null,
+  userLocations: [],
 };
 
 export class User {
@@ -62,10 +62,10 @@ export class User {
     this.updatedAt = normalized.updatedAt ?? null;
     this.lastLogin = normalized.lastLogin ?? null;
     this.isAdmin = normalized.isAdmin ?? false;
-    this.timezone = normalized.timezone ?? null;
-    this.latitude = normalized.latitude ?? null;
-    this.longitude = normalized.longitude ?? null;
     this.language = normalized.language ?? null;
+    this.authProviderTypeId = normalized.authProviderTypeId ?? null;
+    this.authProviderName = normalized.authProviderName ?? null;
+    this.userLocations = normalized.userLocations ?? [];
     this.generatedYearsStart = normalized.generatedYearsStart ?? null;
     this.generatedYearsEnd = normalized.generatedYearsEnd ?? null;
     this.prayerConfigurationStart = normalized.prayerConfigurationStart ?? null;
@@ -93,13 +93,16 @@ export class User {
       this.updatedAt = normalized.updatedAt ?? this.updatedAt;
       this.lastLogin = normalized.lastLogin ?? new Date().toISOString();
       this.isAdmin = normalized.isAdmin ?? this.isAdmin;
-      this.timezone = normalized.timezone ?? this.timezone;
-      this.latitude = normalized.latitude ?? this.latitude;
-      this.longitude = normalized.longitude ?? this.longitude;
       this.language = normalized.language ?? this.language;
+      this.authProviderTypeId =
+        normalized.authProviderTypeId ?? this.authProviderTypeId;
+      this.authProviderName =
+        normalized.authProviderName ?? this.authProviderName;
+      this.userLocations = normalized.userLocations ?? this.userLocations;
       this.generatedYearsStart =
         normalized.generatedYearsStart ?? this.generatedYearsStart;
-      this.generatedYearsEnd = normalized.generatedYearsEnd ?? this.generatedYearsEnd;
+      this.generatedYearsEnd =
+        normalized.generatedYearsEnd ?? this.generatedYearsEnd;
       this.prayerConfigurationStart =
         normalized.prayerConfigurationStart ?? this.prayerConfigurationStart;
       this.prayerConfigurationEnd =
@@ -126,10 +129,10 @@ export class User {
     const allowed = [
       "name",
       "email",
-      "timezone",
-      "latitude",
-      "longitude",
       "language",
+      "authProviderTypeId",
+      "authProviderName",
+      "userLocations",
       "generatedYearsStart",
       "generatedYearsEnd",
       "prayerConfigurationStart",
@@ -152,10 +155,10 @@ export class User {
       updatedAt: this.updatedAt,
       lastLogin: this.lastLogin,
       isAdmin: this.isAdmin,
-      timezone: this.timezone,
-      latitude: this.latitude,
-      longitude: this.longitude,
       language: this.language,
+      authProviderTypeId: this.authProviderTypeId,
+      authProviderName: this.authProviderName,
+      userLocations: this.userLocations,
       generatedYearsStart: this.generatedYearsStart,
       generatedYearsEnd: this.generatedYearsEnd,
       prayerConfigurationStart: this.prayerConfigurationStart,

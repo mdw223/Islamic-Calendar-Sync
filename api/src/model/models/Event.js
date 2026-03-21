@@ -22,6 +22,7 @@ export class Event {
     this.rrule = null,
     this.isSystemEvent = null,
     this.parentEventId = null;
+    this.eventTimezone = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -50,6 +51,7 @@ export class Event {
     event.rrule = body.rrule ?? null;
     event.isSystemEvent = body.isSystemEvent ?? null;
     event.parentEventId = body.parentEventId ?? null;
+    event.eventTimezone = body.eventTimezone ?? null;
     return event;
   }
 
@@ -77,6 +79,7 @@ export class Event {
     event.rrule = row.rrule ?? null;
     event.isSystemEvent = row.issystemevent ?? null;
     event.parentEventId = row.parenteventid ?? null;
+    event.eventTimezone = row.eventtimezone ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -102,6 +105,7 @@ export class Event {
       rrule: this.rrule,
       isSystemEvent: this.isSystemEvent,
       parentEventId: this.parentEventId,
+      eventTimezone: this.eventTimezone,
       userId: this.userId,
     }
   }

@@ -22,6 +22,39 @@ var ics = function(uidDomain, prodId) {
   var calendarEnd = SEPARATOR + 'END:VCALENDAR';
   var BYDAY_VALUES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
+  function datePartsForTimezone(date, timezone) {
+    if (!timezone) {
+      return {
+        year: ("0000" + (date.getFullYear().toString())).slice(-4),
+        month: ("00" + ((date.getMonth() + 1).toString())).slice(-2),
+        day: ("00" + ((date.getDate()).toString())).slice(-2),
+        hour: ("00" + (date.getHours().toString())).slice(-2),
+        minute: ("00" + (date.getMinutes().toString())).slice(-2),
+        second: ("00" + (date.getSeconds().toString())).slice(-2),
+      };
+    }
+
+    var formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    var parts = formatter.formatToParts(date);
+    return {
+      year: parts.find(function(p) { return p.type === 'year'; })?.value ?? '0000',
+      month: parts.find(function(p) { return p.type === 'month'; })?.value ?? '01',
+      day: parts.find(function(p) { return p.type === 'day'; })?.value ?? '01',
+      hour: parts.find(function(p) { return p.type === 'hour'; })?.value ?? '00',
+      minute: parts.find(function(p) { return p.type === 'minute'; })?.value ?? '00',
+      second: parts.find(function(p) { return p.type === 'second'; })?.value ?? '00',
+    };
+  }
+
   return {
     /**
      * Returns events array
@@ -47,7 +80,7 @@ var ics = function(uidDomain, prodId) {
      * @param  {string} begin       Beginning date of event
      * @param  {string} stop        Ending date of event
      */
-    'addEvent': function(subject, description, location, begin, stop, rrule, allDay) {
+    'addEvent': function(subject, description, location, begin, stop, rrule, allDay, options) {
       // I'm not in the mood to make these optional... So they are all required
       if (typeof subject === 'undefined' ||
         typeof description === 'undefined' ||
@@ -110,27 +143,32 @@ var ics = function(uidDomain, prodId) {
       var start_date = new Date(begin);
       var end_date = new Date(stop);
       var now_date = new Date();
+      var eventTimezone = options && options.timezone ? options.timezone : null;
 
-      var start_year = ("0000" + (start_date.getFullYear().toString())).slice(-4);
-      var start_month = ("00" + ((start_date.getMonth() + 1).toString())).slice(-2);
-      var start_day = ("00" + ((start_date.getDate()).toString())).slice(-2);
-      var start_hours = ("00" + (start_date.getHours().toString())).slice(-2);
-      var start_minutes = ("00" + (start_date.getMinutes().toString())).slice(-2);
-      var start_seconds = ("00" + (start_date.getSeconds().toString())).slice(-2);
+      var startParts = datePartsForTimezone(start_date, eventTimezone);
+      var endParts = datePartsForTimezone(end_date, eventTimezone);
+      var nowParts = datePartsForTimezone(now_date, eventTimezone);
 
-      var end_year = ("0000" + (end_date.getFullYear().toString())).slice(-4);
-      var end_month = ("00" + ((end_date.getMonth() + 1).toString())).slice(-2);
-      var end_day = ("00" + ((end_date.getDate()).toString())).slice(-2);
-      var end_hours = ("00" + (end_date.getHours().toString())).slice(-2);
-      var end_minutes = ("00" + (end_date.getMinutes().toString())).slice(-2);
-      var end_seconds = ("00" + (end_date.getSeconds().toString())).slice(-2);
+      var start_year = startParts.year;
+      var start_month = startParts.month;
+      var start_day = startParts.day;
+      var start_hours = startParts.hour;
+      var start_minutes = startParts.minute;
+      var start_seconds = startParts.second;
 
-      var now_year = ("0000" + (now_date.getFullYear().toString())).slice(-4);
-      var now_month = ("00" + ((now_date.getMonth() + 1).toString())).slice(-2);
-      var now_day = ("00" + ((now_date.getDate()).toString())).slice(-2);
-      var now_hours = ("00" + (now_date.getHours().toString())).slice(-2);
-      var now_minutes = ("00" + (now_date.getMinutes().toString())).slice(-2);
-      var now_seconds = ("00" + (now_date.getSeconds().toString())).slice(-2);
+      var end_year = endParts.year;
+      var end_month = endParts.month;
+      var end_day = endParts.day;
+      var end_hours = endParts.hour;
+      var end_minutes = endParts.minute;
+      var end_seconds = endParts.second;
+
+      var now_year = nowParts.year;
+      var now_month = nowParts.month;
+      var now_day = nowParts.day;
+      var now_hours = nowParts.hour;
+      var now_minutes = nowParts.minute;
+      var now_seconds = nowParts.second;
 
       // Since some calendars don't add 0 second events, we need to remove time if there is none...
       var start_time = '';
@@ -187,8 +225,16 @@ var ics = function(uidDomain, prodId) {
 
       var stamp = new Date().toISOString();
 
-      var dtStartLine = allDay ? 'DTSTART;VALUE=DATE:' + start : 'DTSTART;VALUE=DATE-TIME:' + start;
-      var dtEndLine = allDay ? 'DTEND;VALUE=DATE:' + end : 'DTEND;VALUE=DATE-TIME:' + end;
+      var dtStartLine = allDay
+        ? 'DTSTART;VALUE=DATE:' + start
+        : (eventTimezone
+          ? ('DTSTART;TZID=' + eventTimezone + ':' + start)
+          : ('DTSTART;VALUE=DATE-TIME:' + start));
+      var dtEndLine = allDay
+        ? 'DTEND;VALUE=DATE:' + end
+        : (eventTimezone
+          ? ('DTEND;TZID=' + eventTimezone + ':' + end)
+          : ('DTEND;VALUE=DATE-TIME:' + end));
 
       var calendarEvent = [
         'BEGIN:VEVENT',

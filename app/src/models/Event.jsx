@@ -38,6 +38,7 @@ export const defaultEvent = Object.freeze({
   rrule: null,
   isSystemEvent: false,
   parentEventId: null,
+  eventTimezone: null,
 });
 
 // ── Normalise a raw API row (lowercase keys) ───────────────────────────────
@@ -62,6 +63,7 @@ export function fromApiRow(row) {
     rrule: row.rrule ?? null,
     isSystemEvent: row.issystemevent ?? false,
     parentEventId: row.parenteventid ?? null,
+    eventTimezone: row.eventtimezone ?? null,
   };
 }
 
@@ -95,6 +97,7 @@ export class Event {
     this.isSystemEvent = normalized.isSystemEvent ?? false;
     this.parentEventId = normalized.parentEventId ?? null;
     this.islamicDefinitionId = normalized.islamicDefinitionId ?? null;
+    this.eventTimezone = normalized.eventTimezone ?? null;
   }
 
   // ── Validation ─────────────────────────────────────────────────────────
@@ -187,6 +190,7 @@ export class Event {
       rrule: this.rrule,
       isSystemEvent: this.isSystemEvent,
       parentEventId: this.parentEventId,
+      eventTimezone: this.eventTimezone,
     };
   }
 }

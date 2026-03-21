@@ -11,6 +11,10 @@ import {
   Alert,
   Button,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,7 +26,9 @@ import {
   Checkbox,
 } from "@mui/material";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
+import { useUser } from "../../contexts/UserContext";
 import SyncModal from "./SyncModal";
 
 /**
@@ -40,6 +46,8 @@ export default function CalendarActionBar({
 }) {
   const { resetCalendar, ensureIslamicEventsForYears, generatedYearsRange } =
     useCalendar();
+  const { userLocations } = useUser();
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const MAX_GENERATE_YEARS = 5;
 
@@ -53,6 +61,29 @@ export default function CalendarActionBar({
   const [endYear, setEndYear] = useState(String(currentYear));
   const [generateError, setGenerateError] = useState("");
   const [thisYearOnly, setThisYearOnly] = useState(true);
+  const browserTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+  const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
+
+  const locationOptions = useMemo(() => {
+    const options = [];
+    const seen = new Set();
+    for (const location of userLocations ?? []) {
+      if (!location?.timezone || seen.has(location.timezone)) continue;
+      seen.add(location.timezone);
+      options.push({
+        label: location?.name ?? location.timezone,
+        timezone: location.timezone,
+      });
+    }
+    if (options.length === 0) {
+      options.push({
+        label: `Current Device (${browserTimezone})`,
+        timezone: browserTimezone,
+      });
+    }
+    return options;
+  }, [browserTimezone, userLocations]);
 
   // ── Sync modal state ────────────────────────────────────────────────────
   const [syncModalOpen, setSyncModalOpen] = useState(false);
@@ -62,8 +93,9 @@ export default function CalendarActionBar({
     setStartYear(String(currentYear));
     setEndYear(String(currentYear));
     setGenerateError("");
+    setSelectedTimezone(locationOptions[0]?.timezone ?? browserTimezone);
     setGenerateModalOpen(true);
-  }, [currentYear, isGenerating]);
+  }, [browserTimezone, currentYear, isGenerating, locationOptions]);
 
   const handleCloseGeneratePopup = useCallback(() => {
     if (isGenerating) return;
@@ -110,7 +142,9 @@ export default function CalendarActionBar({
     setGenerateError("");
     setIsGenerating(true);
     try {
-      await ensureIslamicEventsForYears(yearsToGenerate);
+      await ensureIslamicEventsForYears(yearsToGenerate, {
+        timezone: selectedTimezone,
+      });
       setGenerateModalOpen(false);
     } finally {
       setIsGenerating(false);
@@ -120,6 +154,7 @@ export default function CalendarActionBar({
     endYear,
     ensureIslamicEventsForYears,
     isGenerating,
+    selectedTimezone,
     startYear,
     thisYearOnly,
     MAX_GENERATE_YEARS,
@@ -326,6 +361,31 @@ export default function CalendarActionBar({
             }
             label="This Year Only"
           />
+
+          <FormControl size="small" fullWidth>
+            <InputLabel id="generate-location-label">Location</InputLabel>
+            <Select
+              labelId="generate-location-label"
+              value={selectedTimezone}
+              label="Location"
+              onChange={(event) => setSelectedTimezone(event.target.value)}
+              disabled={isGenerating}
+            >
+              {locationOptions.map((option) => (
+                <MenuItem key={option.timezone} value={option.timezone}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {(!userLocations || userLocations.length === 0) && (
+            <Alert severity="info">
+              No saved locations yet.{" "}
+              <Button size="small" onClick={() => navigate("/settings")}>
+                Go to Settings
+              </Button>
+            </Alert>
+          )}
 
           {!thisYearOnly && (
             <>

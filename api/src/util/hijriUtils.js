@@ -33,6 +33,16 @@ export function getHijriNumericParts(date) {
   };
 }
 
+function getHijriFormatterForTimezone(timezone) {
+  if (!timezone) return HIJRI_NUMERIC_FORMATTER;
+  return new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: timezone,
+  });
+}
+
 /**
  * Generate Islamic event objects for every enabled definition that falls
  * within the specified Gregorian year.
@@ -45,9 +55,10 @@ export function getHijriNumericParts(date) {
  *   each may have `isHidden: true` to be skipped.
  * @returns {Array<Object>} Plain event objects ready for EventDOA.bulkUpsert.
  */
-export function generateIslamicEventsForYear(gregorianYear, definitions) {
+export function generateIslamicEventsForYear(gregorianYear, definitions, timezone = null) {
   const events = [];
   const seen = new Set();
+  const formatter = getHijriFormatterForTimezone(timezone);
 
   // Build lookup maps
   const byDayMonth = new Map();
@@ -78,7 +89,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
     const date = new Date(gregorianYear, 0, i + 1);
     if (date.getFullYear() !== gregorianYear) break;
 
-    const parts = HIJRI_NUMERIC_FORMATTER.formatToParts(date);
+    const parts = formatter.formatToParts(date);
     dayData[i] = {
       date,
       hijriDay: parseInt(parts.find((p) => p.type === "day")?.value ?? "0", 10),
@@ -125,6 +136,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions) {
         eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
         isTask: false,
         hide: false,
+        eventTimezone: timezone,
       });
     }
   }

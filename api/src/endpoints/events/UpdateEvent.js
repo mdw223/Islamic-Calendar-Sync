@@ -59,6 +59,7 @@ export default async function UpdateEvent(req, res) {
             hijriDay: req.body.hijriDay ?? systemEvent.hijriDay,
             durationDays: req.body.durationDays ?? systemEvent.durationDays,
             rrule: req.body.rrule ?? systemEvent.rrule,
+            eventTimezone: req.body.eventTimezone ?? systemEvent.eventTimezone,
             isSystemEvent: false,
             parentEventId: eventId,
         };

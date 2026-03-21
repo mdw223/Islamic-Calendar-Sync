@@ -26,7 +26,7 @@ Islamic Calendar Sync is designed to help users generate and customize prayer ti
 
 Can login via email or OAuth, configure settings, generate personal Islamic calendar events and prayer times to their calendar provider.
 Users contain an event configuration such as the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
-Users contain location and language settings (`Timezone`, `Latitude`, `Longitude`, `Language`) stored directly on the user record to determine prayer time accuracy. Always asks the user to confirm their current location and language.
+Users contain language settings on the user record. Location/timezone settings are now stored in `UserLocation` records (up to 3 saved locations per user) and selected per feature flow.
 Users contain a prayer configuration for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
 Users contain authentication provider information (`AuthProviderTypeId`) to specify which authentication method the user account uses (Google, Microsoft, Apple, or Email). OAuth credentials (access tokens, refresh tokens, expiry, scopes) are stored directly on the User for authentication purposes.
 
@@ -61,6 +61,11 @@ All the types of prayers as enum (Sunnah, Fard, Taraweeh, etc.).
 ### Event
 
 An Islamic calendar event or task that has start and end date, description with virtues that are customizable. This can be Sunnah fasts, Ramadan, white days, etc. Users can customize these events, and they can save them to the back end. Users can also make custom events like Qur'an.
+Event now supports `EventTimezone` to preserve the timezone context used for generation and export.
+
+### UserLocation
+
+Saved location profile for a user (name + coordinates + IANA timezone). Used to explicitly select where event generation/export should be anchored instead of relying on device timezone.
 
 ### EventType
 
@@ -86,9 +91,6 @@ erDiagram
         timestamp UpdatedAt
         timestamp LastLogin
         boolean IsAdmin
-        varchar Timezone
-        varchar Latitude
-        varchar Longitude
         varchar Language
         timestamp EventConfigurationStart
         timestamp EventConfigurationEnd
@@ -167,6 +169,7 @@ erDiagram
         varchar Name
         timestamp StartDate
         timestamp EndDate
+        varchar EventTimezone
         boolean IsAllDay
         text Description
         boolean Hide
@@ -175,6 +178,18 @@ erDiagram
         timestamp CreatedAt
         timestamp UpdatedAt
         int UserId FK
+    }
+
+    UserLocation {
+        int UserLocationId PK
+        int UserId FK
+        varchar Name
+        varchar Latitude
+        varchar Longitude
+        varchar Timezone
+        boolean IsDefault
+        timestamp CreatedAt
+        timestamp UpdatedAt
     }
 
     %% Commented out in init.sql — planned for future implementation
@@ -213,6 +228,7 @@ erDiagram
     CalendarProvider }o--|| CalendarProviderType : "is type"
     User }o--|| CalculationMethod : "uses"
     User ||--o{ Event : "generates"
+    User ||--o{ UserLocation : "saves"
     Event }o--|| EventType : "is type"
     User ||--o{ Log : "produces"
     CalendarProvider ||--o{ Calendar : "contains"

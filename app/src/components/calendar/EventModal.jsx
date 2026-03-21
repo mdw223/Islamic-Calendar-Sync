@@ -17,8 +17,10 @@ import {
   Checkbox,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import DOMPurify from "dompurify";
 import { useCalendar } from "../../contexts/CalendarContext";
+import { useUser } from "../../contexts/UserContext";
 import { EventTypeId } from "../../Constants";
 import RichTextEditor from "../RichTextEditor";
 
@@ -38,6 +40,8 @@ const DEFAULT_FORM = {
   isTask: false,
   description: "",
   hide: false,
+  useLocalTimezone: true,
+  eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
 };
 
 function toDatetimeLocal(isoString) {
@@ -49,7 +53,17 @@ function toDatetimeLocal(isoString) {
 export default function EventModal({ open, onClose, initialDate, event }) {
   const { addEvent, updateEvent, removeEvent, refreshEventData } =
     useCalendar();
+  const { userLocations } = useUser();
+  const navigate = useNavigate();
   const isEdit = Boolean(event);
+  const localTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+  const locationTimezoneOptions = (userLocations ?? [])
+    .map((location) => ({
+      label: location?.name ?? location?.timezone,
+      value: location?.timezone,
+    }))
+    .filter((option) => !!option.value);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -69,6 +83,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           isTask: event?.isTask ?? false,
           description: event?.description ?? "",
           hide: event?.hide ?? false,
+          useLocalTimezone:
+            !event?.eventTimezone || event.eventTimezone === localTimezone,
+          eventTimezone: event?.eventTimezone ?? localTimezone,
         });
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
@@ -91,10 +108,16 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           : toDatetimeLocal(
               new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             );
-        setForm({ ...DEFAULT_FORM, startDate: base, endDate: end });
+        setForm({
+          ...DEFAULT_FORM,
+          startDate: base,
+          endDate: end,
+          useLocalTimezone: true,
+          eventTimezone: localTimezone,
+        });
       }
     }
-  }, [open, isEdit, event, initialDate]);
+  }, [open, isEdit, event, initialDate, localTimezone]);
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -110,7 +133,12 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     setSaving(true);
     try {
       const payload = {
-        ...form,
+        name: form.name,
+        location: form.location,
+        isAllDay: form.isAllDay,
+        eventTypeId: form.eventTypeId,
+        isTask: form.isTask,
+        hide: form.hide,
         description: form.description
           ? DOMPurify.sanitize(form.description)
           : "",
@@ -118,6 +146,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           ? new Date(form.startDate).toISOString()
           : null,
         endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
+        eventTimezone: form.useLocalTimezone
+          ? localTimezone
+          : form.eventTimezone,
       };
       if (isEdit) {
         const savedEvent = await updateEvent(event.eventId, payload);
@@ -195,6 +226,43 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             }
             label="All Day"
           />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.useLocalTimezone}
+                onChange={(e) =>
+                  handleChange("useLocalTimezone", e.target.checked)
+                }
+              />
+            }
+            label={`Use local timezone (${localTimezone})`}
+          />
+
+          {!form.useLocalTimezone && (
+            <FormControl fullWidth>
+              <InputLabel id="event-timezone-label">Timezone</InputLabel>
+              <Select
+                labelId="event-timezone-label"
+                label="Timezone"
+                value={form.eventTimezone}
+                onChange={(e) => handleChange("eventTimezone", e.target.value)}
+                disabled={locationTimezoneOptions.length === 0}
+              >
+                {locationTimezoneOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {!form.useLocalTimezone &&
+            (!userLocations || userLocations.length === 0) && (
+              <Button size="small" onClick={() => navigate("/settings")}>
+                Add saved locations in Settings
+              </Button>
+            )}
 
           <TextField
             label="Start"

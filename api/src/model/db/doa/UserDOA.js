@@ -34,6 +34,17 @@ export default class UserDOA {
     return row ? User.fromRow(row) : null;
   }
 
+  static async findAuthProviderName(userId) {
+    const result = await query(
+      `SELECT apt.name
+       FROM "User" u
+       JOIN authprovidertype apt ON apt.authprovidertypeid = u.authprovidertypeid
+       WHERE u.userid = $1`,
+      [userId],
+    );
+    return result.rows[0]?.name ?? null;
+  }
+
   /**
    * Create a new user with minimal fields (Email, Name).
    * Defaults to Email auth provider type.

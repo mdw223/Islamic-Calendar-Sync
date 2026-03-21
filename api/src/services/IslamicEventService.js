@@ -51,12 +51,12 @@ export async function getMergedDefinitions(userId) {
  * @param {number[]} years - Array of Gregorian years.
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForUser(userId, years) {
+export async function generateForUser(userId, years, timezone = null) {
   const mergedDefs = await getMergedDefinitions(userId);
 
   const allGenerated = [];
   for (const year of years) {
-    const generated = generateIslamicEventsForYear(year, mergedDefs);
+    const generated = generateIslamicEventsForYear(year, mergedDefs, timezone);
     allGenerated.push(...generated);
   }
 

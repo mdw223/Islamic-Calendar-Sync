@@ -3,6 +3,7 @@
 
 -- Drop tables if they exist (in reverse order of dependencies)
 DROP TABLE IF EXISTS Event CASCADE;
+DROP TABLE IF EXISTS UserLocation CASCADE;
 DROP TABLE IF EXISTS EventType CASCADE;
 DROP TABLE IF EXISTS Prayer CASCADE;
 DROP TABLE IF EXISTS PrayerType CASCADE;
@@ -42,9 +43,6 @@ CREATE TABLE "User" (
     UpdatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     LastLogin TIMESTAMP,
     IsAdmin BOOLEAN DEFAULT FALSE,
-    Timezone VARCHAR(100),
-    Latitude VARCHAR(50),
-    Longitude VARCHAR(50),
     Language VARCHAR(10),
     GeneratedYearsStart INTEGER NULL,
     GeneratedYearsEnd INTEGER NULL,
@@ -110,6 +108,20 @@ CREATE TABLE CalendarProvider (
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
+-- Saved user locations for explicit timezone-aware generation/export.
+CREATE TABLE UserLocation (
+    UserLocationId SERIAL PRIMARY KEY,
+    UserId INTEGER NOT NULL,
+    Name VARCHAR(150) NOT NULL,
+    Latitude VARCHAR(50),
+    Longitude VARCHAR(50),
+    Timezone VARCHAR(100) NOT NULL,
+    IsDefault BOOLEAN NOT NULL DEFAULT FALSE,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
+
 -- -- Create Calendar table
 -- CREATE TABLE Calendar (
 --     CalendarId SERIAL PRIMARY KEY,
@@ -170,6 +182,7 @@ CREATE TABLE Event (
     RRule VARCHAR(512) NULL,
     IsSystemEvent BOOLEAN NOT NULL DEFAULT FALSE,
     ParentEventId INTEGER NULL REFERENCES Event(EventId) ON DELETE CASCADE,
+    EventTimezone VARCHAR(100) NULL,
     IslamicDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

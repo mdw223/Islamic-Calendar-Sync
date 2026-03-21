@@ -18,12 +18,19 @@ import GetDefinitions from './definitions/GetDefinitions.js';
 import UpdateDefinitionPreference from './definitions/UpdateDefinitionPreference.js';
 import SyncOfflineEvents from './events/SyncOfflineEvents.js';
 import SyncOfflinePreferences from './definitions/SyncOfflinePreferences.js';
+import GetUserLocations from './user-locations/GetUserLocations.js';
+import CreateUserLocation from './user-locations/CreateUserLocation.js';
+import UpdateUserLocation from './user-locations/UpdateUserLocation.js';
+import DeleteUserLocation from './user-locations/DeleteUserLocation.js';
+import SyncOfflineUserLocations from './user-locations/SyncOfflineUserLocations.js';
+import UpdateCurrentUser from './users/UpdateCurrentUser.js';
 
 const router = express.Router();
 
 // Health check routes
 router.use("/health", healthRoutes);
 router.get("/users/me", Auth(AuthUser.VALID_USER), GetCurrentUser);
+router.put("/users/me", Auth(AuthUser.VALID_USER), UpdateCurrentUser);
 router.post("/users/send-code", SendVerificationCode);
 router.post("/users/verify-code", VerifyCode);
 router.post("/users/logout", Auth(AuthUser.VALID_USER), Logout);
@@ -47,9 +54,14 @@ router.delete("/events", Auth(AuthUser.VALID_USER), DeleteAllEvents);
 // Offline-to-server sync (called once after login when IndexedDB data exists)
 router.post("/events/sync", Auth(AuthUser.VALID_USER), SyncOfflineEvents);
 router.post("/definitions/sync", Auth(AuthUser.VALID_USER), SyncOfflinePreferences);
+router.post("/user-locations/sync", Auth(AuthUser.VALID_USER), SyncOfflineUserLocations);
 
 // Islamic event definitions routes
 router.get("/definitions", Auth(AuthUser.ANY), GetDefinitions);
 router.put("/definitions/:definitionId", Auth(AuthUser.VALID_USER), UpdateDefinitionPreference);
+router.get("/user-locations", Auth(AuthUser.VALID_USER), GetUserLocations);
+router.post("/user-locations", Auth(AuthUser.VALID_USER), CreateUserLocation);
+router.put("/user-locations/:userLocationId", Auth(AuthUser.VALID_USER), UpdateUserLocation);
+router.delete("/user-locations/:userLocationId", Auth(AuthUser.VALID_USER), DeleteUserLocation);
 
 export default router;

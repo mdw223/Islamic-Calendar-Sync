@@ -9,6 +9,10 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   IconButton,
   Popover,
   TextField,
@@ -22,8 +26,10 @@ import {
   Copy,
   ChevronDown,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
+import { useUser } from "../../contexts/UserContext";
 import ics from "../../util/Ics";
 
 const YEAR_RANGE_OFFSET = 5;
@@ -46,6 +52,8 @@ function buildYearChoices() {
 export default function SyncModal({ open, onClose, user }) {
   const { events, ensureIslamicEventsForYears, generatedYearsRange } =
     useCalendar();
+  const { userLocations } = useUser();
+  const navigate = useNavigate();
   const yearChoices = useMemo(buildYearChoices, []);
   const currentYear = new Date().getFullYear();
 
@@ -54,6 +62,36 @@ export default function SyncModal({ open, onClose, user }) {
   );
   const [yearAnchor, setYearAnchor] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const browserTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+
+  const locationOptions = useMemo(() => {
+    const options = [];
+    const seen = new Set();
+    for (const location of userLocations ?? []) {
+      if (!location?.timezone || seen.has(location.timezone)) continue;
+      seen.add(location.timezone);
+      options.push({
+        label: location?.name ?? location.timezone,
+        timezone: location.timezone,
+      });
+    }
+    if (options.length === 0) {
+      options.push({
+        label: `Current Device (${browserTimezone})`,
+        timezone: browserTimezone,
+      });
+    }
+    return options;
+  }, [browserTimezone, userLocations]);
+
+  const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
+
+  useEffect(() => {
+    if (!open) return;
+    const defaultTimezone = locationOptions[0]?.timezone ?? browserTimezone;
+    setSelectedTimezone(defaultTimezone);
+  }, [browserTimezone, locationOptions, open]);
 
   const duplicateYears = useMemo(() => {
     const generatedStart = generatedYearsRange?.start;
@@ -63,11 +101,7 @@ export default function SyncModal({ open, onClose, user }) {
     return [...selectedYears]
       .filter((year) => year >= generatedStart && year <= generatedEnd)
       .sort((a, b) => a - b);
-  }, [
-    generatedYearsRange?.end,
-    generatedYearsRange?.start,
-    selectedYears,
-  ]);
+  }, [generatedYearsRange?.end, generatedYearsRange?.start, selectedYears]);
 
   const toggleYear = useCallback((year) => {
     setSelectedYears((prev) => {
@@ -83,7 +117,9 @@ export default function SyncModal({ open, onClose, user }) {
 
     setIsGenerating(true);
     try {
-      await ensureIslamicEventsForYears([...selectedYears]);
+      await ensureIslamicEventsForYears([...selectedYears], {
+        timezone: selectedTimezone,
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -108,6 +144,7 @@ export default function SyncModal({ open, onClose, user }) {
         ev.endDate,
         ev.rrule ?? undefined,
         ev.isAllDay ?? false,
+        { timezone: ev.eventTimezone ?? selectedTimezone },
       );
     }
 
@@ -123,12 +160,12 @@ export default function SyncModal({ open, onClose, user }) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [events, selectedYears, ensureIslamicEventsForYears]);
+  }, [ensureIslamicEventsForYears, events, selectedTimezone, selectedYears]);
 
   const isLoggedIn = user?.isLoggedIn;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Sync Calendar</DialogTitle>
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
@@ -142,6 +179,14 @@ export default function SyncModal({ open, onClose, user }) {
             Export your events to a .ics file you can import into any calendar
             app.
           </Typography>
+          {(!userLocations || userLocations.length === 0) && (
+            <Alert severity="info" sx={{ mb: 1 }}>
+              No saved locations yet.{" "}
+              <Button size="small" onClick={() => navigate("/settings")}>
+                Go to Settings
+              </Button>
+            </Alert>
+          )}
 
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
             <Button
@@ -164,6 +209,21 @@ export default function SyncModal({ open, onClose, user }) {
                 ? `${[...selectedYears][0]}`
                 : `${selectedYears.size} years`}
             </Button>
+            <FormControl size="small" sx={{ minWidth: 190 }}>
+              <InputLabel id="sync-location-label">Location</InputLabel>
+              <Select
+                labelId="sync-location-label"
+                value={selectedTimezone}
+                label="Location"
+                onChange={(event) => setSelectedTimezone(event.target.value)}
+              >
+                {locationOptions.map((option) => (
+                  <MenuItem key={option.timezone} value={option.timezone}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <Popover
               open={Boolean(yearAnchor)}

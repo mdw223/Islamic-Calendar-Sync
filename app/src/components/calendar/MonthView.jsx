@@ -182,22 +182,6 @@ export default function MonthView({
     return result;
   }, [startOffset, days]);
 
-  const segmentDayCells = useMemo(() => {
-    const seen = new Set();
-    const result = [];
-    connectedSegments.forEach((seg) => {
-      for (let c = seg.startColIndex; c <= seg.endColIndex; c++) {
-        const cellIndex = seg.rowIndex * 7 + c;
-        const dayNum = cellIndex - startOffset + 1;
-        if (dayNum >= 1 && dayNum <= days && !seen.has(dayNum)) {
-          seen.add(dayNum);
-          result.push({ dayNum, rowIndex: seg.rowIndex, colIndex: c });
-        }
-      }
-    });
-    return result;
-  }, [connectedSegments, startOffset, days]);
-
   return (
     <Box sx={{ flex: 1, overflow: "auto", p: { xs: "0px", sm: 1 } }}>
       {/* Day-of-week header */}
@@ -231,11 +215,22 @@ export default function MonthView({
         }}
       >
         {cells.map((day, idx) => {
-          if (!day) return <Box key={`empty-${idx}`} sx={{ minWidth: 0 }} />;
+          const rowIndex = Math.floor(idx / 7);
+          const colIndex = idx % 7;
+          const gridCellSx = {
+            gridRow: rowIndex + 1,
+            gridColumn: colIndex + 1,
+            zIndex: 1,
+          };
+
+          if (!day) {
+            return (
+              <Box key={`empty-${idx}`} sx={{ minWidth: 0, ...gridCellSx }} />
+            );
+          }
 
           const cellDate = new Date(year, month, day);
           const key = toDateKey(cellDate);
-          const rowIndex = Math.floor(idx / 7);
           const laneCount = spanLaneCountByRow[rowIndex] ?? 0;
           const reservedTopPx = laneCount * 22;
           const isToday = sameDay(cellDate, today);
@@ -248,6 +243,7 @@ export default function MonthView({
               variant="outlined"
               onClick={() => onDayClick(key)}
               sx={{
+                ...gridCellSx,
                 minHeight: 90 + reservedTopPx,
                 minWidth: 0,
                 p: 0.75,
@@ -304,114 +300,6 @@ export default function MonthView({
                   }}
                 >
                   {day}
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 0.25,
-                  flex: 1,
-                  mt: reservedTopPx > 0 ? `${reservedTopPx}px` : 0,
-                  mx: { xs: -0.75, sm: 0 },
-                }}
-              >
-                {dayEvents.slice(0, 3).map((ev) => (
-                  <EventChip
-                    key={`${ev.eventId}-${ev.startDate ?? ""}`}
-                    event={ev}
-                    onClick={onEventClick}
-                    theme={theme}
-                  />
-                ))}
-                {dayEvents.length > 3 && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ pl: 0.5 }}
-                  >
-                    +{dayEvents.length - 3} more
-                  </Typography>
-                )}
-              </Box>
-            </Paper>
-          );
-        })}
-
-        {segmentDayCells.map(({ dayNum, rowIndex, colIndex }) => {
-          const cellDate = new Date(year, month, dayNum);
-          const dateKey = toDateKey(cellDate);
-          const isToday = sameDay(cellDate, today);
-          const hijri = hijriByDay[dayNum];
-          const dayEvents = eventsByDay[dateKey] ?? [];
-          const laneCount = spanLaneCountByRow[rowIndex] ?? 0;
-          const reservedTopPx = laneCount * 22;
-
-          return (
-            <Paper
-              key={`span-day-${dateKey}`}
-              variant="outlined"
-              onClick={() => onDayClick(dateKey)}
-              sx={{
-                gridRow: rowIndex + 1,
-                gridColumn: colIndex + 1,
-                zIndex: 1,
-                minHeight: 90 + reservedTopPx,
-                minWidth: 0,
-                p: 0.75,
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.25,
-                borderRadius: { xs: 0, sm: "12px" },
-                overflow: "hidden",
-                borderColor: isToday ? "primary.main" : "divider",
-                borderWidth: isToday ? 2 : 1,
-                transition: "background-color 0.15s",
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: "0.65rem", lineHeight: 1, pl: 0.25 }}
-                >
-                  {hijri?.day}
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 0.2,
-                      display: "inline-flex",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    <Moon size={10} />
-                  </Box>
-                </Typography>
-
-                <Box
-                  sx={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: isToday ? "primary.main" : "transparent",
-                    color: isToday ? "primary.contrastText" : "text.primary",
-                    fontWeight: isToday ? 700 : 400,
-                    fontSize: "0.8rem",
-                  }}
-                >
-                  {dayNum}
                 </Box>
               </Box>
 

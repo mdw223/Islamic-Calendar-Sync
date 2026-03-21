@@ -44,6 +44,7 @@ export default class OfflineClient {
     const record = {
       ...rest,
       location: rest.location ?? null,
+      eventTimezone: rest.eventTimezone ?? null,
       isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
       islamicDefinitionId: rest.islamicDefinitionId ?? null,
@@ -68,8 +69,8 @@ export default class OfflineClient {
 
   // ── Islamic event generation ───────────────────────────────────────────
 
-  static async generateEvents(years) {
-    const result = await generateForOfflineUser(years);
+  static async generateEvents(years, timezone = null) {
+    const result = await generateForOfflineUser(years, timezone);
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
     const existing = await db.generationMeta.get("generatedYearsRange");
@@ -135,16 +136,18 @@ export default class OfflineClient {
    * Returns null if there is nothing to sync.
    */
   static async getAllDataForSync() {
-    const [events, preferences, generationMeta] = await Promise.all([
+    const [events, preferences, generationMeta, userLocations] = await Promise.all([
       db.events.toArray(),
       db.definitionPreferences.toArray(),
       db.generationMeta.get("generatedYearsRange"),
+      db.userLocations?.toArray?.() ?? [],
     ]);
 
     if (
       events.length === 0 &&
       preferences.length === 0 &&
-      generationMeta == null
+      generationMeta == null &&
+      userLocations.length === 0
     ) {
       return null;
     }
@@ -153,6 +156,7 @@ export default class OfflineClient {
       // Strip local auto-increment `id` and any `eventId` — backend assigns real EventId.
       events: events.map(({ id, eventId, createdAt, updatedAt, ...rest }) => rest),
       preferences,
+      userLocations: userLocations.map(({ id, ...rest }) => rest),
       generatedYearsStart: generationMeta?.generatedYearsStart ?? null,
       generatedYearsEnd: generationMeta?.generatedYearsEnd ?? null,
     };
@@ -166,6 +170,7 @@ export default class OfflineClient {
       db.events.clear(),
       db.definitionPreferences.clear(),
       db.generationMeta.clear(),
+      db.userLocations?.clear?.(),
     ]);
   }
 
@@ -177,7 +182,46 @@ export default class OfflineClient {
     if (count > 0) return true;
     const prefCount = await db.definitionPreferences.count();
     if (prefCount > 0) return true;
+    const userLocationCount = await (db.userLocations?.count?.() ?? 0);
+    if (userLocationCount > 0) return true;
     const generationMeta = await db.generationMeta.get("generatedYearsRange");
     return generationMeta != null;
+  }
+
+  static async getUserLocations() {
+    const records = await (db.userLocations?.toArray?.() ?? []);
+    return {
+      success: true,
+      userLocations: records.map(({ id, ...rest }) => ({
+        ...rest,
+        userLocationId: id,
+      })),
+    };
+  }
+
+  static async createUserLocation(userLocation) {
+    const now = new Date().toISOString();
+    const id = await db.userLocations.add({
+      ...userLocation,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { success: true, userLocation: { ...userLocation, userLocationId: id } };
+  }
+
+  static async updateUserLocation(userLocationId, updates) {
+    await db.userLocations.update(userLocationId, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
+    const record = await db.userLocations.get(userLocationId);
+    if (!record) return { success: false, userLocation: null };
+    const { id, ...rest } = record;
+    return { success: true, userLocation: { ...rest, userLocationId: id } };
+  }
+
+  static async deleteUserLocation(userLocationId) {
+    await db.userLocations.delete(userLocationId);
+    return { success: true };
   }
 }
