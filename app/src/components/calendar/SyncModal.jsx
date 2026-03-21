@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -43,7 +44,8 @@ function buildYearChoices() {
  *  3. Sync to Calendar (dummy, disabled when logged out)
  */
 export default function SyncModal({ open, onClose, user }) {
-  const { events, ensureIslamicEventsForYears } = useCalendar();
+  const { events, ensureIslamicEventsForYears, generatedYearsRange } =
+    useCalendar();
   const yearChoices = useMemo(buildYearChoices, []);
   const currentYear = new Date().getFullYear();
 
@@ -52,6 +54,20 @@ export default function SyncModal({ open, onClose, user }) {
   );
   const [yearAnchor, setYearAnchor] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const duplicateYears = useMemo(() => {
+    const generatedStart = generatedYearsRange?.start;
+    const generatedEnd = generatedYearsRange?.end;
+    if (generatedStart == null || generatedEnd == null) return [];
+
+    return [...selectedYears]
+      .filter((year) => year >= generatedStart && year <= generatedEnd)
+      .sort((a, b) => a - b);
+  }, [
+    generatedYearsRange?.end,
+    generatedYearsRange?.start,
+    selectedYears,
+  ]);
 
   const toggleYear = useCallback((year) => {
     setSelectedYears((prev) => {
@@ -173,6 +189,12 @@ export default function SyncModal({ open, onClose, user }) {
               </Box>
             </Popover>
           </Box>
+          {duplicateYears.length > 0 && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Already generated years: {duplicateYears.join(", ")}. Continuing
+              will duplicate events for those years.
+            </Alert>
+          )}
         </Box>
 
         <Divider />
