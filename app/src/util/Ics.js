@@ -47,7 +47,7 @@ var ics = function(uidDomain, prodId) {
      * @param  {string} begin       Beginning date of event
      * @param  {string} stop        Ending date of event
      */
-    'addEvent': function(subject, description, location, begin, stop, rrule) {
+    'addEvent': function(subject, description, location, begin, stop, rrule, allDay) {
       // I'm not in the mood to make these optional... So they are all required
       if (typeof subject === 'undefined' ||
         typeof description === 'undefined' ||
@@ -145,6 +145,19 @@ var ics = function(uidDomain, prodId) {
       var end = end_year + end_month + end_day + end_time;
       var now = now_year + now_month + now_day + now_time;
 
+      if (allDay) {
+        // RFC5545 all-day events use DATE values and an exclusive DTEND.
+        start = start_year + start_month + start_day;
+
+        var exclusiveEndDate = new Date(end_date);
+        exclusiveEndDate.setDate(exclusiveEndDate.getDate() + 1);
+
+        var exclusive_end_year = ("0000" + (exclusiveEndDate.getFullYear().toString())).slice(-4);
+        var exclusive_end_month = ("00" + ((exclusiveEndDate.getMonth() + 1).toString())).slice(-2);
+        var exclusive_end_day = ("00" + ((exclusiveEndDate.getDate()).toString())).slice(-2);
+        end = exclusive_end_year + exclusive_end_month + exclusive_end_day;
+      }
+
       // recurrence rrule vars
       var rruleString;
       if (rrule) {
@@ -174,14 +187,17 @@ var ics = function(uidDomain, prodId) {
 
       var stamp = new Date().toISOString();
 
+      var dtStartLine = allDay ? 'DTSTART;VALUE=DATE:' + start : 'DTSTART;VALUE=DATE-TIME:' + start;
+      var dtEndLine = allDay ? 'DTEND;VALUE=DATE:' + end : 'DTEND;VALUE=DATE-TIME:' + end;
+
       var calendarEvent = [
         'BEGIN:VEVENT',
         'UID:' + calendarEvents.length + "@" + uidDomain,
         'CLASS:PUBLIC',
         'DESCRIPTION:' + description,
         'DTSTAMP;VALUE=DATE-TIME:' + now,
-        'DTSTART;VALUE=DATE-TIME:' + start,
-        'DTEND;VALUE=DATE-TIME:' + end,
+        dtStartLine,
+        dtEndLine,
         'LOCATION:' + location,
         'SUMMARY;LANGUAGE=en-us:' + subject,
         'TRANSP:TRANSPARENT',

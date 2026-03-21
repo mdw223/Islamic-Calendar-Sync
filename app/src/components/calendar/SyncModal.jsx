@@ -91,6 +91,7 @@ export default function SyncModal({ open, onClose, user }) {
         ev.startDate,
         ev.endDate,
         ev.rrule ?? undefined,
+        ev.isAllDay ?? false,
       );
     }
 
