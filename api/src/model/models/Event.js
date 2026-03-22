@@ -48,6 +48,7 @@ export class Event {
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
     event.eventTimezone = body.eventTimezone ?? null;
+    event.hide = body.hide ?? false
     return event;
   }
 

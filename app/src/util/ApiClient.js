@@ -61,9 +61,14 @@ export default class APIClient {
   // ── Events ─────────────────────────────────────────────────────────────────
 
   /**
-   * Get all events for the current user.
+   * Get calendar events for the current user (expanded for the date range).
+   * @param {{ from?: string, to?: string }} [query] — YYYY-MM-DD inclusive range; omit to use server defaults.
    */
-  static async getEvents() {
+  static async getEvents(query) {
+    if (query?.from && query?.to) {
+      const qs = new URLSearchParams({ from: query.from, to: query.to });
+      return HTTPClient.get(`/events?${qs.toString()}`);
+    }
     return HTTPClient.get("/events");
   }
 

@@ -23,6 +23,8 @@ import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import { EventTypeId } from "../../Constants";
 import RichTextEditor from "../RichTextEditor";
+import { buildRecurrenceRRule } from "../../util/recurrenceBuilder";
+import { parseUserRRuleToRecurrenceForm } from "../../util/parseUserRRule";
 
 /** Map enum entries to {id, name} pairs for the dropdown. */
 const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
@@ -42,7 +44,15 @@ const DEFAULT_FORM = {
   hide: false,
   useLocalTimezone: true,
   eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
+  recurrenceFreq: "none",
+  recurrenceInterval: 1,
+  recurrenceEndType: "never",
+  recurrenceUntil: "",
+  recurrenceCount: 10,
+  recurrenceWeekdays: [],
 };
+
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return "";
@@ -56,6 +66,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
   const { userLocations } = useUser();
   const navigate = useNavigate();
   const isEdit = Boolean(event);
+  const isIslamicEdit = isEdit && Boolean(event?.islamicDefinitionId);
   const localTimezone =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
   const locationTimezoneOptions = (userLocations ?? [])
@@ -73,7 +84,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     if (open) {
       setError(null);
       if (isEdit) {
-        setForm({
+        const base = {
           name: event?.name ?? "",
           location: event?.location ?? "",
           startDate: toDatetimeLocal(event?.startDate),
@@ -86,7 +97,25 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           useLocalTimezone:
             !event?.eventTimezone || event.eventTimezone === localTimezone,
           eventTimezone: event?.eventTimezone ?? localTimezone,
-        });
+          recurrenceFreq: "none",
+          recurrenceInterval: 1,
+          recurrenceEndType: "never",
+          recurrenceUntil: "",
+          recurrenceCount: 10,
+          recurrenceWeekdays: [],
+        };
+        if (!event?.islamicDefinitionId && event?.rrule) {
+          const parsed = parseUserRRuleToRecurrenceForm(event.rrule);
+          if (parsed) {
+            base.recurrenceFreq = parsed.recurrenceFreq;
+            base.recurrenceInterval = parsed.recurrenceInterval;
+            base.recurrenceEndType = parsed.recurrenceEndType;
+            base.recurrenceUntil = parsed.recurrenceUntil;
+            base.recurrenceCount = parsed.recurrenceCount;
+            base.recurrenceWeekdays = parsed.recurrenceWeekdays;
+          }
+        }
+        setForm(base);
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
         // "YYYY-MM-DDThh:mm" (from WeekView / DayView slot clicks).
@@ -108,12 +137,16 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           : toDatetimeLocal(
               new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             );
+        const startAsDate = initialDate
+          ? new Date(hasTime ? initialDate : `${initialDate}T09:00`)
+          : new Date();
         setForm({
           ...DEFAULT_FORM,
           startDate: base,
           endDate: end,
           useLocalTimezone: true,
           eventTimezone: localTimezone,
+          recurrenceWeekdays: [startAsDate.getDay()],
         });
       }
     }
@@ -150,6 +183,28 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           ? localTimezone
           : form.eventTimezone,
       };
+
+      if (!isIslamicEdit && form.startDate) {
+        const dt = new Date(form.startDate);
+        const rrule = buildRecurrenceRRule(
+          {
+            freq: form.recurrenceFreq,
+            interval: form.recurrenceInterval,
+            byweekday: form.recurrenceWeekdays,
+            endType: form.recurrenceEndType,
+            untilDate: form.recurrenceUntil,
+            count: form.recurrenceCount,
+          },
+          dt,
+        );
+        payload.rrule = rrule;
+      }
+
+      if (isIslamicEdit) {
+        delete payload.startDate;
+        delete payload.endDate;
+      }
+
       if (isEdit) {
         const savedEvent = await updateEvent(event.eventId, payload);
         if (savedEvent?.eventId) {
@@ -297,6 +352,132 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             fullWidth
             InputLabelProps={{ shrink: true }}
           />
+
+          {!isIslamicEdit && (
+            <>
+              <Typography variant="subtitle2" color="text.secondary">
+                Recurrence
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel id="recurrence-freq-label">Repeat</InputLabel>
+                <Select
+                  labelId="recurrence-freq-label"
+                  label="Repeat"
+                  value={form.recurrenceFreq}
+                  onChange={(e) =>
+                    handleChange("recurrenceFreq", e.target.value)
+                  }
+                >
+                  <MenuItem value="none">Does not repeat</MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+
+              {form.recurrenceFreq !== "none" && (
+                <TextField
+                  label="Repeat every (interval)"
+                  type="number"
+                  inputProps={{ min: 1, max: 999 }}
+                  value={form.recurrenceInterval}
+                  onChange={(e) =>
+                    handleChange(
+                      "recurrenceInterval",
+                      Math.max(1, parseInt(e.target.value, 10) || 1),
+                    )
+                  }
+                  fullWidth
+                />
+              )}
+
+              {form.recurrenceFreq === "weekly" && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {WEEKDAY_LABELS.map((label, dayIndex) => (
+                    <FormControlLabel
+                      key={label}
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={form.recurrenceWeekdays.includes(dayIndex)}
+                          onChange={() => {
+                            setForm((prev) => {
+                              const set = new Set(prev.recurrenceWeekdays);
+                              if (set.has(dayIndex)) set.delete(dayIndex);
+                              else set.add(dayIndex);
+                              let next = [...set].sort((a, b) => a - b);
+                              if (next.length === 0) next = [dayIndex];
+                              return {
+                                ...prev,
+                                recurrenceWeekdays: next,
+                              };
+                            });
+                          }}
+                        />
+                      }
+                      label={label}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              {form.recurrenceFreq !== "none" && (
+                <>
+                  <FormControl fullWidth>
+                    <InputLabel id="recurrence-end-label">Ends</InputLabel>
+                    <Select
+                      labelId="recurrence-end-label"
+                      label="Ends"
+                      value={form.recurrenceEndType}
+                      onChange={(e) =>
+                        handleChange("recurrenceEndType", e.target.value)
+                      }
+                    >
+                      <MenuItem value="never">Never</MenuItem>
+                      <MenuItem value="until">On date</MenuItem>
+                      <MenuItem value="count">After N occurrences</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {form.recurrenceEndType === "until" && (
+                    <TextField
+                      label="End repeat on"
+                      type="date"
+                      value={form.recurrenceUntil}
+                      onChange={(e) =>
+                        handleChange("recurrenceUntil", e.target.value)
+                      }
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                  {form.recurrenceEndType === "count" && (
+                    <TextField
+                      label="Number of occurrences"
+                      type="number"
+                      inputProps={{ min: 1, max: 999 }}
+                      value={form.recurrenceCount}
+                      onChange={(e) =>
+                        handleChange(
+                          "recurrenceCount",
+                          Math.max(1, parseInt(e.target.value, 10) || 1),
+                        )
+                      }
+                      fullWidth
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {isIslamicEdit && (
+            <Typography variant="caption" color="text.secondary">
+              Dates and Hijri recurrence for this event are managed when you
+              generate Islamic calendar years. You can still edit name,
+              description, and visibility.
+            </Typography>
+          )}
 
           <FormControl fullWidth>
             <InputLabel id="event-type-label">Event Type</InputLabel>

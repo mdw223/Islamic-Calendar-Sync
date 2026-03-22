@@ -189,6 +189,11 @@ CREATE TABLE Event (
     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
 );
 
+-- One Islamic series master per user + definition (see Sql.Migrations/002_islamic_event_masters.sql for dedup on existing DBs).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_event_user_islamic_def
+  ON event (userid, islamicdefinitionid)
+  WHERE islamicdefinitionid IS NOT NULL;
+
 -- User-level show/hide preferences for Islamic event definitions.
 -- Stores which definitions a user has hidden in the sidebar panel.
 -- The backend merges these with the base definitions from islamicEvents.json

@@ -37,6 +37,7 @@ import { useUser } from "./UserContext";
 import { getSavedView } from "../util/LocalStorage";
 import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
 import { createUser } from "../models/User";
+import { getDefaultEventsQueryRange } from "../util/calendarEventRange";
 
 const CalendarContext = createContext(null);
 
@@ -75,6 +76,31 @@ export function CalendarProvider({ children }) {
     eventsRef.current = events;
   }, [events]);
 
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const genRangeRef = useRef(generatedYearsRange);
+  useEffect(() => {
+    genRangeRef.current = generatedYearsRange;
+  }, [generatedYearsRange]);
+
+  function eventsQueryRange(overrides = {}) {
+    return getDefaultEventsQueryRange({
+      generatedYearsStart:
+        overrides.generatedYearsStart ??
+        genRangeRef.current.start ??
+        userRef.current?.generatedYearsStart ??
+        null,
+      generatedYearsEnd:
+        overrides.generatedYearsEnd ??
+        genRangeRef.current.end ??
+        userRef.current?.generatedYearsEnd ??
+        null,
+    });
+  }
+
   // ── Derived auth check ─────────────────────────────────────────────────
   const isAuth = !!user?.userId;
 
@@ -92,16 +118,20 @@ export function CalendarProvider({ children }) {
       try {
         if (isAuth) {
           // Authenticated — load from API, fall back to IndexedDB.
+          const evRange = getDefaultEventsQueryRange({
+            generatedYearsStart: user?.generatedYearsStart ?? null,
+            generatedYearsEnd: user?.generatedYearsEnd ?? null,
+          });
           let eventsRes, defsRes;
           try {
             [eventsRes, defsRes] = await Promise.all([
-              APIClient.getEvents(),
+              APIClient.getEvents(evRange),
               APIClient.getDefinitions(),
             ]);
           } catch (err) {
             if (shouldFallbackToOffline(err)) {
               [eventsRes, defsRes] = await Promise.all([
-                OfflineClient.getEvents(),
+                OfflineClient.getEvents(evRange),
                 OfflineClient.getDefinitions(),
               ]);
             } else {
@@ -122,10 +152,14 @@ export function CalendarProvider({ children }) {
           // Not authenticated — check IndexedDB for cached data.
           const hasData = await OfflineClient.hasData();
           if (hasData) {
-            const [eventsRes, defsRes, yearsRange] = await Promise.all([
-              OfflineClient.getEvents(),
+            const yearsRange = await OfflineClient.getGeneratedYearsRange();
+            const evRange = getDefaultEventsQueryRange({
+              generatedYearsStart: yearsRange?.generatedYearsStart ?? null,
+              generatedYearsEnd: yearsRange?.generatedYearsEnd ?? null,
+            });
+            const [eventsRes, defsRes] = await Promise.all([
+              OfflineClient.getEvents(evRange),
               OfflineClient.getDefinitions(),
-              OfflineClient.getGeneratedYearsRange(),
             ]);
             if (cancelled) return;
 
@@ -234,10 +268,22 @@ export function CalendarProvider({ children }) {
         });
       }
 
-      const generated = res?.events ?? [];
-      if (generated.length > 0) {
-        saveEvents([...eventsRef.current, ...generated]);
+      const evRange = eventsQueryRange({
+        generatedYearsStart: nextStart,
+        generatedYearsEnd: nextEnd,
+      });
+      let reloadRes;
+      try {
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+      } catch (reloadErr) {
+        if (shouldFallbackToOffline(reloadErr) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
+        }
       }
+      const loaded = reloadRes?.events ?? [];
+      saveEvents(loaded);
     } catch {
       // Keep generatedYearsRange unchanged on failure.
     }
@@ -260,8 +306,15 @@ export function CalendarProvider({ children }) {
         }
       }
       const created = res?.event ?? res;
-      const next = [created, ...eventsRef.current];
-      saveEvents(next);
+      const evRange = eventsQueryRange();
+      try {
+        const reload = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+        saveEvents(reload?.events ?? [created, ...eventsRef.current]);
+      } catch {
+        saveEvents([created, ...eventsRef.current]);
+      }
       return created;
     } catch (err) {
       setError(err.message ?? "Failed to create event");
@@ -274,22 +327,22 @@ export function CalendarProvider({ children }) {
    */
   async function refreshEventData(eventId) {
     try {
-      let res;
+      const evRange = eventsQueryRange();
+      let reloadRes;
       try {
-        res = await APIClient.getEventById(eventId);
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
       } catch (err) {
-        if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.getEventById(eventId);
+        if (shouldFallbackToOffline(err) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
         } else {
           throw err;
         }
       }
-      const updated = res?.event ?? res;
-      const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e,
-      );
-      saveEvents(next);
-      return updated;
+      const list = reloadRes?.events ?? [];
+      saveEvents(list);
+      return list.find((e) => e.eventId === eventId) ?? null;
     } catch (err) {
       setError(err.message ?? "Failed to refresh event");
       throw err;
@@ -312,10 +365,18 @@ export function CalendarProvider({ children }) {
         }
       }
       const updated = res?.event ?? res;
-      const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e,
-      );
-      saveEvents(next);
+      const evRange = eventsQueryRange();
+      try {
+        const reload = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+        saveEvents(reload?.events ?? eventsRef.current);
+      } catch {
+        const next = eventsRef.current.map((e) =>
+          e.eventId === eventId ? { ...e, ...updated } : e,
+        );
+        saveEvents(next);
+      }
       return updated;
     } catch (err) {
       setError(err.message ?? "Failed to update event");
@@ -350,6 +411,32 @@ export function CalendarProvider({ children }) {
   }
 
   /**
+   * Fetch expanded events for an explicit date range without replacing context state.
+   * Used for .ics export. Same API/offline rules as refreshFromBackend.
+   *
+   * @param {{ from: string, to: string }} range — YYYY-MM-DD inclusive
+   * @returns {Promise<Object[]>}
+   */
+  async function fetchExpandedEventsForRange({ from, to }) {
+    const query = { from, to };
+    let res;
+    if (isAuth) {
+      try {
+        res = await APIClient.getEvents(query);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.getEvents(query);
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      res = await OfflineClient.getEvents(query);
+    }
+    return res?.events ?? [];
+  }
+
+  /**
    * Reload events from the data source (manual refresh).
    * Tries API first; falls back to IndexedDB.
    */
@@ -357,12 +444,13 @@ export function CalendarProvider({ children }) {
     setIsRefreshing(true);
     setError(null);
     try {
+      const evRange = eventsQueryRange();
       let res;
       try {
-        res = await APIClient.getEvents();
+        res = await APIClient.getEvents(evRange);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.getEvents();
+          res = await OfflineClient.getEvents(evRange);
         } else {
           throw err;
         }
@@ -501,6 +589,7 @@ export function CalendarProvider({ children }) {
         toggleIslamicEvent,
         ensureIslamicEventsForYears,
         generatedYearsRange,
+        fetchExpandedEventsForRange,
 
         // Backend sync / refresh (syncToBackend is now a no-op)
         syncToBackend,

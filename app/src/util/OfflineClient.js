@@ -14,6 +14,12 @@ import {
   getMergedDefinitions,
   generateForOfflineUser,
 } from "../services/IslamicEventService";
+import {
+  expandStoredEventsForRange,
+  parseRangeDateParam,
+  endOfLocalDay,
+} from "../services/eventExpansion";
+import { getDefaultEventsQueryRange } from "./calendarEventRange";
 
 /**
  * Map a raw Dexie record (auto-increment `id`) to the shape the frontend
@@ -28,9 +34,23 @@ function mapDexieEvent(record) {
 export default class OfflineClient {
   // ── Events ─────────────────────────────────────────────────────────────
 
-  static async getEvents() {
+  static async getEvents(query = {}) {
     const raw = await db.events.toArray();
-    return { success: true, events: raw.map(mapDexieEvent) };
+    const mapped = raw.map(mapDexieEvent);
+    const range =
+      query.from && query.to
+        ? query
+        : getDefaultEventsQueryRange({
+            generatedYearsStart: query.generatedYearsStart ?? null,
+            generatedYearsEnd: query.generatedYearsEnd ?? null,
+          });
+    const fromD = parseRangeDateParam(range.from);
+    const toD = endOfLocalDay(parseRangeDateParam(range.to));
+    const expanded =
+      toD.getTime() < fromD.getTime()
+        ? []
+        : expandStoredEventsForRange(mapped, fromD, toD);
+    return { success: true, events: expanded };
   }
 
   static async getEventById(eventId) {

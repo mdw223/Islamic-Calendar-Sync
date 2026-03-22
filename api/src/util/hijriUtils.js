@@ -188,3 +188,73 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
 
   return events;
 }
+
+/**
+ * All occurrences of one definition between two Gregorian dates (inclusive span).
+ * Used when expanding Islamic series masters for GET /events.
+ *
+ * @param {Object} definition — single entry from islamicEvents.json shape
+ * @param {Date} rangeStart
+ * @param {Date} rangeEnd
+ * @param {string | null} timezone
+ * @returns {Array<Object>} Same shape as generateIslamicEventsForYear items
+ */
+export function generateIslamicEventsForDefinitionInDateRange(
+  definition,
+  rangeStart,
+  rangeEnd,
+  timezone = null,
+) {
+  const startY = rangeStart.getFullYear();
+  const endY = rangeEnd.getFullYear();
+  const rs = rangeStart.getTime();
+  const re = rangeEnd.getTime();
+  const out = [];
+
+  for (let y = startY; y <= endY; y++) {
+    const yearEvents = generateIslamicEventsForYear(y, [definition], timezone);
+    for (const ev of yearEvents) {
+      const es = new Date(ev.startDate).getTime();
+      const ee = new Date(ev.endDate).getTime();
+      if (ee >= rs && es <= re) {
+        out.push(ev);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Build one persisted row per Islamic definition (not hidden) for the given
+ * Gregorian years. Anchor dates are the earliest occurrence across those years.
+ *
+ * @param {number[]} years
+ * @param {Array<Object>} definitions — merged defs with isHidden
+ * @param {string | null} timezone
+ * @returns {Array<Object>} Plain objects for EventDOA.upsertIslamicMaster
+ */
+export function buildIslamicMasterRowsForYears(years, definitions, timezone = null) {
+  if (!years.length) return [];
+  const sortedYears = [...years].sort((a, b) => a - b);
+  const masters = [];
+
+  for (const def of definitions) {
+    if (def.isHidden) continue;
+
+    let anchor = null;
+    for (const y of sortedYears) {
+      const evs = generateIslamicEventsForYear(y, [def], timezone);
+      if (evs.length === 0) continue;
+      evs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      const first = evs[0];
+      if (!anchor || new Date(first.startDate) < new Date(anchor.startDate)) {
+        anchor = first;
+      }
+    }
+    if (anchor) {
+      masters.push({ ...anchor });
+    }
+  }
+
+  return masters;
+}

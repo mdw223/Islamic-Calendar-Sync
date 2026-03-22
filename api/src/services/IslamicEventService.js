@@ -14,7 +14,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const islamicEventsData = require("../data/islamicEvents.json");
 
-import { generateIslamicEventsForYear } from "../util/HijriUtils.js";
+import { buildIslamicMasterRowsForYears } from "../util/HijriUtils.js";
 import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../model/db/doa/EventDOA.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
@@ -54,17 +54,13 @@ export async function getMergedDefinitions(userId) {
 export async function generateForUser(userId, years, timezone = null) {
   const mergedDefs = await getMergedDefinitions(userId);
 
-  const allGenerated = [];
-  for (const year of years) {
-    const generated = generateIslamicEventsForYear(year, mergedDefs, timezone);
-    allGenerated.push(...generated);
-  }
+  const allMasters = buildIslamicMasterRowsForYears(years, mergedDefs, timezone);
 
-  if (allGenerated.length === 0) {
+  if (allMasters.length === 0) {
     return { events: [], generatedCount: 0 };
   }
 
-  const persisted = await EventDOA.bulkUpsert(allGenerated, userId);
+  const persisted = await EventDOA.bulkUpsert(allMasters, userId);
   const user = await UserDOA.findById(userId);
   if (user) {
     const minYear = Math.min(...years);

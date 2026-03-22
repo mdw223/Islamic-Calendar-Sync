@@ -31,6 +31,7 @@ import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import ics from "../../util/Ics";
+import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
 
 const YEAR_RANGE_OFFSET = 5;
 
@@ -44,14 +45,43 @@ function buildYearChoices() {
 }
 
 /**
+ * Ics.addEvent expects either a structured { freq, ... } or { rrule: "RRULE:..." }.
+ * API/Dexie events store RRULE as a bare string (e.g. FREQ=MONTHLY;...), which is
+ * truthy but has no .freq — that path throws in Ics.js.
+ */
+function toIcsRRuleArg(value) {
+  if (value == null || value === "") return undefined;
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (!s) return undefined;
+    const line = /^RRULE:/i.test(s) ? s : `RRULE:${s}`;
+    return { rrule: line };
+  }
+  if (typeof value === "object" && value.rrule != null) {
+    const inner = value.rrule;
+    if (typeof inner === "string") {
+      const t = inner.trim();
+      if (!t) return undefined;
+      const line = /^RRULE:/i.test(t) ? t : `RRULE:${t}`;
+      return { rrule: line };
+    }
+  }
+  if (typeof value === "object" && value.freq) return value;
+  return undefined;
+}
+
+/**
  * SyncModal — offers three sync options:
  *  1. Download .ics   (functional, uses Ics.js)
  *  2. Subscription URL (dummy, disabled when logged out)
  *  3. Sync to Calendar (dummy, disabled when logged out)
  */
 export default function SyncModal({ open, onClose, user }) {
-  const { events, ensureIslamicEventsForYears, generatedYearsRange } =
-    useCalendar();
+  const {
+    ensureIslamicEventsForYears,
+    generatedYearsRange,
+    fetchExpandedEventsForRange,
+  } = useCalendar();
   const { userLocations } = useUser();
   const navigate = useNavigate();
   const yearChoices = useMemo(buildYearChoices, []);
@@ -65,25 +95,10 @@ export default function SyncModal({ open, onClose, user }) {
   const browserTimezone =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
 
-  const locationOptions = useMemo(() => {
-    const options = [];
-    const seen = new Set();
-    for (const location of userLocations ?? []) {
-      if (!location?.timezone || seen.has(location.timezone)) continue;
-      seen.add(location.timezone);
-      options.push({
-        label: location?.name ?? location.timezone,
-        timezone: location.timezone,
-      });
-    }
-    if (options.length === 0) {
-      options.push({
-        label: `Current Device (${browserTimezone})`,
-        timezone: browserTimezone,
-      });
-    }
-    return options;
-  }, [browserTimezone, userLocations]);
+  const locationOptions = useMemo(
+    () => buildLocationTimezoneOptions(userLocations, browserTimezone),
+    [browserTimezone, userLocations],
+  );
 
   const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
 
@@ -92,16 +107,6 @@ export default function SyncModal({ open, onClose, user }) {
     const defaultTimezone = locationOptions[0]?.timezone ?? browserTimezone;
     setSelectedTimezone(defaultTimezone);
   }, [browserTimezone, locationOptions, open]);
-
-  const duplicateYears = useMemo(() => {
-    const generatedStart = generatedYearsRange?.start;
-    const generatedEnd = generatedYearsRange?.end;
-    if (generatedStart == null || generatedEnd == null) return [];
-
-    return [...selectedYears]
-      .filter((year) => year >= generatedStart && year <= generatedEnd)
-      .sort((a, b) => a - b);
-  }, [generatedYearsRange?.end, generatedYearsRange?.start, selectedYears]);
 
   const toggleYear = useCallback((year) => {
     setSelectedYears((prev) => {
@@ -115,52 +120,81 @@ export default function SyncModal({ open, onClose, user }) {
   const handleDownload = useCallback(async () => {
     if (selectedYears.size === 0) return;
 
+    const years = [...selectedYears];
+    const genStart = generatedYearsRange?.start;
+    const genEnd = generatedYearsRange?.end;
+
+    let missingYears;
+    if (genStart == null || genEnd == null) {
+      missingYears = years;
+    } else {
+      missingYears = years.filter((y) => y < genStart || y > genEnd);
+    }
+
     setIsGenerating(true);
     try {
-      await ensureIslamicEventsForYears([...selectedYears], {
-        timezone: selectedTimezone,
+      if (missingYears.length > 0) {
+        await ensureIslamicEventsForYears(missingYears, {
+          timezone: selectedTimezone,
+        });
+      }
+
+      const minY = Math.min(...years);
+      const maxY = Math.max(...years);
+      const from = `${minY}-01-01`;
+      const to = `${maxY}-12-31`;
+      const fetched = await fetchExpandedEventsForRange({ from, to });
+      const selectedSet = new Set(years);
+      const filtered = fetched.filter((ev) => {
+        if (!ev.startDate) return false;
+        const y = new Date(ev.startDate).getFullYear();
+        return selectedSet.has(y);
       });
+
+      const yearString = years.sort((a, b) => a - b).join(",");
+      const cal = ics(
+        `IslamicCalendarSync-${yearString}`,
+        `IslamicCalendarSync-${yearString}`,
+      );
+
+      for (const ev of filtered) {
+        cal.addEvent(
+          ev.name ?? "",
+          ev.description ?? "",
+          ev.location ?? "",
+          ev.startDate,
+          ev.endDate,
+          toIcsRRuleArg(ev.rrule),
+          ev.isAllDay ?? false,
+          { timezone: ev.eventTimezone ?? selectedTimezone },
+        );
+      }
+
+      const content = cal.build();
+      if (!content) return;
+
+      const blob = new Blob([content], {
+        type: "text/calendar;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "islamic-calendar.ics";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } finally {
       setIsGenerating(false);
     }
-
-    let yearString = "";
-    for (const year of selectedYears) {
-      yearString += year + ",";
-    }
-    yearString = yearString.slice(0, -1);
-
-    const cal = ics(
-      "IslamicCalendarSync-" + yearString,
-      "IslamicCalendarSync-" + yearString,
-    );
-
-    for (const ev of events) {
-      cal.addEvent(
-        ev.name ?? "",
-        ev.description ?? "",
-        ev.location ?? "",
-        ev.startDate,
-        ev.endDate,
-        ev.rrule ?? undefined,
-        ev.isAllDay ?? false,
-        { timezone: ev.eventTimezone ?? selectedTimezone },
-      );
-    }
-
-    const content = cal.build();
-    if (!content) return;
-
-    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "islamic-calendar.ics";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [ensureIslamicEventsForYears, events, selectedTimezone, selectedYears]);
+  }, [
+    ensureIslamicEventsForYears,
+    fetchExpandedEventsForRange,
+    generatedYearsRange?.end,
+    generatedYearsRange?.start,
+    selectedTimezone,
+    selectedYears,
+  ]);
 
   const isLoggedIn = user?.isLoggedIn;
 
@@ -249,12 +283,6 @@ export default function SyncModal({ open, onClose, user }) {
               </Box>
             </Popover>
           </Box>
-          {duplicateYears.length > 0 && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              Already generated years: {duplicateYears.join(", ")}. Continuing
-              will duplicate events for those years.
-            </Alert>
-          )}
         </Box>
 
         <Divider />

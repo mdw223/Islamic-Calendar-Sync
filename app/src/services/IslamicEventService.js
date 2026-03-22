@@ -185,35 +185,97 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
   return events;
 }
 
+/**
+ * All occurrences of one definition between two Gregorian dates (inclusive).
+ * Mirrors api/src/util/HijriUtils.js generateIslamicEventsForDefinitionInDateRange.
+ */
+export function generateIslamicEventsForDefinitionInDateRange(
+  definition,
+  rangeStart,
+  rangeEnd,
+  timezone = null,
+) {
+  const startY = rangeStart.getFullYear();
+  const endY = rangeEnd.getFullYear();
+  const rs = rangeStart.getTime();
+  const re = rangeEnd.getTime();
+  const out = [];
+
+  for (let y = startY; y <= endY; y++) {
+    const yearEvents = generateIslamicEventsForYear(y, [definition], timezone);
+    for (const ev of yearEvents) {
+      const es = new Date(ev.startDate).getTime();
+      const ee = new Date(ev.endDate).getTime();
+      if (ee >= rs && es <= re) {
+        out.push(ev);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * One master row per Islamic definition for the given years (earliest anchor).
+ */
+export function buildIslamicMasterRowsForYears(years, definitions, timezone = null) {
+  if (!years.length) return [];
+  const sortedYears = [...years].sort((a, b) => a - b);
+  const masters = [];
+
+  for (const def of definitions) {
+    if (def.isHidden) continue;
+
+    let anchor = null;
+    for (const y of sortedYears) {
+      const evs = generateIslamicEventsForYear(y, [def], timezone);
+      if (evs.length === 0) continue;
+      evs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      const first = evs[0];
+      if (!anchor || new Date(first.startDate) < new Date(anchor.startDate)) {
+        anchor = first;
+      }
+    }
+    if (anchor) {
+      masters.push({ ...anchor });
+    }
+  }
+
+  return masters;
+}
+
 // ── Generate + persist to Dexie ─────────────────────────────────────────────
 
 /**
- * Generate Islamic events for one or more years and upsert them into IndexedDB.
+ * Upsert Islamic series masters into IndexedDB (one row per definition).
  *
  * @param {number[]} years - Array of Gregorian years
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
 export async function generateForOfflineUser(years, timezone = null) {
   const mergedDefs = await getMergedDefinitions();
+  const allMasters = buildIslamicMasterRowsForYears(years, mergedDefs, timezone);
 
-  const allGenerated = [];
-  for (const year of years) {
-    const generated = generateIslamicEventsForYear(year, mergedDefs, timezone);
-    allGenerated.push(...generated);
-  }
-
-  if (allGenerated.length === 0) {
+  if (allMasters.length === 0) {
     return { events: [], generatedCount: 0 };
   }
 
   const now = new Date().toISOString();
-  await db.events.bulkAdd(
-    allGenerated.map((e) => ({ ...e, createdAt: now, updatedAt: now })),
-  );
+  for (const master of allMasters) {
+    const existing = await db.events
+      .where("islamicDefinitionId")
+      .equals(master.islamicDefinitionId)
+      .first();
+    const row = {
+      ...master,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+    if (existing) {
+      await db.events.update(existing.id, row);
+    } else {
+      await db.events.add(row);
+    }
+  }
 
-  const allEvents = await db.events.toArray();
-  return {
-    events: allEvents.map(({ id, ...rest }) => ({ ...rest, eventId: id })),
-    generatedCount: allGenerated.length,
-  };
+  return { events: [], generatedCount: allMasters.length };
 }

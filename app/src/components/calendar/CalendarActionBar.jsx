@@ -29,6 +29,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
+import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
 import SyncModal from "./SyncModal";
 
 /**
@@ -65,25 +66,10 @@ export default function CalendarActionBar({
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
   const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
 
-  const locationOptions = useMemo(() => {
-    const options = [];
-    const seen = new Set();
-    for (const location of userLocations ?? []) {
-      if (!location?.timezone || seen.has(location.timezone)) continue;
-      seen.add(location.timezone);
-      options.push({
-        label: location?.name ?? location.timezone,
-        timezone: location.timezone,
-      });
-    }
-    if (options.length === 0) {
-      options.push({
-        label: `Current Device (${browserTimezone})`,
-        timezone: browserTimezone,
-      });
-    }
-    return options;
-  }, [browserTimezone, userLocations]);
+  const locationOptions = useMemo(
+    () => buildLocationTimezoneOptions(userLocations, browserTimezone),
+    [browserTimezone, userLocations],
+  );
 
   // ── Sync modal state ────────────────────────────────────────────────────
   const [syncModalOpen, setSyncModalOpen] = useState(false);
