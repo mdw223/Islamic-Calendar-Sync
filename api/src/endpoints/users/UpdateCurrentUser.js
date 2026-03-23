@@ -3,11 +3,13 @@ import { sendJson } from "../SendJson.js";
 
 export default async function UpdateCurrentUser(req, res) {
   try {
-    const { name, language, hanafi } = req.body ?? {};
+    const { name, language, hanafi, use24HourTime } = req.body ?? {};
     const updates = {};
     if (name !== undefined) updates.name = name;
     if (language !== undefined) updates.language = language;
     if (hanafi !== undefined) updates.hanafi = !!hanafi;
+    if (use24HourTime !== undefined)
+      updates.use24hourtime = !!use24HourTime;
 
     const user = await UserDOA.updateUser(req.user.userId, updates);
     return sendJson(res, { success: true, user });

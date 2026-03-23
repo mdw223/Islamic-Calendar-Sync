@@ -37,4 +37,12 @@ db.version(4).stores({
   userLocations: "++id, name, timezone, isDefault",
 });
 
+db.version(5).stores({
+  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  definitionPreferences: "definitionId",
+  generationMeta: "key",
+  userLocations: "++id, name, timezone, isDefault",
+  userProfile: "key",
+});
+
 export default db;

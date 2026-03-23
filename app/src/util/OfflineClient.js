@@ -156,18 +156,21 @@ export default class OfflineClient {
    * Returns null if there is nothing to sync.
    */
   static async getAllDataForSync() {
-    const [events, preferences, generationMeta, userLocations] = await Promise.all([
-      db.events.toArray(),
-      db.definitionPreferences.toArray(),
-      db.generationMeta.get("generatedYearsRange"),
-      db.userLocations?.toArray?.() ?? [],
-    ]);
+    const [events, preferences, generationMeta, userLocations, userProfile] =
+      await Promise.all([
+        db.events.toArray(),
+        db.definitionPreferences.toArray(),
+        db.generationMeta.get("generatedYearsRange"),
+        db.userLocations?.toArray?.() ?? [],
+        db.userProfile?.get?.("profile") ?? null,
+      ]);
 
     if (
       events.length === 0 &&
       preferences.length === 0 &&
       generationMeta == null &&
-      userLocations.length === 0
+      userLocations.length === 0 &&
+      userProfile == null
     ) {
       return null;
     }
@@ -177,6 +180,13 @@ export default class OfflineClient {
       events: events.map(({ id, eventId, createdAt, updatedAt, ...rest }) => rest),
       preferences,
       userLocations: userLocations.map(({ id, ...rest }) => rest),
+      userProfile: userProfile
+        ? {
+            language: userProfile.language ?? null,
+            hanafi: !!userProfile.hanafi,
+            use24HourTime: !!userProfile.use24HourTime,
+          }
+        : null,
       generatedYearsStart: generationMeta?.generatedYearsStart ?? null,
       generatedYearsEnd: generationMeta?.generatedYearsEnd ?? null,
     };
@@ -191,6 +201,7 @@ export default class OfflineClient {
       db.definitionPreferences.clear(),
       db.generationMeta.clear(),
       db.userLocations?.clear?.(),
+      db.userProfile?.clear?.(),
     ]);
   }
 
@@ -204,8 +215,42 @@ export default class OfflineClient {
     if (prefCount > 0) return true;
     const userLocationCount = await (db.userLocations?.count?.() ?? 0);
     if (userLocationCount > 0) return true;
+    const profile = await (db.userProfile?.get?.("profile") ?? null);
+    if (profile != null) return true;
     const generationMeta = await db.generationMeta.get("generatedYearsRange");
     return generationMeta != null;
+  }
+
+  static async getUserProfile() {
+    const profile = await (db.userProfile?.get?.("profile") ?? null);
+    return {
+      success: true,
+      user: {
+        language: profile?.language ?? null,
+        hanafi: !!profile?.hanafi,
+        use24HourTime: !!profile?.use24HourTime,
+      },
+    };
+  }
+
+  static async updateUser(updates) {
+    const existing = await (db.userProfile?.get?.("profile") ?? null);
+    const next = {
+      key: "profile",
+      language:
+        updates?.language !== undefined
+          ? updates.language
+          : (existing?.language ?? null),
+      hanafi:
+        updates?.hanafi !== undefined ? !!updates.hanafi : !!existing?.hanafi,
+      use24HourTime:
+        updates?.use24HourTime !== undefined
+          ? !!updates.use24HourTime
+          : !!existing?.use24HourTime,
+      updatedAt: new Date().toISOString(),
+    };
+    await db.userProfile.put(next);
+    return { success: true, user: { ...next } };
   }
 
   static async getUserLocations() {

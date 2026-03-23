@@ -19,6 +19,14 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import DOMPurify from "dompurify";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import {
+  DatePicker,
+  DateTimePicker,
+  LocalizationProvider,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import { EventTypeId } from "../../Constants";
@@ -60,10 +68,20 @@ function toDatetimeLocal(isoString) {
   return isoString.slice(0, 16);
 }
 
+function parseFormDateTime(value) {
+  if (!value) return null;
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed : null;
+}
+
+function formatFormDateTime(value) {
+  return value?.isValid?.() ? value.format("YYYY-MM-DDTHH:mm") : "";
+}
+
 export default function EventModal({ open, onClose, initialDate, event }) {
   const { addEvent, updateEvent, removeEvent, refreshEventData } =
     useCalendar();
-  const { userLocations } = useUser();
+  const { userLocations, user } = useUser();
   const navigate = useNavigate();
   const isEdit = Boolean(event);
   const isIslamicEdit = isEdit && Boolean(event?.islamicDefinitionId);
@@ -327,39 +345,118 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               </Button>
             )}
 
-          <TextField
-            label="Start"
-            type={form.isAllDay ? "date" : "datetime-local"}
-            value={
-              form.isAllDay
-                ? (form.startDate || "").slice(0, 10)
-                : form.startDate
-            }
-            onChange={(e) =>
-              handleChange(
-                "startDate",
-                form.isAllDay ? `${e.target.value}T00:00` : e.target.value,
-              )
-            }
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-          />
-
-          <TextField
-            label="End"
-            type={form.isAllDay ? "date" : "datetime-local"}
-            value={
-              form.isAllDay ? (form.endDate || "").slice(0, 10) : form.endDate
-            }
-            onChange={(e) =>
-              handleChange(
-                "endDate",
-                form.isAllDay ? `${e.target.value}T23:59` : e.target.value,
-              )
-            }
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            {form.isAllDay ? (
+              <>
+                <DatePicker
+                  label="Start"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) =>
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T00:00` : "",
+                    )
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DatePicker
+                  label="End"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) =>
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T23:59` : "",
+                    )
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            ) : user?.use24HourTime ? (
+              <>
+                <DatePicker
+                  label="Start Date"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) => {
+                    const timePart =
+                      parseFormDateTime(form.startDate)?.format("HH:mm") ?? "00:00";
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T${timePart}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <TimePicker
+                  label="Start Time (24-hour)"
+                  ampm={false}
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) => {
+                    const datePart =
+                      parseFormDateTime(form.startDate)?.format("YYYY-MM-DD") ?? "";
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.() && datePart
+                        ? `${datePart}T${value.format("HH:mm")}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DatePicker
+                  label="End Date"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) => {
+                    const timePart =
+                      parseFormDateTime(form.endDate)?.format("HH:mm") ?? "00:00";
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T${timePart}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <TimePicker
+                  label="End Time (24-hour)"
+                  ampm={false}
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) => {
+                    const datePart =
+                      parseFormDateTime(form.endDate)?.format("YYYY-MM-DD") ?? "";
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.() && datePart
+                        ? `${datePart}T${value.format("HH:mm")}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            ) : (
+              <>
+                <DateTimePicker
+                  label="Start"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) =>
+                    handleChange("startDate", formatFormDateTime(value))
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DateTimePicker
+                  label="End"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) =>
+                    handleChange("endDate", formatFormDateTime(value))
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            )}
+          </LocalizationProvider>
 
           {!isIslamicEdit && (
             <>

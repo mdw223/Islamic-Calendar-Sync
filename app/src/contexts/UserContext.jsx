@@ -18,6 +18,23 @@ export const UserProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [ready, setReady] = useState(false);
 
+  const loadOfflineGuestState = useCallback(async () => {
+    const [offlineLocations, offlineProfile] = await Promise.all([
+      OfflineClient.getUserLocations(),
+      OfflineClient.getUserProfile(),
+    ]);
+    setUserLocations(offlineLocations?.userLocations ?? []);
+    setUser((prev) => {
+      const nextUser = createUser(prev?.toJSON?.() ?? defaultUser);
+      nextUser.updateProfile({
+        language: offlineProfile?.user?.language ?? null,
+        hanafi: !!offlineProfile?.user?.hanafi,
+        use24HourTime: !!offlineProfile?.user?.use24HourTime,
+      });
+      return nextUser;
+    });
+  }, []);
+
   // Sync any IndexedDB data to the backend, then clear local stores.
   const syncOfflineData = async () => {
     try {
@@ -25,12 +42,24 @@ export const UserProvider = ({ children }) => {
       if (!hasData) return;
       const data = await OfflineClient.getAllDataForSync();
       if (!data) return;
-      const { events, preferences, userLocations: offlineUserLocations } = data;
+      const {
+        events,
+        preferences,
+        userLocations: offlineUserLocations,
+        userProfile,
+      } = data;
       if (events.length > 0) await APIClient.syncOfflineEvents(events);
       if (preferences.length > 0)
         await APIClient.syncOfflinePreferences(preferences);
       if (offlineUserLocations?.length > 0) {
         await APIClient.syncOfflineUserLocations(offlineUserLocations);
+      }
+      if (userProfile) {
+        await APIClient.updateCurrentUser({
+          language: userProfile.language,
+          hanafi: userProfile.hanafi,
+          use24HourTime: userProfile.use24HourTime,
+        });
       }
       await OfflineClient.clearAll();
     } catch (err) {
@@ -67,17 +96,13 @@ export const UserProvider = ({ children }) => {
           setUserLocations(nextUser.userLocations ?? []);
         } else {
           setUser(createUser(defaultUser));
-          const offlineLocations = await OfflineClient.getUserLocations();
-          setUserLocations(offlineLocations?.userLocations ?? []);
+          await loadOfflineGuestState();
         }
       })
       .catch(() => {
         if (!cancelled) {
           setUser(createUser(defaultUser));
-          OfflineClient.getUserLocations()
-            .then((offlineLocations) =>
-              setUserLocations(offlineLocations?.userLocations ?? []),
-            )
+          loadOfflineGuestState()
             .catch(() => setUserLocations([]));
         }
       })
@@ -130,20 +155,25 @@ export const UserProvider = ({ children }) => {
 
   const saveUserProfile = useCallback(
     async (updates) => {
-      const data = await APIClient.updateCurrentUser(updates);
-      if (data?.success && data?.user) {
-        const nextUser = createUser(data.user);
-        nextUser.updateProfile({
-          userLocations,
-          authProviderName: user?.authProviderName ?? null,
-          authProviderTypeId: user?.authProviderTypeId ?? null,
-        });
-        setUser(nextUser);
+      if (user?.isLoggedIn) {
+        const data = await APIClient.updateCurrentUser(updates);
+        if (data?.success && data?.user) {
+          const nextUser = createUser(data.user);
+          nextUser.updateProfile({
+            userLocations,
+            authProviderName: user?.authProviderName ?? null,
+            authProviderTypeId: user?.authProviderTypeId ?? null,
+          });
+          setUser(nextUser);
+        } else {
+          updateUser(updates);
+        } 
       } else {
+        await OfflineClient.updateUser(updates);
         updateUser(updates);
       }
     },
-    [updateUser, userLocations],
+    [updateUser, user, userLocations],
   );
 
   const addUserLocation = useCallback(

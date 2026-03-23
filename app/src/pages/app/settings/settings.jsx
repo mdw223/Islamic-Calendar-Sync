@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -32,6 +32,9 @@ export default function Settings() {
   const [name, setName] = useState(user?.name ?? "");
   const [language, setLanguage] = useState(user?.language ?? "en");
   const [hanafi, setHanafi] = useState(!!user?.hanafi);
+  const [use24HourTime, setUse24HourTime] = useState(
+    !!user?.use24HourTime,
+  );
   const [locationName, setLocationName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -43,6 +46,13 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [isLookingUpCity, setIsLookingUpCity] = useState(false);
 
+  useEffect(() => {
+    setName(user?.name ?? "");
+    setLanguage(user?.language ?? "en");
+    setHanafi(!!user?.hanafi);
+    setUse24HourTime(!!user?.use24HourTime);
+  }, [user]);
+
   const supportedTimezones = useMemo(
     () =>
       typeof Intl.supportedValuesOf === "function"
@@ -53,7 +63,7 @@ export default function Settings() {
 
   async function handleSaveProfile() {
     setError("");
-    await saveUserProfile({ name, language, hanafi });
+    await saveUserProfile({ name, language, hanafi, use24HourTime });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -156,6 +166,15 @@ export default function Settings() {
               />
             }
             label="Hanafi calculation"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={use24HourTime}
+                onChange={(e) => setUse24HourTime(e.target.checked)}
+              />
+            }
+            label="Use 24-hour time"
           />
           <TextField
             label="Authentication Method"

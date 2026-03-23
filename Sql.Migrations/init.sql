@@ -50,6 +50,7 @@ CREATE TABLE "User" (
     PrayerConfigurationEnd TIMESTAMP NULL,
     CalculationMethodId INTEGER NULL,
     Hanafi BOOLEAN DEFAULT FALSE,
+    Use24HourTime BOOLEAN NOT NULL DEFAULT FALSE,
     Salt VARCHAR(255),
     EmailUpdates BOOLEAN DEFAULT TRUE,
     Notifications BOOLEAN DEFAULT TRUE,

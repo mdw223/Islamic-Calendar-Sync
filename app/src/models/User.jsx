@@ -21,6 +21,7 @@ function fromApiRow(row) {
     prayerConfigurationEnd: row.prayerconfigurationend ?? null,
     calculationMethodId: row.calculationmethodid ?? null,
     hanafi: row.hanafi ?? false,
+    use24HourTime: row.use24hourtime ?? row.use24HourTime ?? false,
     authProviderTypeId: row.authprovidertypeid ?? null,
     authProviderName: row.authprovidername ?? row.authProviderName ?? null,
     userLocations: row.userlocations ?? row.userLocations ?? [],
@@ -43,6 +44,7 @@ export const defaultUser = {
   prayerConfigurationEnd: null,
   calculationMethodId: null,
   hanafi: false,
+  use24HourTime: false,
   notifications: true,
   emailUpdates: false,
   authProviderTypeId: null,
@@ -72,6 +74,7 @@ export class User {
     this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
     this.calculationMethodId = normalized.calculationMethodId ?? null;
     this.hanafi = normalized.hanafi ?? false;
+    this.use24HourTime = normalized.use24HourTime ?? false;
     this.notifications = normalized.preferences?.notifications ?? true;
     this.emailUpdates = normalized.preferences?.emailUpdates ?? false;
   }
@@ -110,6 +113,7 @@ export class User {
       this.calculationMethodId =
         normalized.calculationMethodId ?? this.calculationMethodId;
       this.hanafi = normalized.hanafi ?? this.hanafi;
+      this.use24HourTime = normalized.use24HourTime ?? this.use24HourTime;
     }
   }
 
@@ -139,6 +143,7 @@ export class User {
       "prayerConfigurationEnd",
       "calculationMethodId",
       "hanafi",
+      "use24HourTime",
     ];
     allowed.forEach((key) => {
       if (key in updates) this[key] = updates[key];
@@ -165,6 +170,7 @@ export class User {
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
+      use24HourTime: this.use24HourTime,
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,
