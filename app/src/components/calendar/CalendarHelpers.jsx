@@ -11,6 +11,16 @@ export function toDateKey(date) {
   return date.toISOString().slice(0, 10);
 }
 
+function toLocalDateKeyFromIso(isoString) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 /**
  * Returns the Sunday that starts the week containing `date`, with the time
  * component reset to midnight so date comparisons are consistent.
@@ -49,12 +59,8 @@ export function sameDay(a, b) {
  */
 export function eventOverlapsDateKey(event, dateKey) {
   if (!event || !dateKey) return false;
-  const startKey = (event.startDate ?? "").slice(0, 10);
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
   if (!startKey) return false;
-
-  let endKey = (event.endDate ?? event.startDate ?? "").slice(0, 10);
-  if (!endKey) endKey = startKey;
-  if (endKey < startKey) endKey = startKey;
 
   // ISO date keys are lexicographically sortable (YYYY-MM-DD).
   return startKey <= dateKey && dateKey <= endKey;
@@ -72,13 +78,8 @@ function addDaysUTC(date, n) {
  */
 export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
   if (!event || !rangeStartKey || !rangeEndKey) return [];
-
-  const startKey = (event.startDate ?? "").slice(0, 10);
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
   if (!startKey) return [];
-
-  let endKey = (event.endDate ?? event.startDate ?? "").slice(0, 10);
-  if (!endKey) endKey = startKey;
-  if (endKey < startKey) endKey = startKey;
 
   const clampedStartKey = startKey < rangeStartKey ? rangeStartKey : startKey;
   const clampedEndKey = endKey > rangeEndKey ? rangeEndKey : endKey;
@@ -104,12 +105,16 @@ export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
  * Falls back `endKey` to `startKey` when `endDate` is missing.
  */
 export function getEventStartEndDateKeys(event) {
-  const startKey = (event?.startDate ?? "").slice(0, 10);
+  const startKey = event?.isAllDay
+    ? toLocalDateKeyFromIso(event?.startDate ?? "")
+    : (event?.startDate ?? "").slice(0, 10);
   if (!startKey) return { startKey: null, endKey: null };
 
-  const endKeyRaw = (event?.endDate ?? event?.startDate ?? "").slice(0, 10);
+  const endKeyRaw = event?.isAllDay
+    ? toLocalDateKeyFromIso(event?.endDate ?? event?.startDate ?? "")
+    : (event?.endDate ?? event?.startDate ?? "").slice(0, 10);
   const endKey = endKeyRaw || startKey;
-  return { startKey, endKey };
+  return { startKey, endKey: endKey < startKey ? startKey : endKey };
 }
 
 /**

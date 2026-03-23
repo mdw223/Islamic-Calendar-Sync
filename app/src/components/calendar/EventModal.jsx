@@ -162,6 +162,14 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       setError("Name is required.");
       return;
     }
+    if (form.isAllDay) {
+      const startDay = (form.startDate ?? "").slice(0, 10);
+      const endDay = (form.endDate ?? "").slice(0, 10);
+      if (startDay && endDay && endDay < startDay) {
+        setError("End date must be on or after start date for all-day events.");
+        return;
+      }
+    }
     setError(null);
     setSaving(true);
     try {
