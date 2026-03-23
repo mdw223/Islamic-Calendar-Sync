@@ -147,7 +147,7 @@ function expandIslamicMaster(master, rangeStart, rangeEnd) {
 
   return instances.map((inst) => ({
     ...base,
-    name: inst.name,
+    name: base.name ?? inst.name,
     startDate: inst.startDate,
     endDate: inst.endDate,
     description: master.description ?? inst.description,
