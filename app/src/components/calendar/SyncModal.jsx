@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
+import APIClient from "../../util/ApiClient";
 import ics from "../../util/Ics";
 import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
 
@@ -101,6 +102,8 @@ export default function SyncModal({ open, onClose, user }) {
   );
 
   const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
+  const [downloadSource, setDownloadSource] = useState("client");
+  const isLoggedIn = user?.isLoggedIn;
 
   useEffect(() => {
     if (!open) return;
@@ -143,6 +146,12 @@ export default function SyncModal({ open, onClose, user }) {
       const maxY = Math.max(...years);
       const from = `${minY}-01-01`;
       const to = `${maxY}-12-31`;
+
+      if (isLoggedIn && downloadSource === "server") {
+        await APIClient.downloadEventsIcs({ years });
+        return;
+      }
+
       const fetched = await fetchExpandedEventsForRange({ from, to });
       const selectedSet = new Set(years);
       const filtered = fetched.filter((ev) => {
@@ -176,14 +185,7 @@ export default function SyncModal({ open, onClose, user }) {
       const blob = new Blob([content], {
         type: "text/calendar;charset=utf-8",
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "islamic-calendar.ics";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      APIClient.downloadBlob(blob);
     } finally {
       setIsGenerating(false);
     }
@@ -192,11 +194,11 @@ export default function SyncModal({ open, onClose, user }) {
     fetchExpandedEventsForRange,
     generatedYearsRange?.end,
     generatedYearsRange?.start,
+    isLoggedIn,
+    downloadSource,
     selectedTimezone,
     selectedYears,
   ]);
-
-  const isLoggedIn = user?.isLoggedIn;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -243,6 +245,23 @@ export default function SyncModal({ open, onClose, user }) {
                 ? `${[...selectedYears][0]}`
                 : `${selectedYears.size} years`}
             </Button>
+            <FormControl size="small" sx={{ minWidth: 190 }}>
+              {isLoggedIn && (
+                <>
+                  <InputLabel id="sync-download-source-label">Source</InputLabel>
+                  <Select
+                    labelId="sync-download-source-label"
+                    value={downloadSource}
+                    label="Source"
+                    onChange={(event) => setDownloadSource(event.target.value)}
+                    sx={{ mr: 1, minWidth: 180 }}
+                  >
+                    <MenuItem value="client">This browser</MenuItem>
+                    <MenuItem value="server">From server</MenuItem>
+                  </Select>
+                </>
+              )}
+            </FormControl>
             <FormControl size="small" sx={{ minWidth: 190 }}>
               <InputLabel id="sync-location-label">Location</InputLabel>
               <Select

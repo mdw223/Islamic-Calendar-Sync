@@ -8,6 +8,7 @@ import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
 import GetCalendarProviders from './calendar-providers/GetCalendarProviders.js';
 import GetEvents from './events/GetEvents.js';
+import GetEventsIcs from './events/GetEventsIcs.js';
 import GetEventById from './events/GetEventById.js';
 import CreateEvent from './events/CreateEvent.js';
 import GenerateEvents from './events/GenerateEvents.js';
@@ -45,6 +46,7 @@ router.get("/calendar-providers", Auth(AuthUser.ANY), GetCalendarProviders);
 
 // Events routes — handlers scope all queries by req.user.userId (ownership enforced at DB layer)
 router.get("/events", Auth(AuthUser.VALID_USER), GetEvents);
+router.get("/events.ics", Auth(AuthUser.VALID_USER), GetEventsIcs);
 router.post("/events/generate", Auth(AuthUser.VALID_USER), GenerateEvents);
 router.post("/events/islamic/reset", Auth(AuthUser.VALID_USER), ResetIslamicEvents);
 router.get("/events/:eventId", Auth(AuthUser.VALID_USER), GetEventById);

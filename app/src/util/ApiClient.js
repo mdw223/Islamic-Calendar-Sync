@@ -1,8 +1,22 @@
 import HTTPClient from "./HttpClient";
+import { getToken } from "./AuthToken";
 // this is like the .data layer interacting with the backend
 // HTTPClient.baseURL already contains APP_API_URL (e.g. /api)
 
 export default class APIClient {
+  static ICS_FILE_NAME = "islamic-calendar.ics";
+
+  static downloadBlob(blob, filename = APIClient.ICS_FILE_NAME) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   /**
    * Get the currently authenticated user from the backend.
    * Sends stored JWT as Authorization: Bearer <token> when present.
@@ -70,6 +84,52 @@ export default class APIClient {
       return HTTPClient.get(`/events?${qs.toString()}`);
     }
     return HTTPClient.get("/events");
+  }
+
+  /**
+   * Download events as .ics from the server.
+   * Uses explicit years to support sparse year selection (e.g. 2025,2027).
+   * @param {{ years?: number[], from?: string, to?: string }} [query]
+   */
+  static async downloadEventsIcs(query = {}) {
+    const qs = new URLSearchParams();
+    if (Array.isArray(query.years) && query.years.length > 0) {
+      qs.set("years", query.years.join(","));
+    } else if (query.from && query.to) {
+      qs.set("from", query.from);
+      qs.set("to", query.to);
+    }
+
+    const token = getToken();
+    const headers = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const path = qs.toString() ? `/events.ics?${qs.toString()}` : "/events.ics";
+    const response = await fetch(`${HTTPClient.baseURL}${path}`, {
+      method: "GET",
+      credentials: "include",
+      headers,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        const message = json?.message || `HTTP error! status: ${response.status}`;
+        const err = new Error(message);
+        err.status = response.status;
+        throw err;
+      } catch {
+        const err = new Error(`HTTP error! status: ${response.status}`);
+        err.status = response.status;
+        throw err;
+      }
+    }
+
+    const blob = await response.blob();
+    APIClient.downloadBlob(blob);
   }
 
   /**
