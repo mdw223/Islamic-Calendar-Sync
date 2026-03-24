@@ -23,7 +23,7 @@ export function parseRangeDateParam(s) {
     const y = parseInt(m[1], 10);
     const mo = parseInt(m[2], 10) - 1;
     const d = parseInt(m[3], 10);
-    return new Date(y, mo, d, 0, 0, 0, 0);
+    return new Date(Date.UTC(y, mo, d, 0, 0, 0, 0));
   }
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? new Date() : d;
@@ -31,7 +31,7 @@ export function parseRangeDateParam(s) {
 
 export function endOfLocalDay(d) {
   const x = new Date(d.getTime());
-  x.setHours(23, 59, 59, 999);
+  x.setUTCHours(23, 59, 59, 999);
   return x;
 }
 

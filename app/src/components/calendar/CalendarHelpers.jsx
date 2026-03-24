@@ -21,6 +21,25 @@ function toLocalDateKeyFromIso(isoString) {
   return `${y}-${m}-${day}`;
 }
 
+function toDateKeyFromIsoInTimezone(isoString, timezone) {
+  if (!isoString || !timezone) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const pick = (type) => parts.find((p) => p.type === type)?.value ?? "";
+  const y = pick("year");
+  const m = pick("month");
+  const day = pick("day");
+  if (!y || !m || !day) return "";
+  return `${y}-${m}-${day}`;
+}
+
 /**
  * Returns the Sunday that starts the week containing `date`, with the time
  * component reset to midnight so date comparisons are consistent.
@@ -105,13 +124,23 @@ export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
  * Falls back `endKey` to `startKey` when `endDate` is missing.
  */
 export function getEventStartEndDateKeys(event) {
+  const allDayStartFromTimezone = event?.isAllDay
+    ? toDateKeyFromIsoInTimezone(event?.startDate ?? "", event?.eventTimezone ?? "")
+    : "";
+  const allDayEndFromTimezone = event?.isAllDay
+    ? toDateKeyFromIsoInTimezone(
+        event?.endDate ?? event?.startDate ?? "",
+        event?.eventTimezone ?? "",
+      )
+    : "";
   const startKey = event?.isAllDay
-    ? toLocalDateKeyFromIso(event?.startDate ?? "")
+    ? (allDayStartFromTimezone || toLocalDateKeyFromIso(event?.startDate ?? ""))
     : (event?.startDate ?? "").slice(0, 10);
   if (!startKey) return { startKey: null, endKey: null };
 
   const endKeyRaw = event?.isAllDay
-    ? toLocalDateKeyFromIso(event?.endDate ?? event?.startDate ?? "")
+    ? (allDayEndFromTimezone ||
+      toLocalDateKeyFromIso(event?.endDate ?? event?.startDate ?? ""))
     : (event?.endDate ?? event?.startDate ?? "").slice(0, 10);
   const endKey = endKeyRaw || startKey;
   return { startKey, endKey: endKey < startKey ? startKey : endKey };

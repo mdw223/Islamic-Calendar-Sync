@@ -43,6 +43,21 @@ function getHijriFormatterForTimezone(timezone) {
   });
 }
 
+function buildUtcNoonDate(year, monthIndex, dayOfMonth) {
+  return new Date(Date.UTC(year, monthIndex, dayOfMonth, 12, 0, 0, 0));
+}
+
+function buildAllDayIsoRange(anchorUtcDate, durationDays) {
+  const spanDays = Math.max(1, durationDays ?? 1);
+  const startDate = new Date(anchorUtcDate.getTime());
+  const endDate = new Date(anchorUtcDate.getTime());
+  endDate.setUTCDate(endDate.getUTCDate() + spanDays - 1);
+  return {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  };
+}
+
 /**
  * Build RRULE + Hijri metadata for persistence / .ics export, aligned with legacy
  * system-event template strings (Hijri month/day in BYMONTH / BYMONTHDAY).
@@ -127,8 +142,8 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
 
   const dayData = new Array(daysInYear);
   for (let i = 0; i < daysInYear; i++) {
-    const date = new Date(gregorianYear, 0, i + 1);
-    if (date.getFullYear() !== gregorianYear) break;
+    const date = buildUtcNoonDate(gregorianYear, 0, i + 1);
+    if (date.getUTCFullYear() !== gregorianYear) break;
 
     const parts = formatter.formatToParts(date);
     dayData[i] = {
@@ -159,19 +174,13 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
 
     for (const def of candidates) {
       const recurrence = buildIslamicRecurrenceFields(def);
-
-      const startDate = new Date(d.date);
-      startDate.setHours(0, 0, 0, 0);
-
-      const endDate = new Date(d.date);
-      endDate.setDate(endDate.getDate() + (def.durationDays ?? 1) - 1);
-      endDate.setHours(23, 59, 59, 999);
+      const allDayRange = buildAllDayIsoRange(d.date, def.durationDays ?? 1);
 
       events.push({
         islamicDefinitionId: def.id,
         name: `${def.titleAr} | ${def.titleEn}`,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: allDayRange.startDate,
+        endDate: allDayRange.endDate,
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
         eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
