@@ -300,7 +300,48 @@ export default class EventDOA {
 
   }
 
+  /**
+   * Delete Islamic master rows for the given definition IDs (scoped to user).
+   * @param {number} userId
+   * @param {string[]} definitionIds
+   * @returns {Promise<number>} Number of rows deleted.
+   */
+  static async deleteIslamicEventsForDefinitionIds(userId, definitionIds) {
+    if (!definitionIds || definitionIds.length === 0) {
+      return 0;
+    }
 
+    const result = await query(
+      `DELETE FROM event
+       WHERE userid = $1 AND islamicdefinitionid = ANY($2::text[])`,
+      [userId, definitionIds],
+    );
+
+    return result.rowCount;
+  }
+
+  /**
+   * Min/max Gregorian years from Islamic event master rows (remaining after deletes).
+   * @param {number} userId
+   * @returns {Promise<{ start: number, end: number } | null>}
+   */
+  static async getIslamicGeneratedYearBounds(userId) {
+    const result = await query(
+      `SELECT
+         MIN(EXTRACT(YEAR FROM startdate::timestamp))::int AS min_y,
+         MAX(EXTRACT(YEAR FROM startdate::timestamp))::int AS max_y
+       FROM event
+       WHERE userid = $1 AND islamicdefinitionid IS NOT NULL`,
+      [userId],
+    );
+
+    const row = result.rows[0];
+    if (!row || row.min_y == null || row.max_y == null) {
+      return null;
+    }
+
+    return { start: row.min_y, end: row.max_y };
+  }
 
   /**
 

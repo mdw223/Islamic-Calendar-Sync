@@ -18,7 +18,7 @@ import {
   expandStoredEventsForRange,
   parseRangeDateParam,
   endOfLocalDay,
-} from "../services/eventExpansion";
+} from "../services/EventExpansion";
 import { getDefaultEventsQueryRange } from "./calendarEventRange";
 
 /**
@@ -88,6 +88,68 @@ export default class OfflineClient {
   }
 
   // ── Islamic event generation ───────────────────────────────────────────
+
+  /**
+   * Delete Islamic master rows for the given definition IDs; recompute generation year bounds.
+   * @param {string[]} definitionIds
+   */
+  static async resetIslamicEventsForDefinitions(definitionIds) {
+    if (!definitionIds?.length) {
+      return {
+        success: true,
+        deletedCount: 0,
+        generatedYearsStart: null,
+        generatedYearsEnd: null,
+      };
+    }
+
+    const idSet = new Set(definitionIds);
+    const all = await db.events.toArray();
+    let deletedCount = 0;
+    for (const row of all) {
+      if (
+        row.islamicDefinitionId != null &&
+        idSet.has(row.islamicDefinitionId)
+      ) {
+        await db.events.delete(row.id);
+        deletedCount += 1;
+      }
+    }
+
+    const remaining = await db.events.toArray();
+    const bounds = OfflineClient._islamicYearBoundsFromStoredEvents(remaining);
+    const generatedYearsStart = bounds?.start ?? null;
+    const generatedYearsEnd = bounds?.end ?? null;
+
+    await db.generationMeta.put({
+      key: "generatedYearsRange",
+      generatedYearsStart,
+      generatedYearsEnd,
+    });
+
+    return {
+      success: true,
+      deletedCount,
+      generatedYearsStart,
+      generatedYearsEnd,
+    };
+  }
+
+  static _islamicYearBoundsFromStoredEvents(storedEvents) {
+    const islamic = storedEvents.filter((e) => e.islamicDefinitionId != null);
+    if (islamic.length === 0) return null;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const e of islamic) {
+      const y = new Date(e.startDate).getFullYear();
+      if (Number.isFinite(y)) {
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+    if (minY === Infinity) return null;
+    return { start: minY, end: maxY };
+  }
 
   static async generateEvents(years, timezone = null) {
     const result = await generateForOfflineUser(years, timezone);

@@ -519,47 +519,123 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Reset the calendar — deletes all events, reloads fresh definitions,
-   * Tries API first; falls back to IndexedDB.
+   * Reset calendar — either Islamic masters for enabled definitions only, or full wipe.
+   *
+   * @param {{ mode?: 'islamicEnabled' | 'all' }} [options]
+   * @returns {Promise<{ ok: boolean, reason?: string, error?: string }>}
    */
-  async function resetCalendar() {
-    try {
-      await APIClient.deleteAllEvents();
-    } catch {
-      await OfflineClient.clearAll();
+  async function resetCalendar(options = {}) {
+    const mode = options.mode ?? "islamicEnabled";
+
+    if (mode === "all") {
+      try {
+        await APIClient.deleteAllEvents();
+      } catch {
+        await OfflineClient.clearAll();
+      }
+
+      saveEvents([]);
+      setGeneratedYearsRange({ start: null, end: null });
+      if (isAuth) {
+        setUser((prev) => {
+          const base = prev?.toJSON ? prev.toJSON() : prev;
+          const updated = createUser(base);
+          updated.updateProfile({
+            generatedYearsStart: null,
+            generatedYearsEnd: null,
+          });
+          return updated;
+        });
+      }
+
+      try {
+        let defsRes;
+        try {
+          defsRes = await APIClient.getDefinitions();
+        } catch (err) {
+          if (shouldFallbackToOffline(err)) {
+            defsRes = await OfflineClient.getDefinitions();
+          } else {
+            throw err;
+          }
+        }
+        setIslamicEventDefs(defsRes?.definitions ?? []);
+      } catch {
+        setIslamicEventDefs([]);
+      }
+      return { ok: true };
     }
 
-    // Reset local state.
-    saveEvents([]);
-    setGeneratedYearsRange({ start: null, end: null });
+    const definitionIds = islamicEventDefs
+      .filter((d) => !d.isHidden)
+      .map((d) => d.id);
+    if (definitionIds.length === 0) {
+      return { ok: false, reason: "no-enabled-definitions" };
+    }
+
+    let res;
+    try {
+      try {
+        res = await APIClient.resetIslamicEventsForDefinitions(definitionIds);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.resetIslamicEventsForDefinitions(
+            definitionIds,
+          );
+        } else {
+          throw err;
+        }
+      }
+    } catch (err) {
+      const msg = err.message ?? "Failed to reset Islamic events";
+      setError(msg);
+      return { ok: false, error: msg };
+    }
+
+    const nextStart = res?.generatedYearsStart ?? null;
+    const nextEnd = res?.generatedYearsEnd ?? null;
+    setGeneratedYearsRange({ start: nextStart, end: nextEnd });
     if (isAuth) {
       setUser((prev) => {
         const base = prev?.toJSON ? prev.toJSON() : prev;
         const updated = createUser(base);
         updated.updateProfile({
-          generatedYearsStart: null,
-          generatedYearsEnd: null,
+          generatedYearsStart: nextStart,
+          generatedYearsEnd: nextEnd,
         });
         return updated;
       });
     }
 
-    // Reload definitions.
+    const evRange = eventsQueryRange({
+      generatedYearsStart: nextStart,
+      generatedYearsEnd: nextEnd,
+    });
     try {
-      let defsRes;
+      let reloadRes;
       try {
-        defsRes = await APIClient.getDefinitions();
-      } catch (err) {
-        if (shouldFallbackToOffline(err)) {
-          defsRes = await OfflineClient.getDefinitions();
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+      } catch (reloadErr) {
+        if (shouldFallbackToOffline(reloadErr) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
         } else {
-          throw err;
+          throw reloadErr;
         }
       }
-      setIslamicEventDefs(defsRes?.definitions ?? []);
+      saveEvents(reloadRes?.events ?? []);
     } catch {
-      setIslamicEventDefs([]);
+      const idSet = new Set(definitionIds);
+      const next = eventsRef.current.filter(
+        (e) =>
+          e.islamicDefinitionId == null ||
+          !idSet.has(e.islamicDefinitionId),
+      );
+      saveEvents(next);
     }
+
+    return { ok: true };
   }
 
   // ── Derived state ───────────────────────────────────────────────────────

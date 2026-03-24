@@ -18,6 +18,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Paper,
   TextField,
@@ -73,6 +74,12 @@ export default function CalendarActionBar({
 
   // ── Sync modal state ────────────────────────────────────────────────────
   const [syncModalOpen, setSyncModalOpen] = useState(false);
+
+  // ── Reset dialog state ──────────────────────────────────────────────────
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [fullResetDialogOpen, setFullResetDialogOpen] = useState(false);
+  const [resetWorking, setResetWorking] = useState(false);
+  const [resetScopeMessage, setResetScopeMessage] = useState("");
 
   const handleOpenGeneratePopup = useCallback(() => {
     if (isGenerating) return;
@@ -177,12 +184,55 @@ export default function CalendarActionBar({
     thisYearOnly,
   ]);
 
-  const handleReset = useCallback(() => {
-    resetCalendar();
+  const openResetDialog = useCallback(() => {
+    if (resetFeedback != null) return;
+    setResetScopeMessage("");
+    setResetDialogOpen(true);
+  }, [resetFeedback]);
+
+  const closeResetDialog = useCallback(() => {
+    if (resetWorking) return;
+    setResetDialogOpen(false);
+    setResetScopeMessage("");
+  }, [resetWorking]);
+
+  const showResetSuccess = useCallback(() => {
     setResetFeedback("success");
     clearTimeout(resetTimer.current);
     resetTimer.current = setTimeout(() => setResetFeedback(null), 2500);
-  }, [resetCalendar]);
+  }, []);
+
+  const handleConfirmResetIslamicEnabled = useCallback(async () => {
+    if (resetWorking) return;
+    setResetWorking(true);
+    setResetScopeMessage("");
+    try {
+      const result = await resetCalendar({ mode: "islamicEnabled" });
+      if (result.ok) {
+        setResetDialogOpen(false);
+        showResetSuccess();
+      } else if (result.reason === "no-enabled-definitions") {
+        setResetScopeMessage(
+          "No Islamic events are enabled in the panel. Turn on at least one event or use “Reset entire calendar”.",
+        );
+      }
+    } finally {
+      setResetWorking(false);
+    }
+  }, [resetCalendar, resetWorking, showResetSuccess]);
+
+  const handleConfirmResetAll = useCallback(async () => {
+    if (resetWorking) return;
+    setResetWorking(true);
+    try {
+      await resetCalendar({ mode: "all" });
+      setFullResetDialogOpen(false);
+      setResetDialogOpen(false);
+      showResetSuccess();
+    } finally {
+      setResetWorking(false);
+    }
+  }, [resetCalendar, resetWorking, showResetSuccess]);
 
   return (
     <Paper
@@ -236,7 +286,7 @@ export default function CalendarActionBar({
           )
         }
         disabled={resetFeedback != null}
-        onClick={handleReset}
+        onClick={openResetDialog}
         sx={{
           ...(resetFeedback === "success" && {
             borderColor: "#10b981",
@@ -415,6 +465,81 @@ export default function CalendarActionBar({
             disabled={isGenerating}
           >
             {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={resetDialogOpen}
+        onClose={closeResetDialog}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Reset calendar</DialogTitle>
+        <DialogContent sx={{ display: "grid", gap: 1.5, pt: 0.5 }}>
+          <DialogContentText sx={{ m: 0 }}>
+            Reset only removes generated Islamic events for definitions you have
+            enabled in the Islamic Events panel (same as Generate). Your custom
+            events stay unless you erase the whole calendar.
+          </DialogContentText>
+          {!!resetScopeMessage && (
+            <Alert severity="warning">{resetScopeMessage}</Alert>
+          )}
+          <Button
+            variant="contained"
+            fullWidth
+            disabled={resetWorking}
+            onClick={handleConfirmResetIslamicEnabled}
+          >
+            {resetWorking ? "Working…" : "Reset enabled Islamic events"}
+          </Button>
+          <Alert severity="warning" sx={{ mt: 0.5 }}>
+            To remove custom events and everything else, use the option below.
+          </Alert>
+          <Button
+            variant="outlined"
+            color="error"
+            fullWidth
+            disabled={resetWorking}
+            onClick={() => setFullResetDialogOpen(true)}
+          >
+            Reset entire calendar…
+          </Button>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeResetDialog} disabled={resetWorking}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={fullResetDialogOpen}
+        onClose={() => !resetWorking && setFullResetDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Erase entire calendar?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This deletes <strong>all</strong> events, including ones you added
+            manually. This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setFullResetDialogOpen(false)}
+            disabled={resetWorking}
+          >
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={resetWorking}
+            onClick={handleConfirmResetAll}
+          >
+            {resetWorking ? "Erasing…" : "Erase everything"}
           </Button>
         </DialogActions>
       </Dialog>

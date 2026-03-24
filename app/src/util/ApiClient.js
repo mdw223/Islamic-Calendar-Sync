@@ -127,6 +127,15 @@ export default class APIClient {
     return HTTPClient.post("/events/generate", { years, timezone });
   }
 
+  /**
+   * Delete Islamic master rows for the given definition IDs only.
+   * @param {string[]} definitionIds
+   * @returns {Promise<{ success: boolean, deletedCount: number, generatedYearsStart: number | null, generatedYearsEnd: number | null }>}
+   */
+  static async resetIslamicEventsForDefinitions(definitionIds) {
+    return HTTPClient.post("/events/islamic/reset", { definitionIds });
+  }
+
   // ── Definitions ────────────────────────────────────────────────────────────
 
   /**
