@@ -23,18 +23,19 @@ export default async function GenerateEvents(req, res) {
   try {
     const { years, timezone = null } = req.body;
     const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 5; // Allow generating up to 5 years in advance (inclusive)
 
     if (
       !Array.isArray(years) ||
       years.length === 0 ||
       !years.every(
-        (y) => Number.isInteger(y) && y >= currentYear && y <= 2100,
+        (y) => Number.isInteger(y) && y >= currentYear && y <= maxYear,
       )
     ) {
       return sendJson(res, {
         success: false,
         message:
-          `Request body must contain a "years" field with a non-empty array of integers between ${currentYear} and 2100.`,
+          `Request body must contain a "years" field with a non-empty array of integers between ${currentYear} and ${maxYear}.`,
       }, 400);
     }
 

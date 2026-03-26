@@ -21,10 +21,9 @@ import {
   DialogContentText,
   DialogTitle,
   Paper,
-  TextField,
-  Tooltip,
-  FormControlLabel,
-  Checkbox,
+  Box,
+  Typography,
+  Tooltip
 } from "@mui/material";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -32,6 +31,7 @@ import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
 import SyncModal from "./SyncModal";
+import GenerateYearsModal from "./GenerateYearsModal";
 
 /**
  * CalendarActionBar
@@ -51,7 +51,8 @@ export default function CalendarActionBar({
   const { userLocations } = useUser();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
-  const MAX_GENERATE_YEARS = 5;
+  const MAX_YEAR_AHEAD = 5;
+  const maxGenerateYear = currentYear + MAX_YEAR_AHEAD;
 
   // ── Reset button feedback state ─────────────────────────────────────────
   const [resetFeedback, setResetFeedback] = useState(null);
@@ -59,13 +60,8 @@ export default function CalendarActionBar({
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
-  const [startYear, setStartYear] = useState(String(currentYear));
-  const [endYear, setEndYear] = useState(String(currentYear));
-  const [generateError, setGenerateError] = useState("");
-  const [thisYearOnly, setThisYearOnly] = useState(true);
   const browserTimezone =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
-  const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
 
   const locationOptions = useMemo(
     () => buildLocationTimezoneOptions(userLocations, browserTimezone),
@@ -83,106 +79,26 @@ export default function CalendarActionBar({
 
   const handleOpenGeneratePopup = useCallback(() => {
     if (isGenerating) return;
-    setStartYear(String(currentYear));
-    setEndYear(String(currentYear));
-    setGenerateError("");
-    setSelectedTimezone(locationOptions[0]?.timezone ?? browserTimezone);
     setGenerateModalOpen(true);
-  }, [browserTimezone, currentYear, isGenerating, locationOptions]);
+  }, [isGenerating]);
 
   const handleCloseGeneratePopup = useCallback(() => {
     if (isGenerating) return;
     setGenerateModalOpen(false);
-    setGenerateError("");
   }, [isGenerating]);
 
-  const handleConfirmGenerateEvents = useCallback(async () => {
-    if (isGenerating) return;
-
-    const parsedStartYear = thisYearOnly
-      ? currentYear
-      : Number.parseInt(startYear, 10);
-    const parsedEndYear = thisYearOnly
-      ? currentYear
-      : Number.parseInt(endYear, 10);
-
-    if (Number.isNaN(parsedStartYear) || Number.isNaN(parsedEndYear)) {
-      setGenerateError("Please enter valid numeric years.");
-      return;
-    }
-    if (parsedStartYear < currentYear || parsedEndYear < currentYear) {
-      setGenerateError("Years must be the current year or later.");
-      return;
-    }
-    if (parsedStartYear > parsedEndYear) {
-      setGenerateError("Start year must be less than or equal to end year.");
-      return;
-    }
-
-    const totalYears = parsedEndYear - parsedStartYear + 1;
-    if (totalYears > MAX_GENERATE_YEARS) {
-      setGenerateError(
-        `Please choose a range of ${MAX_GENERATE_YEARS} years or fewer.`,
-      );
-      return;
-    }
-
-    const yearsToGenerate = Array.from(
-      { length: totalYears },
-      (_, index) => parsedStartYear + index,
-    );
-
-    setGenerateError("");
-    setIsGenerating(true);
-    try {
-      await ensureIslamicEventsForYears(yearsToGenerate, {
-        timezone: selectedTimezone,
-      });
-      setGenerateModalOpen(false);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [
-    currentYear,
-    endYear,
-    ensureIslamicEventsForYears,
-    isGenerating,
-    selectedTimezone,
-    startYear,
-    thisYearOnly,
-    MAX_GENERATE_YEARS,
-  ]);
-
-  const duplicateYears = useMemo(() => {
-    const generatedStart = generatedYearsRange?.start;
-    const generatedEnd = generatedYearsRange?.end;
-    if (generatedStart == null || generatedEnd == null) return [];
-
-    const selectedStart = thisYearOnly
-      ? currentYear
-      : Number.parseInt(startYear, 10);
-    const selectedEnd = thisYearOnly
-      ? currentYear
-      : Number.parseInt(endYear, 10);
-    if (Number.isNaN(selectedStart) || Number.isNaN(selectedEnd)) return [];
-    if (selectedStart > selectedEnd) return [];
-
-    const overlapStart = Math.max(selectedStart, generatedStart);
-    const overlapEnd = Math.min(selectedEnd, generatedEnd);
-    if (overlapStart > overlapEnd) return [];
-
-    return Array.from(
-      { length: overlapEnd - overlapStart + 1 },
-      (_, index) => overlapStart + index,
-    );
-  }, [
-    currentYear,
-    endYear,
-    generatedYearsRange?.end,
-    generatedYearsRange?.start,
-    startYear,
-    thisYearOnly,
-  ]);
+  const handleGenerateYears = useCallback(
+    async (yearsToGenerate, timezone) => {
+      setIsGenerating(true);
+      try {
+        await ensureIslamicEventsForYears(yearsToGenerate, { timezone });
+        setGenerateModalOpen(false);
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [ensureIslamicEventsForYears],
+  );
 
   const openResetDialog = useCallback(() => {
     if (resetFeedback != null) return;
@@ -378,96 +294,19 @@ export default function CalendarActionBar({
         Add Event
       </Button>
 
-      <Dialog
+      <GenerateYearsModal
         open={generateModalOpen}
         onClose={handleCloseGeneratePopup}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Generate Islamic Events</DialogTitle>
-        <DialogContent sx={{ pt: 1.5, display: "grid", gap: 1.5 }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={thisYearOnly}
-                sx={{ py: 0.5 }}
-                onChange={(event) => setThisYearOnly(event.target.checked)}
-              />
-            }
-            label="This Year Only"
-          />
-
-          <FormControl size="small" fullWidth>
-            <InputLabel id="generate-location-label">Location</InputLabel>
-            <Select
-              labelId="generate-location-label"
-              value={selectedTimezone}
-              label="Location"
-              onChange={(event) => setSelectedTimezone(event.target.value)}
-              disabled={isGenerating}
-            >
-              {locationOptions.map((option) => (
-                <MenuItem key={option.timezone} value={option.timezone}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {(!userLocations || userLocations.length === 0) && (
-            <Alert severity="info">
-              No saved locations yet.{" "}
-              <Button size="small" onClick={() => navigate("/settings")}>
-                Go to Settings
-              </Button>
-            </Alert>
-          )}
-
-          {!thisYearOnly && (
-            <>
-              <TextField
-                label="Start year"
-                type="number"
-                size="small"
-                value={startYear}
-                onChange={(event) => setStartYear(event.target.value)}
-                inputProps={{ step: 1, min: currentYear }}
-                disabled={isGenerating}
-                autoFocus
-              />
-              <TextField
-                label="End year"
-                type="number"
-                size="small"
-                value={endYear}
-                onChange={(event) => setEndYear(event.target.value)}
-                inputProps={{ step: 1, min: currentYear }}
-                disabled={isGenerating}
-              />
-            </>
-          )}
-
-          {!!generateError && <Alert severity="error">{generateError}</Alert>}
-          {duplicateYears.length > 0 && (
-            <Alert severity="warning">
-              Already generated years: {duplicateYears.join(", ")}. Continuing
-              will submit the full selected range.
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseGeneratePopup} disabled={isGenerating}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleConfirmGenerateEvents}
-            disabled={isGenerating}
-          >
-            {isGenerating ? "Generating..." : "Generate"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onGenerate={handleGenerateYears}
+        isGenerating={isGenerating}
+        currentYear={currentYear}
+        maxGenerateYear={maxGenerateYear}
+        locationOptions={locationOptions}
+        userLocations={userLocations}
+        browserTimezone={browserTimezone}
+        generatedYearsRange={generatedYearsRange}
+        onGoToSettings={() => navigate("/settings")}
+      />
 
       <Dialog
         open={resetDialogOpen}

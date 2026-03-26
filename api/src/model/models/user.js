@@ -28,6 +28,12 @@ export class User {
     this.expiresAt = null;
     this.scopes = null;
     this.isExpired = null;
+    /** @type {string | null} SHA-256 hex of opaque subscription token */
+    this.subscriptionTokenHash = null;
+    /** @type {number | null} epoch ms when subscription URL was created */
+    this.subscriptionTokenCreatedAt = null;
+    /** @type {number | null} epoch ms when subscription was revoked */
+    this.subscriptionTokenRevokedAt = null;
   }
 
   /**
@@ -61,6 +67,9 @@ export class User {
     user.expiresAt = row.expiresat;
     user.scopes = row.scopes;
     user.isExpired = row.isexpired ?? true;
+    user.subscriptionTokenHash = row.subscriptiontokenhash ?? null;
+    user.subscriptionTokenCreatedAt = row.subscriptiontokencreatedat ?? null;
+    user.subscriptionTokenRevokedAt = row.subscriptiontokenrevokedat ?? null;
     return user;
   }
 

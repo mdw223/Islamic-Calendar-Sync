@@ -26,11 +26,22 @@ import UpdateUserLocation from './user-locations/UpdateUserLocation.js';
 import DeleteUserLocation from './user-locations/DeleteUserLocation.js';
 import SyncOfflineUserLocations from './user-locations/SyncOfflineUserLocations.js';
 import UpdateCurrentUser from './users/UpdateCurrentUser.js';
+import { RequireSubscriptionToken } from '../middleware/AuthMiddleware.js';
+import GetSubscriptionEvents from './subscription/GetSubscriptionEvents.js';
+import GetSubscriptionStatus from './subscription/GetSubscriptionStatus.js';
+import CreateSubscriptionUrl from './subscription/CreateSubscriptionUrl.js';
+import RevokeSubscription from './subscription/RevokeSubscription.js';
+import RotateSubscriptionUrl from './subscription/RotateSubscriptionUrl.js';
 
 const router = express.Router();
 
 // Health check routes
 router.use("/health", healthRoutes);
+
+// Public subscription feed (opaque ?token=); must stay before Bearer-only app routes
+router.get("/subscription/events", RequireSubscriptionToken, GetSubscriptionEvents);
+
+// AUTH
 router.get("/users/me", Auth(AuthUser.VALID_USER), GetCurrentUser);
 router.put("/users/me", Auth(AuthUser.VALID_USER), UpdateCurrentUser);
 router.post("/users/send-code", SendVerificationCode);
@@ -40,6 +51,12 @@ router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUser
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
+
+// Subscription management (Bearer JWT)
+router.get("/subscription", Auth(AuthUser.VALID_USER), GetSubscriptionStatus);
+router.post("/subscription", Auth(AuthUser.VALID_USER), CreateSubscriptionUrl);
+router.post("/subscription/revoke", Auth(AuthUser.VALID_USER), RevokeSubscription);
+router.post("/subscription/rotate", Auth(AuthUser.VALID_USER), RotateSubscriptionUrl);
 
 // Calendar Providers routes
 router.get("/calendar-providers", Auth(AuthUser.ANY), GetCalendarProviders);

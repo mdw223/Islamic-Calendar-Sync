@@ -13,17 +13,13 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  IconButton,
   Popover,
-  TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import {
   Download,
   Link as LinkIcon,
   CalendarSync,
-  Copy,
   ChevronDown,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -74,7 +70,7 @@ function toIcsRRuleArg(value) {
 /**
  * SyncModal — offers three sync options:
  *  1. Download .ics   (functional, uses Ics.js)
- *  2. Subscription URL (dummy, disabled when logged out)
+ *  2. Subscription URL (opens Settings to generate/copy URL)
  *  3. Sync to Calendar (dummy, disabled when logged out)
  */
 export default function SyncModal({ open, onClose, user }) {
@@ -313,36 +309,23 @@ export default function SyncModal({ open, onClose, user }) {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             {isLoggedIn
-              ? "Subscribe from your calendar app to stay in sync automatically."
-              : "Sign in to get a personal subscription URL."}
+              ? "Generate and copy a personal feed URL in Settings, then add it as a calendar subscription in Google Calendar or another app."
+              : "Sign in to create a personal subscription URL."}
           </Typography>
 
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            <TextField
-              size="small"
-              fullWidth
-              disabled
-              value={
-                isLoggedIn ? "https://example.com/feed/your-calendar.ics" : ""
-              }
-              placeholder="Sign in to enable"
-              InputProps={{
-                startAdornment: (
-                  <LinkIcon
-                    size={16}
-                    style={{ marginRight: 8, opacity: 0.5 }}
-                  />
-                ),
-              }}
-            />
-            <Tooltip title={isLoggedIn ? "Copy URL" : "Sign in to enable"}>
-              <span>
-                <IconButton size="small" disabled={!isLoggedIn}>
-                  <Copy size={16} />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<LinkIcon size={16} />}
+            onClick={() => {
+              onClose();
+              navigate(
+                isLoggedIn ? "/settings#calendar-subscription" : "/settings",
+              );
+            }}
+          >
+            {isLoggedIn ? "Open subscription in Settings" : "Go to Settings"}
+          </Button>
         </Box>
 
         <Divider />

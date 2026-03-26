@@ -38,4 +38,6 @@ export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-production",
 };
 
-
+export const subscriptionConfig = {
+  DEFAULT_RANGE_YEARS: process.env.SUBSCRIPTION_DEFAULT_RANGE_YEARS || 2,
+};

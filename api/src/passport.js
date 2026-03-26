@@ -14,18 +14,24 @@ import { generateForNewUser } from "./services/IslamicEventService.js";
  * Payload: { sub: userId }, exp set to jwtConfig.EXPIRY_DAYS from now.
  */
 export function signToken(user) {
-  const payload = { sub: user.userId };
-  return jwt.sign(payload, jwtConfig.SECRET, {
-    algorithm: jwtConfig.ALGORITHM,
-    expiresIn: jwtConfig.EXPIRY_DAYS + "d",
-  });
+  return jwt.sign(
+    { sub: user.userId },
+    jwtConfig.SECRET,
+    {
+      algorithm: jwtConfig.ALGORITHM,
+      expiresIn: jwtConfig.EXPIRY_DAYS + "d",
+    },
+  );
 }
+
+/** Bearer only; `?token=` on subscription routes is an opaque secret, not a JWT. */
+const jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 
 // JWT strategy: extract token from Authorization: Bearer <token>, verify, load user, set req.user
 passport.use(
   new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest,
       secretOrKey: jwtConfig.SECRET,
       algorithms: [jwtConfig.ALGORITHM],
     },

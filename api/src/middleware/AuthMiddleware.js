@@ -1,4 +1,6 @@
+import crypto from "crypto";
 import { AuthUser } from "../Constants.js";
+import UserDOA from "../model/db/doa/UserDOA.js";
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
@@ -80,5 +82,30 @@ export function Auth(allowedRoles) {
       })
     }
 };
+
+/**
+ * GET /subscription/events?token=<opaque hex>: hash token, load user, reject if missing/revoked.
+ */
+export async function RequireSubscriptionToken(req, res, next) {
+  try {
+    const token = req.query.token;
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+    const hash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+    const user = await UserDOA.findBySubscriptionTokenHash(hash);
+    if (
+      !user ||
+      !user.subscriptionTokenHash ||
+      user.subscriptionTokenRevokedAt != null
+    ) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
 
 export default Auth;
