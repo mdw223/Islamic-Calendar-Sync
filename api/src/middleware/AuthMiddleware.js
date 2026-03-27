@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import { AuthUser } from "../Constants.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
+import jwt from "jsonwebtoken";
+import appConfig from '../Config.js'
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
@@ -92,8 +94,8 @@ export async function RequireSubscriptionToken(req, res, next) {
     if (!token || typeof token !== "string") {
       return res.status(400).json({ success: false, message: "Token is required" });
     }
-    const hash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-    const user = await UserDOA.findBySubscriptionTokenHash(hash);
+    const decoded = jwt.verify(token, appConfig.API_SECRET);
+    const user = await UserDOA.findById(decoded.userId);
     if (
       !user ||
       !user.subscriptionTokenHash ||
@@ -107,5 +109,10 @@ export async function RequireSubscriptionToken(req, res, next) {
     next(err);
   }
 }
+
+export function GenerateToken(user) {
+  return jwt.sign({ userId: user.userId }, appConfig.API_SECRET);
+}
+
 
 export default Auth;

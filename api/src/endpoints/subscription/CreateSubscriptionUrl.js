@@ -2,10 +2,11 @@ import { appConfig } from "../../Config.js";
 import { sendJson } from "../SendJson.js";
 import crypto from "crypto";
 import UserDOA from "../../model/db/doa/UserDOA.js";
+import { GenerateToken } from "../../middleware/AuthMiddleware.js";
 
 function subscriptionEventsUrl(token) {
-  const base = appConfig.BASE_URL.replace(/\/$/, "");
-  return `${base}/api/subscription/events?token=${encodeURIComponent(token)}`;
+  const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
+  return `${base}/api/subscription/events?token=${token}`;
 }
 
 function hasActiveSubscription(user) {
@@ -31,23 +32,18 @@ export default async function CreateSubscriptionUrl(req, res) {
       );
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
+    const token = GenerateToken(req.user);
     const createdAt = Date.now();
-    const hash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
     await UserDOA.updateUser(userId, {
-      subscriptiontokenhash: hash,
+      subscriptiontokenhash: token,
       subscriptiontokencreatedat: createdAt,
       subscriptiontokenrevokedat: null,
     });
 
-    return sendJson(
-      res,
-      {
-        success: true,
-        subscriptionUrl: subscriptionEventsUrl(token),
-      },
-      200,
-    );
+    res.json({
+      success: true,
+      subscriptionUrl: subscriptionEventsUrl(token),
+    });
   } catch {
     return sendJson(
       res,

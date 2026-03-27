@@ -4,7 +4,9 @@ export const appConfig = {
   PORT: process.env.API_PORT || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
   TRUST_PROXY: true,
-  BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000"
+  BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000",
+  SUBSCRIPTION_URL: process.env.SUBSCRIPTION_URL || process.env.APP_BASE_URL,
+  API_SECRET: process.env.API_SECRET || 'secret'
 };
 
 // JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.

@@ -93,7 +93,7 @@ ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --log=stdout
 **Solution:** Use ngrok's `--host-header` flag to rewrite the Host header so IIS Express sees `localhost`:
 
 ```powershell
-ngrok http http://localhost:55404 --url=your-domain.ngrok-free.dev --host-header="localhost:55404"
+ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --host-header="localhost:5000"
 ```
 
 **The Following Works the Best!**

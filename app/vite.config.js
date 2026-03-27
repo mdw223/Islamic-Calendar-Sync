@@ -70,6 +70,6 @@ export default defineConfig({
       usePolling: true,
       interval: 500,
     },
-    allowedHosts: 'all',
+    allowedHosts: true,
   },
 })
