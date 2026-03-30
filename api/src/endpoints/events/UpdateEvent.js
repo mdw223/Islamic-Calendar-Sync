@@ -1,6 +1,5 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { sanitizeDescription } from '../../util/SanitizeHtml.js';
-import { sendJson } from '../SendJson.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
 
 /**
@@ -12,10 +11,10 @@ export default async function UpdateEvent(req, res) {
         const eventId = parseInt(req.params.eventId);
 
         if (isNaN(eventId)) {
-            return sendJson(res, {
+            return res.status(400).json({
                 success: false,
                 message: 'Invalid event ID',
-            }, 400);
+            });
         }
 
         if (req.body.description !== undefined) {
@@ -27,10 +26,10 @@ export default async function UpdateEvent(req, res) {
         } else if (req.body.rrule !== undefined && req.body.rrule !== null) {
             const rr = validateStoredUserRRule(req.body.rrule);
             if (!rr.ok) {
-                return sendJson(res, {
+                return res.status(400).json({
                     success: false,
                     message: rr.message,
-                }, 400);
+                });
             }
             req.body.rrule = rr.value || null;
         }
@@ -39,18 +38,18 @@ export default async function UpdateEvent(req, res) {
 
         const userEvent = await EventDOA.findById(eventId, userId);
         if (!userEvent) {
-            return sendJson(res, {
+            return res.status(404).json({
                 success: false,
                 message: 'Event not found',
-            }, 404);
+            });
         }
 
         const updated = await EventDOA.updateEvent(eventId, userId, req.body);
-        return sendJson(res, { success: true, event: updated });
+        return res.json({ success: true, event: updated });
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to update event',
-        }, 500);
+        });
     }
 }

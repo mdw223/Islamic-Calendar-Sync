@@ -1,6 +1,4 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
-import { sendJson } from '../SendJson.js';
-
 /**
  * GET /events/:eventId
  * Get a single event by ID for the current user.
@@ -10,29 +8,29 @@ export default async function GetEventById(req, res) {
         const eventId = parseInt(req.params.eventId);
 
         if (isNaN(eventId)) {
-            return sendJson(res, {
+            return res.status(400).json({
                 success: false,
                 message: 'Invalid event ID',
-            }, 400);
+            });
         }
 
         const event = await EventDOA.findById(eventId, req.user.userId);
 
         if (!event) {
-            return sendJson(res, {
+            return res.status(404).json({
                 success: false,
                 message: 'Event not found',
-            }, 404);
+            });
         }
 
-        return sendJson(res, {
+        return res.json({
             success: true,
             event,
         });
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to get event',
-        }, 500);
+        });
     }
 }

@@ -1,6 +1,4 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
-import { sendJson } from '../SendJson.js';
-
 /**
  * DELETE /events
  * Delete every event owned by the current user (full calendar reset).
@@ -11,9 +9,9 @@ export default async function DeleteAllEvents(req, res) {
         await EventDOA.deleteAllEvents(req.user.userId);
         res.status(204).send();
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to delete all events',
-        }, 500);
+        });
     }
 }

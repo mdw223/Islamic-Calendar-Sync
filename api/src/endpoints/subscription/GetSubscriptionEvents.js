@@ -4,8 +4,6 @@ import {
   expandStoredEventsForRange,
   endOfLocalDay,
 } from "../../services/EventExpansionService.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function GetSubscriptionEvents(req, res) {
   try {
     const userEvents = await EventDOA.findAllByUserId(req.user.userId);

@@ -1,5 +1,4 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
-import { sendJson } from '../SendJson.js';
 import {
     expandStoredEventsForRange,
     parseRangeDateParam,
@@ -28,22 +27,22 @@ export default async function GetEvents(req, res) {
         }
 
         if (toD.getTime() < fromD.getTime()) {
-            return sendJson(res, {
+            return res.status(400).json({
                 success: false,
                 message: 'Invalid range: "to" must be on or after "from".',
-            }, 400);
+            });
         }
 
         const expanded = expandStoredEventsForRange(userEvents, fromD, toD);
 
-        return sendJson(res, {
+        return res.json({
             success: true,
             events: expanded,
         });
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to get events',
-        }, 500);
+        });
     }
 }

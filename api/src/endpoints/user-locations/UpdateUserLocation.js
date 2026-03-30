@@ -1,11 +1,9 @@
 import UserLocationDOA from "../../model/db/doa/UserLocationDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function UpdateUserLocation(req, res) {
   try {
     const userLocationId = Number.parseInt(req.params.userLocationId, 10);
     if (Number.isNaN(userLocationId)) {
-      return sendJson(res, { success: false, message: "Invalid user location id." }, 400);
+      return res.status(400).json({ success: false, message: "Invalid user location id." });
     }
 
     if (req.body?.isDefault === true) {
@@ -19,12 +17,12 @@ export default async function UpdateUserLocation(req, res) {
     );
 
     if (!userLocation) {
-      return sendJson(res, { success: false, message: "User location not found." }, 404);
+      return res.status(404).json({ success: false, message: "User location not found." });
     }
 
-    return sendJson(res, { success: true, userLocation });
+    return res.json({ success: true, userLocation });
   } catch {
-    return sendJson(res, { success: false, message: "Failed to update user location." }, 500);
+    return res.status(500).json({ success: false, message: "Failed to update user location." });
   }
 }
 

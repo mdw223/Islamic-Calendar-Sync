@@ -17,8 +17,6 @@
  *   500 — server error
  */
 import { generateForUser } from "../../services/IslamicEventService.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function GenerateEvents(req, res) {
   try {
     const { years, timezone = null } = req.body;
@@ -32,18 +30,18 @@ export default async function GenerateEvents(req, res) {
         (y) => Number.isInteger(y) && y >= currentYear && y <= maxYear,
       )
     ) {
-      return sendJson(res, {
+      return res.status(400).json({
         success: false,
         message:
           `Request body must contain a "years" field with a non-empty array of integers between ${currentYear} and ${maxYear}.`,
-      }, 400);
+      });
     }
 
     if (timezone != null && (typeof timezone !== "string" || timezone.length > 100)) {
-      return sendJson(res, {
+      return res.status(400).json({
         success: false,
         message: 'Optional "timezone" must be a valid IANA timezone string.',
-      }, 400);
+      });
     }
 
     const { events, generatedCount } = await generateForUser(
@@ -52,16 +50,16 @@ export default async function GenerateEvents(req, res) {
       timezone,
     );
 
-    return sendJson(res, {
+    return res.status(201).json({
       success: true,
       events,
       generatedCount,
-    }, 201);
+    });
   } catch (error) {
     console.error("GenerateEvents error:", error);
-    return sendJson(res, {
+    return res.status(500).json({
       success: false,
       message: "Failed to generate Islamic events.",
-    }, 500);
+    });
   }
 }

@@ -1,6 +1,4 @@
 import UserDOA from "../../model/db/doa/UserDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function RevokeSubscription(req, res) {
   try {
     const userId = req.user.userId;
@@ -10,22 +8,16 @@ export default async function RevokeSubscription(req, res) {
       subscriptiontokenrevokedat: revokedAt,
     });
     if (!updated) {
-      return sendJson(res, { success: false, message: "User not found" }, 404);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    return sendJson(
-      res,
-      {
-        success: true,
-        message: "Subscription revoked. Existing calendar URLs will stop working.",
-        subscriptionTokenRevokedAt: revokedAt,
-      },
-      200,
-    );
+    return res.status(200).json({
+      success: true,
+      message: "Subscription revoked. Existing calendar URLs will stop working.",
+      subscriptionTokenRevokedAt: revokedAt,
+    });
   } catch {
-    return sendJson(
-      res,
-      { success: false, message: "Failed to revoke subscription" },
-      500,
-    );
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to revoke subscription" });
   }
 }

@@ -1,6 +1,4 @@
 import UserDOA from "../../model/db/doa/UserDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function UpdateCurrentUser(req, res) {
   try {
     const { name, language, hanafi, use24HourTime } = req.body ?? {};
@@ -12,9 +10,9 @@ export default async function UpdateCurrentUser(req, res) {
       updates.use24hourtime = !!use24HourTime;
 
     const user = await UserDOA.updateUser(req.user.userId, updates);
-    return sendJson(res, { success: true, user });
+    return res.json({ success: true, user });
   } catch {
-    return sendJson(res, { success: false, message: "Failed to update user profile." }, 500);
+    return res.status(500).json({ success: false, message: "Failed to update user profile." });
   }
 }
 

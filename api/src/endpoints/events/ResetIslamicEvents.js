@@ -6,8 +6,6 @@
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
 import UserDOA from "../../model/db/doa/UserDOA.js";
-import { sendJson } from "../SendJson.js";
-
 const MAX_DEFINITION_IDS = 200;
 
 export default async function ResetIslamicEvents(req, res) {
@@ -19,25 +17,17 @@ export default async function ResetIslamicEvents(req, res) {
       definitionIds.length === 0 ||
       definitionIds.length > MAX_DEFINITION_IDS
     ) {
-      return sendJson(
-        res,
-        {
-          success: false,
-          message: `Request body must contain a non-empty "definitionIds" array (max ${MAX_DEFINITION_IDS} items).`,
-        },
-        400,
-      );
+      return res.status(400).json({
+        success: false,
+        message: `Request body must contain a non-empty "definitionIds" array (max ${MAX_DEFINITION_IDS} items).`,
+      });
     }
 
     if (!definitionIds.every((id) => typeof id === "string" && id.length > 0)) {
-      return sendJson(
-        res,
-        {
-          success: false,
-          message: 'Each "definitionIds" entry must be a non-empty string.',
-        },
-        400,
-      );
+      return res.status(400).json({
+        success: false,
+        message: 'Each "definitionIds" entry must be a non-empty string.',
+      });
     }
 
     const userId = req.user.userId;
@@ -64,7 +54,7 @@ export default async function ResetIslamicEvents(req, res) {
       await UserDOA.updateGeneratedYearsRange(userId, null, null);
     }
 
-    return sendJson(res, {
+    return res.json({
       success: true,
       deletedCount,
       generatedYearsStart,
@@ -72,13 +62,9 @@ export default async function ResetIslamicEvents(req, res) {
     });
   } catch (error) {
     console.error("ResetIslamicEvents error:", error);
-    return sendJson(
-      res,
-      {
-        success: false,
-        message: "Failed to reset Islamic events.",
-      },
-      500,
-    );
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset Islamic events.",
+    });
   }
 }

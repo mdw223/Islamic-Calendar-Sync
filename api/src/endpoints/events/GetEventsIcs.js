@@ -1,5 +1,4 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
-import { sendJson } from '../SendJson.js';
 import {
     expandStoredEventsForRange,
     parseRangeDateParam,
@@ -42,10 +41,10 @@ export default async function GetEventsIcs(req, res) {
         const userEvents = await EventDOA.findAllByUserId(req.user.userId);
         const { years, error } = parseYearsQuery(req.query.years);
         if (error) {
-            return sendJson(res, {
+            return res.status(400).json({
                 success: false,
                 message: error,
-            }, 400);
+            });
         }
 
         const cy = new Date().getFullYear();
@@ -63,10 +62,10 @@ export default async function GetEventsIcs(req, res) {
         }
 
         if (toD.getTime() < fromD.getTime()) {
-            return sendJson(res, {
+            return res.status(400).json({
                 success: false,
                 message: 'Invalid range: "to" must be on or after "from".',
-            }, 400);
+            });
         }
 
         const expanded = expandStoredEventsForRange(userEvents, fromD, toD);
@@ -86,9 +85,9 @@ export default async function GetEventsIcs(req, res) {
         res.setHeader('Cache-Control', 'no-store');
         return res.send(icsText);
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to export events',
-        }, 500);
+        });
     }
 }

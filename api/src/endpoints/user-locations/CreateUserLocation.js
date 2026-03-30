@@ -1,16 +1,14 @@
 import UserLocationDOA from "../../model/db/doa/UserLocationDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function CreateUserLocation(req, res) {
   try {
     const { name, latitude = null, longitude = null, timezone, isDefault = false } = req.body ?? {};
     if (!name || !timezone) {
-      return sendJson(res, { success: false, message: "name and timezone are required." }, 400);
+      return res.status(400).json({ success: false, message: "name and timezone are required." });
     }
 
     const count = await UserLocationDOA.countByUserId(req.user.userId);
     if (count >= 3) {
-      return sendJson(res, { success: false, message: "Users can save up to 3 locations." }, 400);
+      return res.status(400).json({ success: false, message: "Users can save up to 3 locations." });
     }
 
     if (isDefault) {
@@ -24,9 +22,9 @@ export default async function CreateUserLocation(req, res) {
       timezone,
       isDefault,
     });
-    return sendJson(res, { success: true, userLocation }, 201);
+    return res.status(201).json({ success: true, userLocation });
   } catch {
-    return sendJson(res, { success: false, message: "Failed to create user location." }, 500);
+    return res.status(500).json({ success: false, message: "Failed to create user location." });
   }
 }
 

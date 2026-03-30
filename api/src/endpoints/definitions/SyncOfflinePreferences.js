@@ -20,47 +20,34 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function SyncOfflinePreferences(req, res) {
   try {
     const { preferences } = req.body;
 
     if (!Array.isArray(preferences)) {
-      return sendJson(
-        res,
-        {
-          success: false,
-          message:
-            'Request body must contain a "preferences" array.',
-        },
-        400,
-      );
+      return res.status(400).json({
+        success: false,
+        message: 'Request body must contain a "preferences" array.',
+      });
     }
 
     if (preferences.length === 0) {
-      return sendJson(res, { success: true, syncedCount: 0 }, 200);
+      return res.status(200).json({ success: true, syncedCount: 0 });
     }
 
     if (preferences.length > 200) {
-      return sendJson(
-        res,
-        { success: false, message: "Too many preferences (max 200)." },
-        400,
-      );
+      return res
+        .status(400)
+        .json({ success: false, message: "Too many preferences (max 200)." });
     }
 
     for (const p of preferences) {
       if (!p.definitionId || typeof p.isHidden !== "boolean") {
-        return sendJson(
-          res,
-          {
-            success: false,
-            message:
-              "Every preference must have definitionId (string) and isHidden (boolean).",
-          },
-          400,
-        );
+        return res.status(400).json({
+          success: false,
+          message:
+            "Every preference must have definitionId (string) and isHidden (boolean).",
+        });
       }
     }
 
@@ -79,13 +66,11 @@ export default async function SyncOfflinePreferences(req, res) {
       synced++;
     }
 
-    return sendJson(res, { success: true, syncedCount: synced }, 200);
+    return res.status(200).json({ success: true, syncedCount: synced });
   } catch (error) {
     console.error("SyncOfflinePreferences error:", error);
-    return sendJson(
-      res,
-      { success: false, message: "Failed to sync offline preferences." },
-      500,
-    );
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to sync offline preferences." });
   }
 }

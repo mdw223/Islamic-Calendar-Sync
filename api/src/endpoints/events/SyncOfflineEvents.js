@@ -20,65 +20,46 @@
  *   500 — server error
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
-import { sendJson } from "../SendJson.js";
-
 export default async function SyncOfflineEvents(req, res) {
   try {
     const { events } = req.body;
 
     if (!Array.isArray(events)) {
-      return sendJson(
-        res,
-        {
-          success: false,
-          message:
-            'Request body must contain an "events" array.',
-        },
-        400,
-      );
+      return res.status(400).json({
+        success: false,
+        message: 'Request body must contain an "events" array.',
+      });
     }
 
     if (events.length === 0) {
-      return sendJson(res, { success: true, syncedCount: 0 }, 200);
+      return res.status(200).json({ success: true, syncedCount: 0 });
     }
 
     // Cap at a reasonable limit to prevent abuse.
     if (events.length > 2000) {
-      return sendJson(
-        res,
-        { success: false, message: "Too many events (max 2000)." },
-        400,
-      );
+      return res
+        .status(400)
+        .json({ success: false, message: "Too many events (max 2000)." });
     }
 
     // Validate each event minimally.
     for (const e of events) {
       if (!e.name || !e.startDate || !e.endDate || !e.eventTypeId) {
-        return sendJson(
-          res,
-          {
-            success: false,
-            message:
-              "Every event must have name, startDate, endDate, and eventTypeId.",
-          },
-          400,
-        );
+        return res.status(400).json({
+          success: false,
+          message:
+            "Every event must have name, startDate, endDate, and eventTypeId.",
+        });
       }
     }
 
     const persisted = await EventDOA.bulkUpsert(events, req.user.userId);
 
-    return sendJson(
-      res,
-      { success: true, syncedCount: persisted.length },
-      201,
-    );
+    return res.status(201).json({ success: true, syncedCount: persisted.length });
   } catch (error) {
     console.error("SyncOfflineEvents error:", error);
-    return sendJson(
-      res,
-      { success: false, message: "Failed to sync offline events." },
-      500,
-    );
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to sync offline events." });
   }
 }

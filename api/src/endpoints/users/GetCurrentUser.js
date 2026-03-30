@@ -1,4 +1,3 @@
-import { sendJson } from '../SendJson.js';
 import UserDOA from "../../model/db/doa/UserDOA.js";
 import UserLocationDOA from "../../model/db/doa/UserLocationDOA.js";
 
@@ -11,16 +10,16 @@ export default async function GetCurrentUser(req, res) {
     try {
         const user = await UserDOA.findById(req.user.userId);
         if (!user) {
-            return sendJson(res, {
+            return res.status(404).json({
                 success: false,
                 message: 'User not found'
-            }, 404);
+            });
         }
 
         const authProviderName = await UserDOA.findAuthProviderName(req.user.userId);
         const userLocations = await UserLocationDOA.findAllByUserId(req.user.userId);
 
-        return sendJson(res, {
+        return res.json({
             success: true,
             user: {
                 ...user.toJSON(),
@@ -29,9 +28,9 @@ export default async function GetCurrentUser(req, res) {
             }
         });
     } catch (error) {
-        return sendJson(res, {
+        return res.status(500).json({
             success: false,
             message: 'Failed to get current user',
-        }, 500);
+        });
     }
 }

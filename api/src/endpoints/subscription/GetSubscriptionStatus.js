@@ -1,6 +1,4 @@
 import UserDOA from "../../model/db/doa/UserDOA.js";
-import { sendJson } from "../SendJson.js";
-
 function hasActiveSubscription(user) {
   return (
     user?.subscriptionTokenHash != null &&
@@ -12,23 +10,17 @@ export default async function GetSubscriptionStatus(req, res) {
   try {
     const user = await UserDOA.findById(req.user.userId);
     if (!user) {
-      return sendJson(res, { success: false, message: "User not found" }, 404);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    return sendJson(
-      res,
-      {
-        success: true,
-        hasActiveSubscription: hasActiveSubscription(user),
-        subscriptionTokenCreatedAt: user.subscriptionTokenCreatedAt,
-        subscriptionTokenRevokedAt: user.subscriptionTokenRevokedAt,
-      },
-      200,
-    );
+    return res.status(200).json({
+      success: true,
+      hasActiveSubscription: hasActiveSubscription(user),
+      subscriptionTokenCreatedAt: user.subscriptionTokenCreatedAt,
+      subscriptionTokenRevokedAt: user.subscriptionTokenRevokedAt,
+    });
   } catch {
-    return sendJson(
-      res,
-      { success: false, message: "Failed to get subscription status" },
-      500,
-    );
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to get subscription status" });
   }
 }

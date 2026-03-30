@@ -1,5 +1,4 @@
 import { appConfig } from "../../Config.js";
-import { sendJson } from "../SendJson.js";
 import crypto from "crypto";
 import UserDOA from "../../model/db/doa/UserDOA.js";
 
@@ -20,23 +19,17 @@ export default async function RotateSubscriptionUrl(req, res) {
       subscriptiontokenrevokedat: null,
     });
     if (!updated) {
-      return sendJson(res, { success: false, message: "User not found" }, 404);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    return sendJson(
-      res,
-      {
-        success: true,
-        subscriptionUrl: subscriptionEventsUrl(token),
-        message:
-          "Update the subscription URL in Google Calendar or your calendar app; the previous link no longer works.",
-      },
-      200,
-    );
+    return res.status(200).json({
+      success: true,
+      subscriptionUrl: subscriptionEventsUrl(token),
+      message:
+        "Update the subscription URL in Google Calendar or your calendar app; the previous link no longer works.",
+    });
   } catch {
-    return sendJson(
-      res,
-      { success: false, message: "Failed to rotate subscription url" },
-      500,
-    );
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to rotate subscription url" });
   }
 }
