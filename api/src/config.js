@@ -41,5 +41,5 @@ export const sessionConfig = {
 };
 
 export const subscriptionConfig = {
-  DEFAULT_RANGE_YEARS: process.env.SUBSCRIPTION_DEFAULT_RANGE_YEARS || 2,
+  DEFAULT_RANGE_YEARS: Number(process.env.SUBSCRIPTION_DEFAULT_RANGE_YEARS) || 2,
 };
