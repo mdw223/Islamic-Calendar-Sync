@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { AuthUser } from "../Constants.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
 import jwt from "jsonwebtoken";
-import appConfig from '../Config.js'
+import {appConfig} from '../Config.js'
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.

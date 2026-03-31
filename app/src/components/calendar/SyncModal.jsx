@@ -169,7 +169,7 @@ export default function SyncModal({ open, onClose, user }) {
           ev.location ?? "",
           ev.startDate,
           ev.endDate,
-          toIcsRRuleArg(ev.rrule),
+          undefined, // toIcsRRuleArg(ev.rrule),
           ev.isAllDay ?? false,
           { timezone: ev.eventTimezone ?? selectedTimezone },
         );
@@ -244,7 +244,9 @@ export default function SyncModal({ open, onClose, user }) {
             <FormControl size="small" sx={{ minWidth: 190 }}>
               {isLoggedIn && (
                 <>
-                  <InputLabel id="sync-download-source-label">Source</InputLabel>
+                  <InputLabel id="sync-download-source-label">
+                    Source
+                  </InputLabel>
                   <Select
                     labelId="sync-download-source-label"
                     value={downloadSource}
