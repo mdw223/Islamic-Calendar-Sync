@@ -16,13 +16,11 @@ const RRule =
   rruleModule.default?.default?.RRule ??
   rruleModule.RRule;
 
-/** @type {Map<string, Object> | null} */
-let definitionCache = null;
+// recomputed only on server restart or per running node process
+const definitionCache = new Map(getBaseDefinitions().map((d) => [d.id, d]));
 
+/** @type {Map<string, Object> | null} */
 function getDefinitionById(id) {
-  if (!definitionCache) {
-    definitionCache = new Map(getBaseDefinitions().map((d) => [d.id, d]));
-  }
   return definitionCache.get(id) ?? null;
 }
 
@@ -52,7 +50,7 @@ export function validateStoredUserRRule(rrule) {
     if (parsed == null || parsed.freq === undefined) {
       return { ok: false, message: "RRule must include a valid FREQ." };
     }
-    new RRule({ ...parsed, dtstart: new Date("2020-01-01T12:00:00.000Z") });
+    new RRule({ ...parsed, dtstart: new Date("2020-01-01T12:00:00.000Z") }); // dummy date to validate the rrule
   } catch {
     return { ok: false, message: "Invalid RRule string." };
   }
@@ -72,11 +70,11 @@ function eventOverlapsRange(startIso, endIso, rangeStart, rangeEnd) {
  * @returns {Record<string, unknown>[]}
  */
 function expandGregorianMaster(master, rangeStart, rangeEnd) {
-  const base = master.toJSON();
   const rruleResult = validateStoredUserRRule(master.rrule);
+  const isWithinRange = eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd);
   if (!rruleResult.ok || !master.rrule) {
-    if (eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd)) {
-      return [base];
+    if (isWithinRange) {
+      return [master];
     }
     return [];
   }
@@ -88,8 +86,8 @@ function expandGregorianMaster(master, rangeStart, rangeEnd) {
   }
 
   if (RRule == null || typeof RRule.parseString !== "function") {
-    if (eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd)) {
-      return [base];
+    if (isWithinRange) {
+      return [master];
     }
     return [];
   }
@@ -104,14 +102,14 @@ function expandGregorianMaster(master, rangeStart, rangeEnd) {
       const st = new Date(d.getTime());
       const en = new Date(st.getTime() + durMs);
       return {
-        ...base,
+        ...master,
         startDate: st.toISOString(),
         endDate: en.toISOString(),
       };
     });
   } catch {
-    if (eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd)) {
-      return [base];
+    if (isWithinRange) {
+      return [master];
     }
     return [];
   }
@@ -124,43 +122,38 @@ function expandGregorianMaster(master, rangeStart, rangeEnd) {
  * @returns {Record<string, unknown>[]}
  */
 function expandIslamicMaster(master, rangeStart, rangeEnd) {
-  const base = master.toJSON();
-  const jsonDef = getDefinitionById(master.islamicDefinitionId);
-  if (!jsonDef) {
-    if (eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd)) {
-      return [base];
+  const validDefinition = getDefinitionById(master.islamicDefinitionId);
+  if (!validDefinition) { // defintion checked from json events file 
+    const isWithinRange = eventOverlapsRange(master.startDate, master.endDate, rangeStart, rangeEnd);
+    if (isWithinRange) { // don't need to expand into the future then
+      return [master];
     }
     return [];
   }
 
-  const def = {
-    ...jsonDef,
-    description: master.description ?? jsonDef.description ?? null,
-  };
-
   const instances = generateIslamicEventsForDefinitionInDateRange(
-    def,
+    validDefinition,
     rangeStart,
     rangeEnd,
     master.eventTimezone,
   );
 
   return instances.map((inst) => ({
-    ...base,
-    name: base.name ?? inst.name,
+    ...master,
+    name: master.name ?? inst.name,
     startDate: inst.startDate,
     endDate: inst.endDate,
     description: master.description ?? inst.description,
-    rrule: inst.rrule ?? base.rrule,
-    hijriMonth: inst.hijriMonth ?? base.hijriMonth,
-    hijriDay: inst.hijriDay ?? base.hijriDay,
-    durationDays: inst.durationDays ?? base.durationDays,
+    rrule: inst.rrule ?? master.rrule,
+    hijriMonth: inst.hijriMonth ?? master.hijriMonth,
+    hijriDay: inst.hijriDay ?? master.hijriDay,
+    durationDays: inst.durationDays ?? master.durationDays,
     hide: master.hide,
   }));
 }
 
 /**
- * @param {import('../model/models/Event.js').Event[]} stored
+ * @param {import('../model/models/Event.js').Event[]} stored, events array from database
  * @param {Date} rangeStart
  * @param {Date} rangeEnd
  * @returns {Record<string, unknown>[]}
@@ -169,9 +162,9 @@ export function expandStoredEventsForRange(stored, rangeStart, rangeEnd) {
   const out = [];
 
   for (const row of stored) {
-    const master =
-      row && typeof row.toJSON === "function" ? row : Event.fromRow(row);
-    if (!master) continue;
+    const isAnEvent = row instanceof Event;
+    if (!isAnEvent) continue;
+    const master = row; // represent the original event object from database
 
     if (master.islamicDefinitionId) {
       out.push(...expandIslamicMaster(master, rangeStart, rangeEnd));

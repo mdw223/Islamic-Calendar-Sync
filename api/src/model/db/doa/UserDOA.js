@@ -125,18 +125,4 @@ export default class UserDOA {
   static async updateSalt(userId, salt) {
     return this.updateUser(userId, { salt });
   }
-
-  /**
-   * Find user by stored SHA-256 hex hash of opaque subscription token.
-   * @param {string} subscriptionTokenHash
-   * @returns {Promise<ReturnType<User.fromRow>|null>}
-   */
-  static async findBySubscriptionTokenHash(subscriptionTokenHash) {
-    const result = await query(
-      `SELECT * FROM "User" WHERE subscriptiontokenhash = $1`,
-      [subscriptionTokenHash],
-    );
-    const row = result.rows[0];
-    return row ? User.fromRow(row) : null;
-  }
 }

@@ -23,7 +23,7 @@ import {
   Paper,
   Box,
   Typography,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -44,7 +44,6 @@ export default function CalendarActionBar({
   user,
   isRefreshing,
   refreshFeedback,
-  onRefresh,
 }) {
   const { resetCalendar, ensureIslamicEventsForYears, generatedYearsRange } =
     useCalendar();
@@ -218,80 +217,23 @@ export default function CalendarActionBar({
         {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
       </Button>
 
-      {/* ── Sync button (opens modal) ─────────────────────────────────── */}
       <Button
         variant="outlined"
-        size="small"
-        startIcon={<SyncIcon size={14} />}
-        onClick={() => setSyncModalOpen(true)}
-      >
-        Sync
-      </Button>
-
-      {user.isLoggedIn && (
-        <Tooltip title="Refresh events from your account">
-          <span>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={
-                isRefreshing ? (
-                  <CircularProgress size={14} />
-                ) : refreshFeedback === "success" ? (
-                  <CheckIcon
-                    size={14}
-                    style={{
-                      color: "#10b981",
-                      animation: "popIn 0.3s ease-out",
-                    }}
-                  />
-                ) : refreshFeedback === "error" ? (
-                  <XIcon
-                    size={14}
-                    style={{
-                      color: "#ef4444",
-                      animation: "popIn 0.3s ease-out",
-                    }}
-                  />
-                ) : (
-                  <RefreshIcon size={14} />
-                )
-              }
-              disabled={isRefreshing || refreshFeedback != null}
-              onClick={onRefresh}
-              sx={{
-                ...(refreshFeedback === "success" && {
-                  borderColor: "#10b981",
-                  color: "#10b981",
-                }),
-                ...(refreshFeedback === "error" && {
-                  borderColor: "#ef4444",
-                  color: "#ef4444",
-                }),
-                "@keyframes popIn": {
-                  "0%": { transform: "scale(0)" },
-                  "60%": { transform: "scale(1.3)" },
-                  "100%": { transform: "scale(1)" },
-                },
-              }}
-            >
-              {refreshFeedback === "success"
-                ? "Done!"
-                : refreshFeedback === "error"
-                  ? "Failed"
-                  : "Refresh"}
-            </Button>
-          </span>
-        </Tooltip>
-      )}
-
-      <Button
-        variant="contained"
         size="small"
         startIcon={<AddIcon />}
         onClick={onAddEvent}
       >
         Add Event
+      </Button>
+
+      {/* ── Sync button (opens modal) ─────────────────────────────────── */}
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<SyncIcon size={14} />}
+        onClick={() => setSyncModalOpen(true)}
+      >
+        Sync
       </Button>
 
       <GenerateYearsModal
