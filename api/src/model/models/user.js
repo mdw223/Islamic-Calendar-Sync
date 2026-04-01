@@ -34,6 +34,7 @@ export class User {
     this.subscriptionTokenCreatedAt = null;
     /** @type {number | null} epoch ms when subscription was revoked */
     this.subscriptionTokenRevokedAt = null;
+    this.subscriptionUrl = null;
   }
 
   /**
@@ -70,6 +71,7 @@ export class User {
     user.subscriptionTokenHash = row.subscriptiontokenhash ?? null;
     user.subscriptionTokenCreatedAt = row.subscriptiontokencreatedat ?? null;
     user.subscriptionTokenRevokedAt = row.subscriptiontokenrevokedat ?? null;
+    user.subscriptionUrl = row.subscriptionurl ?? null;
     return user;
   }
 
@@ -88,7 +90,9 @@ export class User {
       hanafi: this.hanafi,
       use24HourTime: this.use24HourTime,
       emailUpdates: this.emailUpdates,
-      notifications: this.notifications
+      notifications: this.notifications,
+      subscriptionUrl: this.subscriptionUrl,
+      lastLogin: this.lastLogin,
     };
   }
 }

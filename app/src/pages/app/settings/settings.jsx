@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Box,
@@ -38,9 +44,7 @@ export default function Settings() {
   const [name, setName] = useState(user?.name ?? "");
   const [language, setLanguage] = useState(user?.language ?? "en");
   const [hanafi, setHanafi] = useState(!!user?.hanafi);
-  const [use24HourTime, setUse24HourTime] = useState(
-    !!user?.use24HourTime,
-  );
+  const [use24HourTime, setUse24HourTime] = useState(!!user?.use24HourTime);
   const [locationName, setLocationName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -67,6 +71,7 @@ export default function Settings() {
     try {
       const data = await APIClient.getSubscriptionStatus();
       setSubscriptionStatus(data);
+      setSubscriptionUrlShown(data?.subscriptionUrl ?? "");
     } catch (e) {
       setSubscriptionActionError(
         e?.message ?? "Could not load subscription status.",
@@ -81,6 +86,7 @@ export default function Settings() {
     setLanguage(user?.language ?? "en");
     setHanafi(!!user?.hanafi);
     setUse24HourTime(!!user?.use24HourTime);
+    setSubscriptionUrlShown(user?.subscriptionUrl ?? "");
   }, [user]);
 
   useEffect(() => {
@@ -88,8 +94,14 @@ export default function Settings() {
   }, [loadSubscriptionStatus]);
 
   useEffect(() => {
-    if (window.location.hash === "#calendar-subscription" && subscriptionSectionRef.current) {
-      subscriptionSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (
+      window.location.hash === "#calendar-subscription" &&
+      subscriptionSectionRef.current
+    ) {
+      subscriptionSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   }, [subscriptionStatus]);
 
@@ -295,7 +307,11 @@ export default function Settings() {
           {isLoggedIn && (
             <TextField
               label="Last Login"
-              value={user?.lastLogin ? String(user.lastLogin) : "N/A"}
+              value={
+                user?.lastLogin
+                  ? new Date(user.lastLogin).toLocaleString()
+                  : "N/A"
+              }
               fullWidth
               InputProps={{ readOnly: true }}
             />
@@ -317,9 +333,9 @@ export default function Settings() {
             Calendar subscription
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Paste this URL into Google Calendar or another app as an
-            internet calendar subscription. Copy and save it; it cannot be shown
-            again without generating a new link (rotate).
+            Paste this URL into Google Calendar or another app as an internet
+            calendar subscription. Copy and save it; it cannot be shown again
+            without generating a new link (rotate).
           </Typography>
           {subscriptionLoading && (
             <Typography variant="body2" color="text.secondary">
@@ -334,7 +350,7 @@ export default function Settings() {
                   {" "}
                   · Created{" "}
                   {new Date(
-                    subscriptionStatus.subscriptionTokenCreatedAt,
+                    Number(subscriptionStatus.subscriptionTokenCreatedAt),
                   ).toLocaleString()}
                 </>
               )}
@@ -398,7 +414,11 @@ export default function Settings() {
                 </>
               )}
               {subscriptionUrlShown && (
-                <Button size="small" variant="text" onClick={copySubscriptionUrl}>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={copySubscriptionUrl}
+                >
                   Copy URL
                 </Button>
               )}

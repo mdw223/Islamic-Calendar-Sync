@@ -17,6 +17,7 @@ export default async function GetSubscriptionStatus(req, res) {
       hasActiveSubscription: hasActiveSubscription(user),
       subscriptionTokenCreatedAt: user.subscriptionTokenCreatedAt,
       subscriptionTokenRevokedAt: user.subscriptionTokenRevokedAt,
+      subscriptionUrl: user.subscriptionUrl,
     });
   } catch {
     return res

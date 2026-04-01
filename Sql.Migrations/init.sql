@@ -60,9 +60,10 @@ CREATE TABLE "User" (
     ExpiresAt TIMESTAMP,
     Scopes VARCHAR(1000),
     IsExpired BOOLEAN NOT NULL DEFAULT TRUE,
-    SubscriptionTokenHash VARCHAR(64) NULL,
+    SubscriptionTokenHash VARCHAR(255) NULL,
     SubscriptionTokenCreatedAt BIGINT NULL,
     SubscriptionTokenRevokedAt BIGINT NULL,
+    SubscriptionUrl VARCHAR(500) NULL,
     FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT,
     FOREIGN KEY (AuthProviderTypeId) REFERENCES AuthProviderType(AuthProviderTypeId) ON DELETE RESTRICT
 );

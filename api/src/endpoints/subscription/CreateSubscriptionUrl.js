@@ -3,12 +3,12 @@ import crypto from "crypto";
 import UserDOA from "../../model/db/doa/UserDOA.js";
 import { GenerateToken } from "../../middleware/AuthMiddleware.js";
 
-function subscriptionEventsUrl(token) {
+function SubscriptionEventsUrl(token) {
   const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
   return `${base}/api/subscription/events?token=${token}`;
 }
 
-function hasActiveSubscription(user) {
+function HasActiveSubscription(user) {
   return (
     user?.subscriptionTokenHash != null &&
     user.subscriptionTokenRevokedAt == null
@@ -19,7 +19,7 @@ export default async function CreateSubscriptionUrl(req, res) {
   try {
     const userId = req.user.userId;
     const existing = await UserDOA.findById(userId);
-    if (existing && hasActiveSubscription(existing)) {
+    if (existing && HasActiveSubscription(existing)) {
       return res.status(409).json({
         success: false,
         message:
@@ -29,7 +29,9 @@ export default async function CreateSubscriptionUrl(req, res) {
 
     const token = GenerateToken(req.user);
     const createdAt = Date.now();
+    const subscriptionUrl = SubscriptionEventsUrl(token);
     await UserDOA.updateUser(userId, {
+      subscriptionUrl: subscriptionUrl,
       subscriptiontokenhash: token,
       subscriptiontokencreatedat: createdAt,
       subscriptiontokenrevokedat: null,
@@ -37,7 +39,7 @@ export default async function CreateSubscriptionUrl(req, res) {
 
     res.json({
       success: true,
-      subscriptionUrl: subscriptionEventsUrl(token),
+      subscriptionUrl: subscriptionUrl
     });
   } catch {
     return res
