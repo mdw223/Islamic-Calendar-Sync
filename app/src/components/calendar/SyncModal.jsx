@@ -162,6 +162,7 @@ export default function SyncModal({ open, onClose, user }) {
       );
 
       for (const ev of filtered) {
+        ev.description = ev.description + `\n\nLearn more: ${window.location.origin}/learn`;
         cal.addEvent(
           ev.name ?? "",
           ev.description ?? "",

@@ -37,7 +37,7 @@ import { useUser } from "./UserContext";
 import { getSavedView } from "../util/LocalStorage";
 import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
 import { createUser } from "../models/User";
-import { getDefaultEventsQueryRange } from "../util/calendarEventRange";
+import { getDefaultEventsQueryRange } from "../util/CalendarEventRange";
 
 const CalendarContext = createContext(null);
 

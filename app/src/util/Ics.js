@@ -139,7 +139,6 @@ var ics = function(uidDomain, prodId) {
         }
       }
 
-      //TODO add time and time zone? use moment to format?
       var start_date = new Date(begin);
       var end_date = new Date(stop);
       var now_date = new Date();
@@ -240,12 +239,12 @@ var ics = function(uidDomain, prodId) {
         'BEGIN:VEVENT',
         'UID:' + calendarEvents.length + "@" + uidDomain,
         'CLASS:PUBLIC',
-        'DESCRIPTION:' + description,
+        'DESCRIPTION:' + escapeIcsText(description),
         'DTSTAMP;VALUE=DATE-TIME:' + now,
         dtStartLine,
         dtEndLine,
-        'LOCATION:' + location,
-        'SUMMARY;LANGUAGE=en-us:' + subject,
+        'LOCATION:' + escapeIcsText(location),
+        'SUMMARY;LANGUAGE=en-us:' + escapeIcsText(subject),
         'TRANSP:TRANSPARENT',
         'END:VEVENT'
       ];
@@ -300,5 +299,13 @@ var ics = function(uidDomain, prodId) {
     }
   };
 };
+
+function escapeIcsText(value) {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,");
+}
 
 export default ics;

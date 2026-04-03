@@ -3,6 +3,8 @@
  * Mirrors app/src/util/Ics.js addEvent/calendar assembly; uses CRLF; snapshot export omits RRULE.
  */
 
+import { appConfig } from "../Config.js";
+
 const CRLF = "\r\n";
 
 /**
@@ -59,8 +61,8 @@ function datePartsForTimezone(date, timezone) {
  */
 function buildVeventBlock(ev, index, uidDomain, defaultTimezone) {
   const subject = ev.name ?? "";
-  const description = ev.description ?? "";
-  const location = ev.location ?? "";
+  const description = escapeIcsText(ev.description) ?? "";
+  const location = escapeIcsText(ev.location) ?? "";
   const begin = ev.startDate;
   const stop = ev.endDate;
   const allDay = ev.isAllDay ?? false;
@@ -152,6 +154,7 @@ export function buildIcsString(events, options = {}) {
   const uidDomain = options.uidDomain ?? "islamiccalendarsync.app";
   // When eventTimezone is missing on a row, use UTC (no per-session UI timezone on API).
   const defaultTimezone = options.defaultTimezone ?? "UTC";
+  const addSubscriptionUrl = options.addSubscriptionUrl ?? false;
 
   const calendarStart = [
     "BEGIN:VCALENDAR",
@@ -163,6 +166,7 @@ export function buildIcsString(events, options = {}) {
   let index = 0;
   for (const ev of events) {
     if (ev.startDate == null || ev.endDate == null) continue;
+    ev.description = ev.description + `\n\nLearn more: ${appConfig.BASE_URL}/learn`;
     const block = buildVeventBlock(
       {
         name: ev.name,
@@ -185,4 +189,12 @@ export function buildIcsString(events, options = {}) {
 
   const body = blocks.length > 0 ? `${CRLF}${blocks.join(CRLF)}` : "";
   return `${calendarStart}${body}${CRLF}END:VCALENDAR`;
+}
+
+function escapeIcsText(value) {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,");
 }

@@ -19,7 +19,7 @@ import {
   parseRangeDateParam,
   endOfLocalDay,
 } from "../services/EventExpansion";
-import { getDefaultEventsQueryRange } from "./calendarEventRange";
+import { getDefaultEventsQueryRange } from "./CalendarEventRange";
 
 /**
  * Map a raw Dexie record (auto-increment `id`) to the shape the frontend

@@ -77,7 +77,7 @@ export default async function GetEventsIcs(req, res) {
                 return selectedYears.has(y);
             })
             : expanded;
-        const icsText = buildIcsString(filtered);
+        const icsText = buildIcsString(filtered, {addSubscriptionUrl: true});
 
         res.status(200);
         res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
