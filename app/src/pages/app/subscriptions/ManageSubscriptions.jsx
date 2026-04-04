@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowLeft, ArrowRight, CheckCircle2, Copy, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Copy, HelpCircle, Pencil, Trash2 } from "lucide-react";
 import { useUser } from "../../../contexts/UserContext";
 import APIClient from "../../../util/ApiClient";
 import { SubscriptionDefinitionId } from "../../../Constants";
@@ -260,7 +260,7 @@ export default function ManageSubscriptions() {
       )}
 
       {!user?.isLoggedIn ? null : (
-      <>
+        <>
 
       {!!actionError && <Alert severity="error">{actionError}</Alert>}
 
@@ -278,17 +278,45 @@ export default function ManageSubscriptions() {
               <Typography variant="subtitle2" color="text.secondary">
                 Active URLs: {subscriptions.length}/{maxActiveUrls}
               </Typography>
-              <Button variant="contained" onClick={resetWizardForCreate}>
-                New Subscription URL
-              </Button>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button
+                  variant="outlined"
+                  startIcon={<HelpCircle size={16} />}
+                  onClick={() => navigate("/help/subscriptions")}
+                  aria-label="Open subscription help"
+                >
+                  How to add to calendar
+                </Button>
+                <Button variant="contained" onClick={resetWizardForCreate}>
+                  New Subscription URL
+                </Button>
+              </Stack>
             </Stack>
 
             {subscriptions.map((subscription) => (
               <Card key={subscription.subscriptionTokenId} variant="outlined">
                 <CardContent sx={{ display: "grid", gap: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    {subscription.name || "Untitled subscription"}
-                  </Typography>
+                  <Box sx={{ position: "relative", display: "flex", alignItems: "center", minHeight: 36, pr: 6 }}>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 700,
+                        width: "100%",
+                        textAlign: "center",
+                      }}
+                    >
+                      {subscription.name || "Untitled subscription"}
+                    </Typography>
+                    <Button
+                      sx={{ position: "absolute", right: 0 }}
+                      size="small"
+                      startIcon={<HelpCircle size={14} />}
+                      onClick={() => navigate("/help/subscriptions")}
+                      aria-label="Open instructions for adding the subscription URL"
+                    >
+                      Help
+                    </Button>
+                  </Box>
                   <Typography variant="caption" color="text.secondary">
                     Created {new Date(Number(subscription.createdAt)).toLocaleString()}
                   </Typography>
@@ -301,6 +329,13 @@ export default function ManageSubscriptions() {
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                     <Button size="small" startIcon={<Copy size={14} />} onClick={() => copyUrl(subscription.subscriptionUrl)}>
                       Copy URL
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<HelpCircle size={14} />}
+                      onClick={() => navigate("/help/subscriptions")}
+                    >
+                      How to add
                     </Button>
                     <Button
                       size="small"
@@ -466,7 +501,7 @@ export default function ManageSubscriptions() {
           </Stack>
         )}
       </Paper>
-      </>
+        </>
       )}
     </Box>
   );
