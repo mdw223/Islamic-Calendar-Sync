@@ -1,45 +1,66 @@
 import { appConfig } from "../../Config.js";
+import { subscriptionConfig } from "../../Config.js";
 import crypto from "crypto";
-import UserDOA from "../../model/db/doa/UserDOA.js";
+import SubscriptionTokenDOA from "../../model/db/doa/SubscriptionTokenDOA.js";
 import { GenerateToken } from "../../middleware/AuthMiddleware.js";
 
 function SubscriptionEventsUrl(token) {
   const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
-  return `${base}/api/subscription/events?token=${token}`;
-}
-
-function HasActiveSubscription(user) {
-  return (
-    user?.subscriptionTokenHash != null &&
-    user.subscriptionTokenRevokedAt == null
-  );
+  return `${base}/api/subscription/events?token=${encodeURIComponent(token)}`;
 }
 
 export default async function CreateSubscriptionUrl(req, res) {
   try {
     const userId = req.user.userId;
-    const existing = await UserDOA.findById(userId);
-    if (existing && HasActiveSubscription(existing)) {
+    const activeCount = await SubscriptionTokenDOA.countActiveByUserId(userId);
+    if (activeCount >= subscriptionConfig.MAX_ACTIVE_URLS) {
       return res.status(409).json({
         success: false,
-        message:
-          "A subscription URL is already active. Use rotate to get a new link.",
+        message: `You can only have ${subscriptionConfig.MAX_ACTIVE_URLS} active subscription URLs. Revoke one before creating another.`,
       });
     }
 
-    const token = GenerateToken(req.user);
+    const maxNameLength = 100;
+    const nameRaw = req.body?.name;
+    const normalizedName =
+      typeof nameRaw === "string" && nameRaw.trim().length > 0
+        ? nameRaw.trim()
+        : null;
+    if (
+      normalizedName != null &&
+      normalizedName.length > maxNameLength
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Subscription name must be at most ${maxNameLength} characters.`,
+      });
+    }
+
+    const salt = crypto.randomBytes(8).toString("hex");
+    const token = GenerateToken(req.user, salt);
     const createdAt = Date.now();
-    const subscriptionUrl = SubscriptionEventsUrl(token);
-    await UserDOA.updateUser(userId, {
-      subscriptionUrl: subscriptionUrl,
-      subscriptiontokenhash: token,
-      subscriptiontokencreatedat: createdAt,
-      subscriptiontokenrevokedat: null,
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token, "utf8")
+      .digest("hex");
+
+    const created = await SubscriptionTokenDOA.createToken({
+      userId,
+      name: normalizedName,
+      tokenHash,
+      salt,
+      createdAt,
     });
+    const subscriptionUrl = SubscriptionEventsUrl(token);
 
     res.json({
       success: true,
-      subscriptionUrl: subscriptionUrl
+      subscription: {
+        subscriptionTokenId: created.subscriptionTokenId,
+        name: created.name,
+        createdAt: created.createdAt,
+        subscriptionUrl,
+      },
     });
   } catch {
     return res

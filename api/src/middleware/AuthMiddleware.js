@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { AuthUser } from "../Constants.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
+import SubscriptionTokenDOA from "../model/db/doa/SubscriptionTokenDOA.js";
 import jwt from "jsonwebtoken";
 import {appConfig} from '../Config.js'
 
@@ -94,24 +95,46 @@ export async function RequireSubscriptionToken(req, res, next) {
     if (!token || typeof token !== "string") {
       return res.status(400).json({ success: false, message: "Token is required" });
     }
-    const decoded = jwt.verify(token, appConfig.API_SECRET);
-    const user = await UserDOA.findById(decoded.userId);
-    if (
-      !user ||
-      !user.subscriptionTokenHash ||
-      user.subscriptionTokenRevokedAt != null
-    ) {
+
+    const decoded = jwt.decode(token);
+    const userId = decoded?.userId;
+    if (!userId) {
       return res.status(403).json({ success: false, message: "Invalid or revoked token" });
     }
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token, "utf8")
+      .digest("hex");
+    const subscription = await SubscriptionTokenDOA.findActiveByUserIdAndHash(
+      userId,
+      tokenHash,
+    );
+    if (!subscription) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    const tokenSecret = appConfig.API_SECRET + subscription.salt;
+    const verified = jwt.verify(token, tokenSecret);
+    if (!verified?.userId || verified.userId !== userId) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    const user = await UserDOA.findById(verified.userId);
+    if (!user) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
     req.user = user;
-    next();
-  } catch (err) {
-    next(err);
+    return next();
+  } catch {
+    return res.status(403).json({ success: false, message: "Invalid or revoked token" });
   }
 }
 
-export function GenerateToken(user) {
-  return jwt.sign({ userId: user.userId }, appConfig.API_SECRET);
+export function GenerateToken(user, salt) {
+  const tokenSecret = appConfig.API_SECRET + salt;
+  return jwt.sign({ userId: user.userId }, tokenSecret);
 }
 
 

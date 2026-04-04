@@ -25,7 +25,6 @@ function fromApiRow(row) {
     authProviderTypeId: row.authprovidertypeid ?? null,
     authProviderName: row.authprovidername ?? row.authProviderName ?? null,
     userLocations: row.userlocations ?? row.userLocations ?? [],
-    subscriptionUrl: row.subscriptionurl ?? null,
   };
 }
 
@@ -51,7 +50,6 @@ export const defaultUser = {
   authProviderTypeId: null,
   authProviderName: null,
   userLocations: [],
-  subscriptionUrl: null,
 };
 
 export class User {
@@ -79,7 +77,6 @@ export class User {
     this.use24HourTime = normalized.use24HourTime ?? false;
     this.notifications = normalized.preferences?.notifications ?? true;
     this.emailUpdates = normalized.preferences?.emailUpdates ?? false;
-    this.subscriptionUrl = normalized.subscriptionUrl ?? null;
   }
 
   // Session-based: logged in when we have a user id (from API/cookie).
@@ -117,7 +114,6 @@ export class User {
         normalized.calculationMethodId ?? this.calculationMethodId;
       this.hanafi = normalized.hanafi ?? this.hanafi;
       this.use24HourTime = normalized.use24HourTime ?? this.use24HourTime;
-      this.subscriptionUrl = normalized.subscriptionUrl ?? this.subscriptionUrl;
     }
   }
 
@@ -178,7 +174,6 @@ export class User {
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,
-      subscriptionUrl: this.subscriptionUrl,
     };
   }
 }

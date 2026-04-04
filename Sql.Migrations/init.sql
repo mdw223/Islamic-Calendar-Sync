@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS CalendarProvider CASCADE;
 DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
+DROP TABLE IF EXISTS SubscriptionToken CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
 DROP TABLE IF EXISTS AuthProviderType CASCADE;
 
@@ -60,13 +61,23 @@ CREATE TABLE "User" (
     ExpiresAt TIMESTAMP,
     Scopes VARCHAR(1000),
     IsExpired BOOLEAN NOT NULL DEFAULT TRUE,
-    SubscriptionTokenHash VARCHAR(255) NULL,
-    SubscriptionTokenCreatedAt BIGINT NULL,
-    SubscriptionTokenRevokedAt BIGINT NULL,
-    SubscriptionUrl VARCHAR(500) NULL,
     FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT,
     FOREIGN KEY (AuthProviderTypeId) REFERENCES AuthProviderType(AuthProviderTypeId) ON DELETE RESTRICT
 );
+
+-- Stores opaque subscription-feed tokens per user (multi-link support).
+CREATE TABLE SubscriptionToken (
+    SubscriptionTokenId SERIAL PRIMARY KEY,
+    UserId INTEGER NOT NULL,
+    Name VARCHAR(100) NULL,
+    TokenHash VARCHAR(64) NOT NULL UNIQUE,
+    Salt VARCHAR(255) NOT NULL,
+    CreatedAt BIGINT NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_subscriptiontoken_userid ON SubscriptionToken(UserId);
+CREATE INDEX idx_subscriptiontoken_tokenhash ON SubscriptionToken(TokenHash);
 
 -- Create Log table (server-side application logs; values are redacted/sanitized at write time)
 CREATE TABLE Log (

@@ -28,10 +28,9 @@ import SyncOfflineUserLocations from './user-locations/SyncOfflineUserLocations.
 import UpdateCurrentUser from './users/UpdateCurrentUser.js';
 import { RequireSubscriptionToken } from '../middleware/AuthMiddleware.js';
 import GetSubscriptionEvents from './subscription/GetSubscriptionEvents.js';
-import GetSubscriptionStatus from './subscription/GetSubscriptionStatus.js';
+import GetSubscriptionUrls from './subscription/GetSubscriptionUrls.js';
 import CreateSubscriptionUrl from './subscription/CreateSubscriptionUrl.js';
 import RevokeSubscription from './subscription/RevokeSubscription.js';
-import RotateSubscriptionUrl from './subscription/RotateSubscriptionUrl.js';
 
 const router = express.Router();
 
@@ -53,10 +52,9 @@ router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
 
 // Subscription management (Bearer JWT)
-router.get("/subscription", Auth(AuthUser.VALID_USER), GetSubscriptionStatus);
+router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);
 router.post("/subscription", Auth(AuthUser.VALID_USER), CreateSubscriptionUrl);
 router.post("/subscription/revoke", Auth(AuthUser.VALID_USER), RevokeSubscription);
-router.post("/subscription/rotate", Auth(AuthUser.VALID_USER), RotateSubscriptionUrl);
 
 // Calendar Providers routes
 router.get("/calendar-providers", Auth(AuthUser.ANY), GetCalendarProviders);

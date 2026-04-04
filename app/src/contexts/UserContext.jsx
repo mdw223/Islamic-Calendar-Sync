@@ -18,6 +18,22 @@ export const UserProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [ready, setReady] = useState(false);
 
+  const refreshSubscriptions = useCallback(async () => {
+    if (!user?.isLoggedIn) {
+      setSubscriptions([]);
+      return [];
+    }
+    try {
+      const data = await APIClient.getSubscriptionUrls();
+      const items = data?.subscriptionUrls ?? [];
+      setSubscriptions(items);
+      return items;
+    } catch {
+      setSubscriptions([]);
+      return [];
+    }
+  }, [user?.isLoggedIn]);
+
   const loadOfflineGuestState = useCallback(async () => {
     const [offlineLocations, offlineProfile] = await Promise.all([
       OfflineClient.getUserLocations(),
@@ -94,14 +110,22 @@ export const UserProvider = ({ children }) => {
           const nextUser = createUser(refreshed?.user ?? data.user);
           setUser(nextUser);
           setUserLocations(nextUser.userLocations ?? []);
+          try {
+            const subscriptionsData = await APIClient.getSubscriptionUrls();
+            setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+          } catch {
+            setSubscriptions([]);
+          }
         } else {
           setUser(createUser(defaultUser));
+          setSubscriptions([]);
           await loadOfflineGuestState();
         }
       })
       .catch(() => {
         if (!cancelled) {
           setUser(createUser(defaultUser));
+          setSubscriptions([]);
           loadOfflineGuestState()
             .catch(() => setUserLocations([]));
         }
@@ -120,6 +144,12 @@ export const UserProvider = ({ children }) => {
     newUser.login(userData);
     setUser(newUser);
     setUserLocations(newUser.userLocations ?? []);
+    try {
+      const subscriptionsData = await APIClient.getSubscriptionUrls();
+      setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+    } catch {
+      setSubscriptions([]);
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -148,8 +178,15 @@ export const UserProvider = ({ children }) => {
       const nextUser = createUser(data.user);
       setUser(nextUser);
       setUserLocations(nextUser.userLocations ?? []);
+      try {
+        const subscriptionsData = await APIClient.getSubscriptionUrls();
+        setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+      } catch {
+        setSubscriptions([]);
+      }
       return nextUser;
     }
+    setSubscriptions([]);
     return null;
   }, []);
 
@@ -270,6 +307,7 @@ export const UserProvider = ({ children }) => {
         addUserLocation,
         updateUserLocation,
         removeUserLocation,
+        refreshSubscriptions,
         ready,
         showAuthPrompt,
       }}

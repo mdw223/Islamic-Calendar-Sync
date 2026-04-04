@@ -4,17 +4,23 @@ import {
   expandStoredEventsForRange,
   endOfLocalDay,
 } from "../../services/EventExpansionService.js";
+import GetEventsIcs from "../events/GetEventsIcs.js";
+
+// Delegate the actual iCalendar rendering to the shared ICS endpoint so the
+// VEVENT objects stay consistent across exports/subscriptions.
+//
+// If the caller didn't provide a range, apply the subscription default.
 export default async function GetSubscriptionEvents(req, res) {
   try {
-    const userEvents = await EventDOA.findAllByUserId(req.user.userId);
     const cy = new Date().getFullYear();
-    const fromD = new Date(cy - 1, 0, 1, 0, 0, 0, 0);
-    const toD = endOfLocalDay(new Date(cy + subscriptionConfig.DEFAULT_RANGE_YEARS, 11, 31, 0, 0, 0, 0));
-    const expanded = expandStoredEventsForRange(userEvents, fromD, toD);
-    return res.json({
-      success: true,
-      events: expanded,
-    });
+    if (req.query.years == null && (req.query.from == null || req.query.to == null)) {
+      const from = `${cy - 1}-01-01`;
+      const to = `${cy + subscriptionConfig.DEFAULT_RANGE_YEARS}-12-31`;
+      req.query.from = from;
+      req.query.to = to;
+    }
+
+    return GetEventsIcs(req, res);
   } catch (error) {
     return res.status(500).json({
       success: false,

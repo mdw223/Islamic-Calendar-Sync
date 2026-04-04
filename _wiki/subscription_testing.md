@@ -9,7 +9,7 @@ This guide explains how to run the project locally with IIS Express and expose i
 ```
 Google Subscription API → https://abc123.ngrok.io/api/subscription/events
                  ↓ (ngrok tunnels internally)
-                 https://localhost:5000/api/subscription/events
+                 http://localhost:5000/api/subscription/events
 ```
 
 ## Prerequisites
@@ -30,7 +30,7 @@ Google Subscription API → https://abc123.ngrok.io/api/subscription/events
    ```
 5. Verify connection:
    ```powershell
-   ngrok http https://localhost:5000
+   ngrok http http://localhost:5000
    ```
 
 ## Step 2: Configure Google Subscription API Integration
@@ -49,7 +49,7 @@ To avoid changing endpoints every time you restart ngrok:
 2. Claim a permanent ngrok domain (free tier available)
 3. Start ngrok with your domain:
    ```powershell
-   ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev
+   ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev
    ```
 
 ## Important Considerations
@@ -75,7 +75,7 @@ This ensures the frontend points to the correct backend endpoint.
 If ngrok fails due to your local self-signed certificate, add the TLS verification skip flag:
 
 ```powershell
-ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --upstream-tls-verify=false
+ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --upstream-tls-verify=false
 ```
 
 ### Viewing ngrok Responses
@@ -83,7 +83,7 @@ ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --upstream-tl
 To see request/response logs:
 
 ```powershell
-ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --log=stdout
+ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --log=stdout
 ```
 
 ### "Bad Request - Invalid Hostname"
@@ -99,7 +99,7 @@ ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --host-header=
 **The Following Works the Best!**
 
 ```powershell
-ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --host-header="localhost:5000"
+ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --host-header="localhost:5000"
 ```
 
 ### Self-Signed Certificate Rejection
@@ -109,5 +109,33 @@ ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --host-header
 **Solution:** Combine both flags:
 
 ```powershell
-ngrok http https://localhost:5000 --url=your-domain.ngrok-free.dev --host-header="localhost:5000" --upstream-tls-verify=false
+ngrok http http://localhost:5000 --url=your-domain.ngrok-free.dev --host-header="localhost:5000" --upstream-tls-verify=false
 ```
+
+### Public URL not loading / Network blocking check
+
+If your public ngrok URL shows an error like **"sent an invalid response"** or **"connection is not secure"**, first determine whether requests are reaching ngrok at all (vs. your network/ISP blocking it).
+
+- **Check the ngrok inspector**: open `http://127.0.0.1:4040` and then load the public URL in your browser.
+  - If you see **no requests**, your browser likely **is not reaching ngrok** (DNS filtering, firewall, ISP security, etc.).
+
+- **Use curl and look for block redirects/pages**:
+
+```bash
+curl -sv http://your-domain.ngrok-free.dev/ --max-time 10
+curl -sv https://your-domain.ngrok-free.dev/ --max-time 10
+```
+
+  - If the `http://` request returns a `Location:` redirect to a **block/warn** page (often containing strings like `block`, `warn`, `umbrella`, `zscaler`, `fortiguard`), that strongly indicates **network filtering**.
+
+- **Compare on another network**:
+  - Test from your phone on **cellular** (Wi‑Fi off) or via a **VPN**.
+  - If it works there but not on your main network, the main network/ISP is blocking/interfering.
+
+- **Check DNS differences**:
+
+```bash
+nslookup your-domain.ngrok-free.dev
+```
+
+  - Compare results between networks (home vs cellular/VPN). If one network returns unusual results or fails while others work, that points to **DNS filtering**.
