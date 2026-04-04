@@ -126,6 +126,7 @@ export async function RequireSubscriptionToken(req, res, next) {
     }
 
     req.user = user;
+    req.subscriptionToken = subscription;
     return next();
   } catch {
     return res.status(403).json({ success: false, message: "Invalid or revoked token" });

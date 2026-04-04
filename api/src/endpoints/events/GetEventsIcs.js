@@ -31,6 +31,27 @@ function parseYearsQuery(rawYears) {
     return { years: Array.from(new Set(years)).sort((a, b) => a - b) };
 }
 
+function filterBySubscriptionSelection(expandedEvents, selection) {
+    if (!selection || !Array.isArray(selection.selectedDefinitionIds)) {
+        return expandedEvents;
+    }
+
+    const definitionIdSet = new Set(
+        selection.selectedDefinitionIds.filter(
+            (id) => typeof id === 'string' && id.length > 0,
+        ),
+    );
+    const includeUserCreated = selection.includeUserCreatedEvents === true;
+
+    return expandedEvents.filter((ev) => {
+        const definitionId = ev?.islamicDefinitionId;
+        if (definitionId) {
+            return definitionIdSet.has(definitionId);
+        }
+        return includeUserCreated;
+    });
+}
+
 /**
  * GET /events.ics
  * Authenticated. Same optional from/to query and expansion as GET /events.
@@ -70,13 +91,17 @@ export default async function GetEventsIcs(req, res) {
 
         const expanded = expandStoredEventsForRange(userEvents, fromD, toD);
         const selectedYears = years ? new Set(years) : null;
-        const filtered = selectedYears
+        const yearFiltered = selectedYears
             ? expanded.filter((ev) => {
                 if (!ev.startDate) return false;
                 const y = new Date(ev.startDate).getFullYear();
                 return selectedYears.has(y);
             })
             : expanded;
+        const filtered = filterBySubscriptionSelection(
+            yearFiltered,
+            req.subscriptionSelection,
+        );
         const icsText = buildIcsString(filtered, {addSubscriptionUrl: true});
 
         res.status(200);

@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS CalendarProvider CASCADE;
 DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
+DROP TABLE IF EXISTS SubscriptionDefinitionSelection CASCADE;
 DROP TABLE IF EXISTS SubscriptionToken CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
 DROP TABLE IF EXISTS AuthProviderType CASCADE;
@@ -78,6 +79,18 @@ CREATE TABLE SubscriptionToken (
 
 CREATE INDEX idx_subscriptiontoken_userid ON SubscriptionToken(UserId);
 CREATE INDEX idx_subscriptiontoken_tokenhash ON SubscriptionToken(TokenHash);
+
+-- Selected definitions for each subscription URL (includes pseudo definitions).
+CREATE TABLE SubscriptionDefinitionSelection (
+        SubscriptionTokenId INTEGER NOT NULL,
+        DefinitionId VARCHAR(256) NOT NULL,
+        CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (SubscriptionTokenId, DefinitionId),
+        FOREIGN KEY (SubscriptionTokenId) REFERENCES SubscriptionToken(SubscriptionTokenId) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_subdefselection_tokenid
+    ON SubscriptionDefinitionSelection(SubscriptionTokenId);
 
 -- Create Log table (server-side application logs; values are redacted/sanitized at write time)
 CREATE TABLE Log (

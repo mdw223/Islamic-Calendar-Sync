@@ -2,7 +2,10 @@ import { appConfig } from "../../Config.js";
 import { subscriptionConfig } from "../../Config.js";
 import crypto from "crypto";
 import SubscriptionTokenDOA from "../../model/db/doa/SubscriptionTokenDOA.js";
+import SubscriptionDefinitionSelectionDOA from "../../model/db/doa/SubscriptionDefinitionSelectionDOA.js";
 import { GenerateToken } from "../../middleware/AuthMiddleware.js";
+import { getBaseDefinitions } from "../../services/IslamicEventService.js";
+import { SubscriptionDefinitionId } from "../../Constants.js";
 
 function SubscriptionEventsUrl(token) {
   const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
@@ -11,6 +14,46 @@ function SubscriptionEventsUrl(token) {
 
 export default async function CreateSubscriptionUrl(req, res) {
   try {
+        const baseDefinitionIds = getBaseDefinitions().map((d) => d.id);
+        const allowedDefinitionIds = new Set([
+          ...baseDefinitionIds,
+          SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+        ]);
+
+        const submittedDefinitionIds = req.body?.definitionIds;
+        if (!Array.isArray(submittedDefinitionIds) || submittedDefinitionIds.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Request body must contain a non-empty definitionIds array.",
+          });
+        }
+
+        const normalizedDefinitionIds = Array.from(
+          new Set(
+            submittedDefinitionIds
+              .filter((id) => typeof id === "string")
+              .map((id) => id.trim())
+              .filter((id) => id.length > 0),
+          ),
+        );
+        if (normalizedDefinitionIds.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Request body must contain valid definitionIds.",
+          });
+        }
+
+        const invalidDefinitionIds = normalizedDefinitionIds.filter(
+          (id) => !allowedDefinitionIds.has(id),
+        );
+        if (invalidDefinitionIds.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: "One or more definitionIds are invalid.",
+            invalidDefinitionIds,
+          });
+        }
+
     const userId = req.user.userId;
     const activeCount = await SubscriptionTokenDOA.countActiveByUserId(userId);
     if (activeCount >= subscriptionConfig.MAX_ACTIVE_URLS) {
@@ -51,6 +94,10 @@ export default async function CreateSubscriptionUrl(req, res) {
       salt,
       createdAt,
     });
+    await SubscriptionDefinitionSelectionDOA.replaceForToken(
+      created.subscriptionTokenId,
+      normalizedDefinitionIds,
+    );
     const subscriptionUrl = SubscriptionEventsUrl(token);
 
     res.json({
@@ -59,6 +106,7 @@ export default async function CreateSubscriptionUrl(req, res) {
         subscriptionTokenId: created.subscriptionTokenId,
         name: created.name,
         createdAt: created.createdAt,
+        definitionIds: normalizedDefinitionIds,
         subscriptionUrl,
       },
     });

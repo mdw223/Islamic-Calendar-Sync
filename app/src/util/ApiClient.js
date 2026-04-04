@@ -72,7 +72,7 @@ export default class APIClient {
     return HTTPClient.get("/calendar-providers");
   }
 
-  // ── Calendar subscription (opaque URL; manage in Settings) ────────────────
+  // ── Calendar subscription (opaque URL; manage in Manage Subscriptions) ─────
 
   static async getSubscriptionUrls() {
     return HTTPClient.get("/subscription/urls");
@@ -80,6 +80,10 @@ export default class APIClient {
 
   static async createSubscriptionUrl(payload = {}) {
     return HTTPClient.post("/subscription", payload);
+  }
+
+  static async updateSubscriptionUrl(subscriptionTokenId, payload = {}) {
+    return HTTPClient.put(`/subscription/${subscriptionTokenId}`, payload);
   }
 
   static async revokeSubscription(subscriptionTokenId) {

@@ -153,6 +153,12 @@ The API uses **JWT for authentication** (no `express-session`). Auth is document
 
 Run any migrations or seed scripts the project provides so the schema exists before starting the API.
 
+If your database already exists and you are upgrading to the subscription-definition selection feature, run:
+
+```bash
+psql -h localhost -U <db_user> -d <db_name> -f Sql.Migrations/001_subscription_definition_selection.sql
+```
+
 ---
 
 ## Environment variables

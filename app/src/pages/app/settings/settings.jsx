@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from "react-router";
 import {
   Alert,
   Box,
@@ -27,6 +28,7 @@ import APIClient from "../../../util/ApiClient";
 const LANGUAGE_OPTIONS = ["en", "ar", "ur", "fr", "tr", "id"];
 
 export default function Settings() {
+  const navigate = useNavigate();
   const {
     user,
     userLocations,
@@ -57,7 +59,6 @@ export default function Settings() {
   const subscriptionSectionRef = useRef(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionActionError, setSubscriptionActionError] = useState("");
-  const [subscriptionName, setSubscriptionName] = useState("");
   const [maxActiveUrls, setMaxActiveUrls] = useState(3);
 
   const loadSubscriptionUrls = useCallback(async () => {
@@ -170,19 +171,6 @@ export default function Settings() {
       setError(err.message ?? "Failed to look up city.");
     } finally {
       setIsLookingUpCity(false);
-    }
-  }
-
-  async function handleCreateSubscriptionUrl() {
-    setSubscriptionActionError("");
-    try {
-      await APIClient.createSubscriptionUrl({ name: subscriptionName });
-      setSubscriptionName("");
-      await loadSubscriptionUrls();
-    } catch (e) {
-      setSubscriptionActionError(
-        e?.message ?? "Failed to create subscription URL.",
-      );
     }
   }
 
@@ -308,9 +296,17 @@ export default function Settings() {
             Calendar subscription
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Create and manage up to {maxActiveUrls} active subscription URLs.
-            You can give each URL a name to organize devices/apps.
+            Revoke existing subscription URLs here. To create new URLs or update
+            definitions for a URL, use Manage Subscriptions.
           </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ mb: 1.5 }}
+            onClick={() => navigate("/subscriptions")}
+          >
+            Open Manage Subscriptions
+          </Button>
           {subscriptionLoading && (
             <Typography variant="body2" color="text.secondary">
               Loading…
@@ -325,25 +321,6 @@ export default function Settings() {
             </Alert>
           )}
           <Stack spacing={1.5} sx={{ mt: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              label="New subscription name (optional)"
-              value={subscriptionName}
-              onChange={(e) => setSubscriptionName(e.target.value)}
-              helperText="Up to 100 characters"
-            />
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleCreateSubscriptionUrl}
-                disabled={subscriptionLoading || subscriptions.length >= maxActiveUrls}
-              >
-                Generate subscription URL
-              </Button>
-            </Stack>
-
             {subscriptions.map((subscription) => (
               <Paper
                 key={subscription.subscriptionTokenId}

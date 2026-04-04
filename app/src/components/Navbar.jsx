@@ -52,8 +52,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Calendar", path: "/calendar", icon: <Calendar size={18} /> },
-    { name: "Prayers", path: "/prayers", icon: <Clock size={18} /> },
-    { name: "Events", path: "/events", icon: <Star size={18} /> },
+    { name: "Subscriptions", path: "/subscriptions", icon: <Star size={18} /> },
     { name: "Settings", path: "/settings", icon: <SettingsIcon size={18} /> },
   ];
 

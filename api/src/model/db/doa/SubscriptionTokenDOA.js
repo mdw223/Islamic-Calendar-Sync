@@ -52,4 +52,15 @@ export default class SubscriptionTokenDOA {
     );
     return SubscriptionToken.fromRow(result.rows[0] ?? null);
   }
+
+  static async updateNameById(userId, subscriptionTokenId, name) {
+    const result = await query(
+      `UPDATE subscriptiontoken
+       SET name = $3
+       WHERE userid = $1 AND subscriptiontokenid = $2
+       RETURNING *`,
+      [userId, subscriptionTokenId, name],
+    );
+    return SubscriptionToken.fromRow(result.rows[0] ?? null);
+  }
 }

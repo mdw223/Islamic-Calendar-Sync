@@ -1,10 +1,8 @@
-import EventDOA from "../../model/db/doa/EventDOA.js";
 import { subscriptionConfig } from "../../Config.js";
-import {
-  expandStoredEventsForRange,
-  endOfLocalDay,
-} from "../../services/EventExpansionService.js";
 import GetEventsIcs from "../events/GetEventsIcs.js";
+import SubscriptionDefinitionSelectionDOA from "../../model/db/doa/SubscriptionDefinitionSelectionDOA.js";
+import { SubscriptionDefinitionId } from "../../Constants.js";
+import { getBaseDefinitions } from "../../services/IslamicEventService.js";
 
 // Delegate the actual iCalendar rendering to the shared ICS endpoint so the
 // VEVENT objects stay consistent across exports/subscriptions.
@@ -19,6 +17,29 @@ export default async function GetSubscriptionEvents(req, res) {
       req.query.from = from;
       req.query.to = to;
     }
+
+    const subscriptionTokenId = req.subscriptionToken?.subscriptionTokenId;
+    const selectedDefinitionIds = subscriptionTokenId
+      ? await SubscriptionDefinitionSelectionDOA.findDefinitionIdsByTokenId(
+          subscriptionTokenId,
+        )
+      : [];
+    const normalizedDefinitionIds =
+      selectedDefinitionIds.length > 0
+        ? selectedDefinitionIds
+        : [
+            ...getBaseDefinitions().map((d) => d.id),
+            SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+          ];
+
+    const includeUserCreatedEvents = normalizedDefinitionIds.includes(
+      SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+    );
+
+    req.subscriptionSelection = {
+      selectedDefinitionIds: normalizedDefinitionIds,
+      includeUserCreatedEvents,
+    };
 
     return GetEventsIcs(req, res);
   } catch (error) {

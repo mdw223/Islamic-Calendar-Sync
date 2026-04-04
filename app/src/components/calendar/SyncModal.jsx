@@ -291,7 +291,7 @@ export default function SyncModal({ open, onClose, user }) {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             {isLoggedIn
-              ? "Generate and copy a personal feed URL in Settings, then add it as a calendar subscription in Google Calendar or another app."
+              ? "Create and copy a personal feed URL in Manage Subscriptions, then add it as a calendar subscription in Google Calendar or another app."
               : "Sign in to create a personal subscription URL."}
           </Typography>
 
@@ -302,11 +302,11 @@ export default function SyncModal({ open, onClose, user }) {
             onClick={() => {
               onClose();
               navigate(
-                isLoggedIn ? "/settings#calendar-subscription" : "/settings",
+                isLoggedIn ? "/subscriptions" : "/settings",
               );
             }}
           >
-            {isLoggedIn ? "Open subscription in Settings" : "Go to Settings"}
+            {isLoggedIn ? "Open Manage Subscriptions" : "Go to Settings"}
           </Button>
         </Box>
 

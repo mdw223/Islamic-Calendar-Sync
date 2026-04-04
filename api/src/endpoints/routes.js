@@ -31,6 +31,7 @@ import GetSubscriptionEvents from './subscription/GetSubscriptionEvents.js';
 import GetSubscriptionUrls from './subscription/GetSubscriptionUrls.js';
 import CreateSubscriptionUrl from './subscription/CreateSubscriptionUrl.js';
 import RevokeSubscription from './subscription/RevokeSubscription.js';
+import UpdateSubscriptionUrl from './subscription/UpdateSubscriptionUrl.js';
 
 const router = express.Router();
 
@@ -54,6 +55,7 @@ router.get("/auth/google/redirect", ...googleRedirect);
 // Subscription management (Bearer JWT)
 router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);
 router.post("/subscription", Auth(AuthUser.VALID_USER), CreateSubscriptionUrl);
+router.put("/subscription/:subscriptionTokenId", Auth(AuthUser.VALID_USER), UpdateSubscriptionUrl);
 router.post("/subscription/revoke", Auth(AuthUser.VALID_USER), RevokeSubscription);
 
 // Calendar Providers routes

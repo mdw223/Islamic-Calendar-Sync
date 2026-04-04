@@ -37,3 +37,7 @@ export const EventTypeId = Object.freeze({
   JUMAH: 3,
   CUSTOM: 4,
 });
+
+export const SubscriptionDefinitionId = Object.freeze({
+  INCLUDE_USER_CREATED_EVENTS: "include_user_created_events",
+});

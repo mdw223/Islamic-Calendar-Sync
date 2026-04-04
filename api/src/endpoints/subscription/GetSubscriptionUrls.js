@@ -1,6 +1,9 @@
 import { appConfig, subscriptionConfig } from "../../Config.js";
 import jwt from "jsonwebtoken";
 import SubscriptionTokenDOA from "../../model/db/doa/SubscriptionTokenDOA.js";
+import SubscriptionDefinitionSelectionDOA from "../../model/db/doa/SubscriptionDefinitionSelectionDOA.js";
+import { getBaseDefinitions } from "../../services/IslamicEventService.js";
+import { SubscriptionDefinitionId } from "../../Constants.js";
 
 function subscriptionEventsUrl(token) {
 	const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
@@ -11,8 +14,19 @@ export default async function GetSubscriptionUrls(req, res) {
 	try {
 		const userId = req.user.userId;
 		const subscriptions = await SubscriptionTokenDOA.findActiveByUserId(userId);
+		const defaultDefinitionIds = [
+			...getBaseDefinitions().map((d) => d.id),
+			SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+		];
+		const selectionMap =
+			await SubscriptionDefinitionSelectionDOA.findDefinitionIdsByTokenIds(
+				subscriptions.map((s) => s.subscriptionTokenId),
+			);
 
 		const result = subscriptions.map((subscription) => {
+			const selectedDefinitionIds =
+				selectionMap.get(subscription.subscriptionTokenId) ??
+				defaultDefinitionIds;
 			const token = jwt.sign(
 				{ userId },
 				appConfig.API_SECRET + subscription.salt,
@@ -21,6 +35,7 @@ export default async function GetSubscriptionUrls(req, res) {
 				subscriptionTokenId: subscription.subscriptionTokenId,
 				name: subscription.name,
 				createdAt: subscription.createdAt,
+				definitionIds: selectedDefinitionIds,
 				subscriptionUrl: subscriptionEventsUrl(token),
 			};
 		});

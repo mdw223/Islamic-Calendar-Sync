@@ -323,6 +323,16 @@ project/
 ├── proxy/                         # Nginx reverse proxy
 │   └── nginx.conf
 └── Sql.Migrations/                # Database initialization scripts
+
+### Applying incremental DB migrations (existing databases)
+
+For databases that were already initialized earlier, run migration files manually instead of relying on container init scripts.
+
+Example:
+
+```bash
+docker exec -i ics_postgres_db_dev psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} < Sql.Migrations/001_subscription_definition_selection.sql
+```
 ```
 
 ## Architecture
