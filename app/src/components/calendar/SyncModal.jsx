@@ -21,6 +21,7 @@ import {
   Link as LinkIcon,
   CalendarSync,
   ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -281,6 +282,18 @@ export default function SyncModal({ open, onClose, user }) {
               disabled={isGenerating || selectedYears.size === 0}
             >
               {isGenerating ? "Generating…" : "Download .ics"}
+            </Button>
+
+            <Button
+              size="small"
+              variant="outlined"
+              endIcon={<ArrowRight size={14} />}
+              onClick={() => {
+                onClose();
+                navigate("/export");
+              }}
+            >
+              Customize export
             </Button>
 
             <Button
