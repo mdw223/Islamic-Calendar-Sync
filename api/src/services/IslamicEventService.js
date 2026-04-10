@@ -3,7 +3,6 @@
  *
  * Shared service used by:
  *   - POST /events/generate  (explicit generation for a year)
- *   - GuestSessionMiddleware  (auto-generate for new guests)
  *   - passport.js             (auto-generate after Google OAuth / new user)
  *
  * Loads definitions from islamicEvents.json, merges user preferences from the
@@ -15,9 +14,10 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const islamicEventsData = require("../data/islamicEvents.json");
 
-import { generateIslamicEventsForYear } from "../util/HijriUtils.js";
+import { buildIslamicMasterRowsForYears } from "../util/HijriUtils.js";
 import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../model/db/doa/EventDOA.js";
+import UserDOA from "../model/db/doa/UserDOA.js";
 
 /**
  * Get the base definitions from the JSON file.
@@ -44,33 +44,48 @@ export async function getMergedDefinitions(userId) {
 }
 
 /**
- * Generate Islamic events for a given user and year.
- * Loads preferences, generates events, upserts to DB.
+ * Generate Islamic events for a given user across one or more years.
+ * Loads preferences, generates events for each year, upserts to DB in one batch.
  *
  * @param {number} userId
- * @param {number} year - Gregorian year.
+ * @param {number[]} years - Array of Gregorian years.
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForUser(userId, year) {
+export async function generateForUser(userId, years, timezone = null) {
   const mergedDefs = await getMergedDefinitions(userId);
-  const generated = generateIslamicEventsForYear(year, mergedDefs);
 
-  if (generated.length === 0) {
+  const allMasters = buildIslamicMasterRowsForYears(years, mergedDefs, timezone);
+
+  if (allMasters.length === 0) {
     return { events: [], generatedCount: 0 };
   }
 
-  const persisted = await EventDOA.bulkUpsert(generated, userId);
+  const persisted = await EventDOA.bulkUpsert(allMasters, userId);
+  const user = await UserDOA.findById(userId);
+  if (user) {
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const nextStart =
+      user.generatedYearsStart == null
+        ? minYear
+        : Math.min(user.generatedYearsStart, minYear);
+    const nextEnd =
+      user.generatedYearsEnd == null
+        ? maxYear
+        : Math.max(user.generatedYearsEnd, maxYear);
+    await UserDOA.updateGeneratedYearsRange(userId, nextStart, nextEnd);
+  }
   return { events: persisted, generatedCount: persisted.length };
 }
 
 /**
  * Generate Islamic events for a new user (current year, all definitions enabled).
- * Called from GuestSessionMiddleware and passport.js after user creation.
+ * Called after user creation to preload baseline event data.
  * The upsert makes this idempotent — calling it redundantly is harmless.
  *
  * @param {number} userId
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
 export async function generateForNewUser(userId) {
-  return generateForUser(userId, new Date().getFullYear());
+  return generateForUser(userId, [new Date().getFullYear()]);
 }

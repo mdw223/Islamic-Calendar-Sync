@@ -16,6 +16,8 @@ import Home from "./pages/app/home/Home";
 import Login from "./pages/app/login/Login";
 import Register from "./pages/app/register/Register";
 import Settings from "./pages/app/settings/Settings";
+import ManageSubscriptions from "./pages/app/subscriptions/ManageSubscriptions";
+import SubscriptionsHelp from "./pages/app/help/SubscriptionsHelp";
 import CalendarPage from "./pages/app/calendar/Calendar";
 import RootLayout from "./layouts/RootLayout";
 
@@ -30,6 +32,8 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Home /> },
           { path: "settings", element: <Settings /> },
+          { path: "subscriptions", element: <ManageSubscriptions /> },
+          { path: "help/subscriptions", element: <SubscriptionsHelp /> },
           { path: "calendar", element: <CalendarPage /> },
         ],
       },

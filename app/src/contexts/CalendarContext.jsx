@@ -1,19 +1,22 @@
 /**
  * CalendarContext.jsx
  *
- * API-first calendar state management. All events are persisted server-side.
- * Both guest users (HMAC-signed session cookie) and registered users (JWT)
- * have a userId, so all API calls work for everyone.
+ * Calendar state management — API-first with offline fallback:
+ *   • All operations target APIClient first.
+ *   • If a request fails due to being offline (network error) or
+ *     unauthenticated (401/403), the operation falls back to
+ *     OfflineClient (IndexedDB) so data is cached locally.
+ *   • On the next successful login, UserContext.syncOfflineData()
+ *     pushes cached IndexedDB data to the server and clears it.
  *
  * Data flow:
- *   1. On mount (once user is available), events + definitions are loaded from
- *      the API.
- *   2. Islamic events are generated server-side via POST /events/generate.
- *      The backend's upsert guarantees idempotency.
- *   3. All CRUD operations go through the API — no localStorage for events.
- *   4. Definition show/hide preferences are stored server-side in the
- *      UserIslamicDefinitionPreference table.
- *   5. Providers are fetched in the background.
+ *   1. On mount (once user is available), load events + definitions
+ *      from the API; fall back to IndexedDB on failure.
+ *   2. Islamic events are generated server-side (POST /events/generate)
+ *      for authenticated users, or client-side when offline/unauth.
+ *   3. Definition show/hide preferences are stored server-side; falls
+ *      back to Dexie when the server is unreachable.
+ *   4. Providers are fetched in the background (auth only).
  *
  * localStorage keys still used:
  *   "calendarView" — UI preference (month / week / day)
@@ -28,25 +31,28 @@ import {
   useState,
 } from "react";
 import APIClient from "../util/ApiClient";
+import OfflineClient from "../util/OfflineClient";
+import { shouldFallbackToOffline } from "../util/ApiErrorHelper";
 import { useUser } from "./UserContext";
-import { getSavedView } from "../util/localStorage";
-import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../constants";
+import { getSavedView } from "../util/LocalStorage";
+import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
+import { createUser } from "../models/User";
+import { getDefaultEventsQueryRange } from "../util/CalendarEventRange";
 
 const CalendarContext = createContext(null);
 
 export function CalendarProvider({ children }) {
-  // ── User (guest or registered — always has a userId after mount) ────────
-  const { user } = useUser();
+  // ── User ────────────────────────────────────────────────────────────────
+  const { user, setUser } = useUser();
 
   // ── Events state ────────────────────────────────────────────────────────
-  // Starts empty; populated from GET /events once the user is available.
   const [events, setEvents] = useState([]);
 
   // ── View preference ─────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState(getSavedView);
 
-  // ── Providers (loaded in background) ────────────────────────────────────
-  const [providers, setProviders] = useState([]);
+  // ── Calendar Providers (loaded in background) ───────────────────────────
+  const [calendarProviders, setCalendarProviders] = useState([]);
 
   // ── Loading / error state ────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -58,8 +64,11 @@ export function CalendarProvider({ children }) {
   // ── Islamic event definitions (loaded from API) ─────────────────────────
   const [islamicEventDefs, setIslamicEventDefs] = useState([]);
 
-  // ── Track which years have been generated this session ──────────────────
-  const generatedYearsRef = useRef(new Set());
+  // ── Persisted generated-year coverage range ─────────────────────────────
+  const [generatedYearsRange, setGeneratedYearsRange] = useState({
+    start: null,
+    end: null,
+  });
 
   // ── Ref to always-current events (avoids stale closures in callbacks) ───
   const eventsRef = useRef(events);
@@ -67,49 +76,129 @@ export function CalendarProvider({ children }) {
     eventsRef.current = events;
   }, [events]);
 
-  // ── On mount (and when user changes): load events + definitions from API ─
+  const userRef = useRef(user);
   useEffect(() => {
-    if (!user?.userId) return;
+    userRef.current = user;
+  }, [user]);
 
+  const genRangeRef = useRef(generatedYearsRange);
+  useEffect(() => {
+    genRangeRef.current = generatedYearsRange;
+  }, [generatedYearsRange]);
+
+  function eventsQueryRange(overrides = {}) {
+    return getDefaultEventsQueryRange({
+      generatedYearsStart:
+        overrides.generatedYearsStart ??
+        genRangeRef.current.start ??
+        userRef.current?.generatedYearsStart ??
+        null,
+      generatedYearsEnd:
+        overrides.generatedYearsEnd ??
+        genRangeRef.current.end ??
+        userRef.current?.generatedYearsEnd ??
+        null,
+    });
+  }
+
+  // ── Derived auth check ─────────────────────────────────────────────────
+  const isAuth = !!user?.userId;
+
+  // ── On mount (and when user changes): load events + definitions ─────────
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    generatedYearsRef.current = new Set();
+    setGeneratedYearsRange({
+      start: user?.generatedYearsStart ?? null,
+      end: user?.generatedYearsEnd ?? null,
+    });
 
     (async () => {
       try {
-        // Fetch events and definitions from the API in parallel.
-        const [eventsRes, defsRes] = await Promise.all([
-          APIClient.getEvents(),
-          APIClient.getDefinitions(),
-        ]);
-        if (cancelled) return;
+        if (isAuth) {
+          // Authenticated — load from API, fall back to IndexedDB.
+          const evRange = getDefaultEventsQueryRange({
+            generatedYearsStart: user?.generatedYearsStart ?? null,
+            generatedYearsEnd: user?.generatedYearsEnd ?? null,
+          });
+          let eventsRes, defsRes;
+          try {
+            [eventsRes, defsRes] = await Promise.all([
+              APIClient.getEvents(evRange),
+              APIClient.getDefinitions(),
+            ]);
+          } catch (err) {
+            if (shouldFallbackToOffline(err)) {
+              [eventsRes, defsRes] = await Promise.all([
+                OfflineClient.getEvents(evRange),
+                OfflineClient.getDefinitions(),
+              ]);
+            } else {
+              throw err;
+            }
+          }
+          if (cancelled) return;
 
-        const serverEvents = eventsRes?.events ?? [];
-        setEvents(serverEvents);
-        eventsRef.current = serverEvents;
+          const loaded = eventsRes?.events ?? [];
+          setEvents(loaded);
+          eventsRef.current = loaded;
+          setIslamicEventDefs(defsRes?.definitions ?? []);
+          setGeneratedYearsRange({
+            start: user?.generatedYearsStart ?? null,
+            end: user?.generatedYearsEnd ?? null,
+          });
+        } else {
+          // Not authenticated — check IndexedDB for cached data.
+          const hasData = await OfflineClient.hasData();
+          if (hasData) {
+            const yearsRange = await OfflineClient.getGeneratedYearsRange();
+            const evRange = getDefaultEventsQueryRange({
+              generatedYearsStart: yearsRange?.generatedYearsStart ?? null,
+              generatedYearsEnd: yearsRange?.generatedYearsEnd ?? null,
+            });
+            const [eventsRes, defsRes] = await Promise.all([
+              OfflineClient.getEvents(evRange),
+              OfflineClient.getDefinitions(),
+            ]);
+            if (cancelled) return;
 
-        const defs = defsRes?.definitions ?? [];
-        setIslamicEventDefs(defs);
-
-        // Ensure Islamic events for the current year exist on the server.
-        await ensureIslamicEventsForYearInternal(new Date().getFullYear());
+            const loaded = eventsRes?.events ?? [];
+            setEvents(loaded);
+            eventsRef.current = loaded;
+            setIslamicEventDefs(defsRes?.definitions ?? []);
+            setGeneratedYearsRange({
+              start: yearsRange?.generatedYearsStart ?? null,
+              end: yearsRange?.generatedYearsEnd ?? null,
+            });
+          } else {
+            if (cancelled) return;
+            setEvents([]);
+            eventsRef.current = [];
+            setIslamicEventDefs([]);
+            setCalendarProviders([]);
+            setGeneratedYearsRange({ start: null, end: null });
+          }
+        }
       } catch {
         if (!cancelled) {
           setEvents([]);
           eventsRef.current = [];
+          setGeneratedYearsRange({ start: null, end: null });
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
 
-    // Fetch providers in the background (non-blocking).
-    APIClient.getProviders()
-      .then((data) => {
-        if (!cancelled) setProviders(data?.providers ?? []);
-      })
-      .catch(() => {});
+    // Calendar providers — auth users only.
+    if (isAuth) {
+      APIClient.getCalendarProviders()
+        .then((data) => {
+          if (!cancelled) setCalendarProviders(data?.calendarProviders ?? []);
+        })
+        .catch(() => {});
+    }
 
     return () => {
       cancelled = true;
@@ -118,17 +207,11 @@ export function CalendarProvider({ children }) {
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
-  /**
-   * Update React state for events.
-   */
   function saveEvents(nextEvents) {
     setEvents(nextEvents);
     eventsRef.current = nextEvents;
   }
 
-  /**
-   * Change the calendar view (month / week / day) and persist the preference.
-   */
   function changeView(view) {
     if (!VALID_VIEWS.includes(view)) return;
     setCurrentView(view);
@@ -136,55 +219,102 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Internal helper — ask the backend to generate Islamic events for `year`.
-   * The backend's upsert handles idempotency. We track generated years
-   * in-memory to avoid redundant network calls within the same session.
+   * Generate Islamic events for the given years (skipping already-generated ones).
+   * Tries API first, falls back to OfflineClient on failure.
+   *
+   * @param {number[]} years - Array of Gregorian years.
    */
-  async function ensureIslamicEventsForYearInternal(year) {
-    if (!user?.userId) return;
-    if (generatedYearsRef.current.has(year)) return;
+  async function ensureIslamicEventsForYears(years, options = {}) {
+    const requestedYears = [...new Set(years)].filter((y) =>
+      Number.isInteger(y),
+    );
+    if (requestedYears.length === 0) return;
+
+    const timezone = options?.timezone ?? null;
 
     try {
-      const res = await APIClient.generateEvents(year);
-      generatedYearsRef.current.add(year);
-
-      // If new events were created, merge them into state.
-      const generated = res?.events ?? [];
-      if (generated.length > 0) {
-        const existingKeys = new Set(
-          eventsRef.current.map((e) => e.islamicEventKey).filter(Boolean),
-        );
-        const newEvents = generated.filter(
-          (e) => e.islamicEventKey && !existingKeys.has(e.islamicEventKey),
-        );
-        if (newEvents.length > 0) {
-          saveEvents([...eventsRef.current, ...newEvents]);
+      let res;
+      try {
+        res = await APIClient.generateEvents(requestedYears, timezone);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.generateEvents(requestedYears, timezone);
+        } else {
+          throw err;
         }
       }
+
+      const minRequestedYear = Math.min(...requestedYears);
+      const maxRequestedYear = Math.max(...requestedYears);
+      const nextStart =
+        generatedYearsRange.start == null
+          ? minRequestedYear
+          : Math.min(generatedYearsRange.start, minRequestedYear);
+      const nextEnd =
+        generatedYearsRange.end == null
+          ? maxRequestedYear
+          : Math.max(generatedYearsRange.end, maxRequestedYear);
+      setGeneratedYearsRange({ start: nextStart, end: nextEnd });
+
+      if (isAuth) {
+        setUser((prev) => {
+          const base = prev?.toJSON ? prev.toJSON() : prev;
+          const updated = createUser(base);
+          updated.updateProfile({
+            generatedYearsStart: nextStart,
+            generatedYearsEnd: nextEnd,
+          });
+          return updated;
+        });
+      }
+
+      const evRange = eventsQueryRange({
+        generatedYearsStart: nextStart,
+        generatedYearsEnd: nextEnd,
+      });
+      let reloadRes;
+      try {
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+      } catch (reloadErr) {
+        if (shouldFallbackToOffline(reloadErr) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
+        }
+      }
+      const loaded = reloadRes?.events ?? [];
+      saveEvents(loaded);
     } catch {
-      // Don't mark year as generated so it retries next time.
+      // Keep generatedYearsRange unchanged on failure.
     }
   }
 
   /**
-   * Public wrapper — called by Calendar.jsx when navigating to a new year.
-   */
-  async function ensureIslamicEventsForYear(year) {
-    await ensureIslamicEventsForYearInternal(year);
-  }
-
-  /**
-   * Add a new event via the API.
-   *
-   * @param {Object} eventData - Fields matching the API's createEvent schema.
-   * @returns {Promise<Object>} The created event object.
+   * Add a new event. Tries API first; falls back to IndexedDB on
+   * network failure or auth error.
    */
   async function addEvent(eventData) {
     try {
-      const res = await APIClient.createEvent(eventData);
+      let res;
+      try {
+        res = await APIClient.createEvent(eventData);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.createEvent(eventData);
+        } else {
+          throw err;
+        }
+      }
       const created = res?.event ?? res;
-      const next = [created, ...eventsRef.current];
-      saveEvents(next);
+      const evRange = eventsQueryRange();
+      try {
+        const reload = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+        saveEvents(reload?.events ?? [created, ...eventsRef.current]);
+      } catch {
+        saveEvents([created, ...eventsRef.current]);
+      }
       return created;
     } catch (err) {
       setError(err.message ?? "Failed to create event");
@@ -193,20 +323,60 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Update an existing event via the API.
-   *
-   * @param {number} eventId
-   * @param {Object} updates
-   * @returns {Promise<Object>} The updated event object.
+   * Fetch the latest event data from the backend and update context.
+   */
+  async function refreshEventData(eventId) {
+    try {
+      const evRange = eventsQueryRange();
+      let reloadRes;
+      try {
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+      } catch (err) {
+        if (shouldFallbackToOffline(err) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
+        } else {
+          throw err;
+        }
+      }
+      const list = reloadRes?.events ?? [];
+      saveEvents(list);
+      return list.find((e) => e.eventId === eventId) ?? null;
+    } catch (err) {
+      setError(err.message ?? "Failed to refresh event");
+      throw err;
+    }
+  }
+
+  /**
+   * Update an existing event. Tries API first; falls back to IndexedDB.
    */
   async function updateEvent(eventId, updates) {
     try {
-      const res = await APIClient.updateEvent(eventId, updates);
+      let res;
+      try {
+        res = await APIClient.updateEvent(eventId, updates);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.updateEvent(eventId, updates);
+        } else {
+          throw err;
+        }
+      }
       const updated = res?.event ?? res;
-      const next = eventsRef.current.map((e) =>
-        e.eventId === eventId ? updated : e,
-      );
-      saveEvents(next);
+      const evRange = eventsQueryRange();
+      try {
+        const reload = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+        saveEvents(reload?.events ?? eventsRef.current);
+      } catch {
+        const next = eventsRef.current.map((e) =>
+          e.eventId === eventId ? { ...e, ...updated } : e,
+        );
+        saveEvents(next);
+      }
       return updated;
     } catch (err) {
       setError(err.message ?? "Failed to update event");
@@ -215,13 +385,19 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Delete an event via the API.
-   *
-   * @param {number} eventId
+   * Delete an event. Tries API first; falls back to IndexedDB.
    */
   async function removeEvent(eventId) {
     try {
-      await APIClient.deleteEvent(eventId);
+      try {
+        await APIClient.deleteEvent(eventId);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          await OfflineClient.deleteEvent(eventId);
+        } else {
+          throw err;
+        }
+      }
       const next = eventsRef.current.filter((e) => e.eventId !== eventId);
       saveEvents(next);
     } catch (err) {
@@ -230,24 +406,57 @@ export function CalendarProvider({ children }) {
     }
   }
 
-  /**
-   * No-op — kept for backwards compatibility.
-   * With API-first architecture all writes already go through the API.
-   */
   async function syncToBackend() {
     return { ok: true };
   }
 
   /**
-   * Reload events from the server (manual refresh).
+   * Fetch expanded events for an explicit date range without replacing context state.
+   * Used for .ics export. Same API/offline rules as refreshFromBackend.
+   *
+   * @param {{ from: string, to: string }} range — YYYY-MM-DD inclusive
+   * @returns {Promise<Object[]>}
+   */
+  async function fetchExpandedEventsForRange({ from, to }) {
+    const query = { from, to };
+    let res;
+    if (isAuth) {
+      try {
+        res = await APIClient.getEvents(query);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.getEvents(query);
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      res = await OfflineClient.getEvents(query);
+    }
+    return res?.events ?? [];
+  }
+
+  /**
+   * Reload events from the data source (manual refresh).
+   * Tries API first; falls back to IndexedDB.
    */
   async function refreshFromBackend() {
     setIsRefreshing(true);
     setError(null);
     try {
-      const res = await APIClient.getEvents();
-      const serverEvents = res?.events ?? [];
-      saveEvents(serverEvents);
+      const evRange = eventsQueryRange();
+      let res;
+      try {
+        res = await APIClient.getEvents(evRange);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.getEvents(evRange);
+        } else {
+          throw err;
+        }
+      }
+      const refreshed = res?.events ?? [];
+      saveEvents(refreshed);
       return { ok: true };
     } catch (err) {
       const msg = err.message ?? "Failed to refresh events";
@@ -260,10 +469,7 @@ export function CalendarProvider({ children }) {
 
   /**
    * Toggle a single Islamic event definition's `isHidden` flag.
-   * Sends a single API call that updates the preference and all matching
-   * events server-side.
-   *
-   * @param {string} definitionId - The `id` field from the definition.
+   * Optimistic update with API-first persistence; falls back to IndexedDB.
    */
   async function toggleIslamicEvent(definitionId) {
     const target = islamicEventDefs.find((d) => d.id === definitionId);
@@ -285,9 +491,19 @@ export function CalendarProvider({ children }) {
     );
     saveEvents(updated);
 
-    // Persist to the server (single API call).
     try {
-      await APIClient.updateDefinitionPreference(definitionId, newHidden);
+      try {
+        await APIClient.updateDefinitionPreference(definitionId, newHidden);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          await OfflineClient.updateDefinitionPreference(
+            definitionId,
+            newHidden,
+          );
+        } else {
+          throw err;
+        }
+      }
     } catch {
       // Revert on failure.
       setIslamicEventDefs((prev) =>
@@ -303,31 +519,123 @@ export function CalendarProvider({ children }) {
   }
 
   /**
-   * Reset the calendar — deletes all events on the server, reloads fresh
-   * definitions, then re-generates Islamic events.
+   * Reset calendar — either Islamic masters for enabled definitions only, or full wipe.
+   *
+   * @param {{ mode?: 'islamicEnabled' | 'all' }} [options]
+   * @returns {Promise<{ ok: boolean, reason?: string, error?: string }>}
    */
-  async function resetCalendar() {
-    // Delete all current events from the server.
-    await Promise.allSettled(
-      eventsRef.current
-        .filter((e) => typeof e.eventId === "number")
-        .map((e) => APIClient.deleteEvent(e.eventId)),
-    );
+  async function resetCalendar(options = {}) {
+    const mode = options.mode ?? "islamicEnabled";
 
-    // Reset local state.
-    saveEvents([]);
-    generatedYearsRef.current = new Set();
+    if (mode === "all") {
+      try {
+        await APIClient.deleteAllEvents();
+      } catch {
+        await OfflineClient.clearAll();
+      }
 
-    // Reload definitions from server (resets preferences).
-    try {
-      const defsRes = await APIClient.getDefinitions();
-      setIslamicEventDefs(defsRes?.definitions ?? []);
-    } catch {
-      setIslamicEventDefs([]);
+      saveEvents([]);
+      setGeneratedYearsRange({ start: null, end: null });
+      if (isAuth) {
+        setUser((prev) => {
+          const base = prev?.toJSON ? prev.toJSON() : prev;
+          const updated = createUser(base);
+          updated.updateProfile({
+            generatedYearsStart: null,
+            generatedYearsEnd: null,
+          });
+          return updated;
+        });
+      }
+
+      try {
+        let defsRes;
+        try {
+          defsRes = await APIClient.getDefinitions();
+        } catch (err) {
+          if (shouldFallbackToOffline(err)) {
+            defsRes = await OfflineClient.getDefinitions();
+          } else {
+            throw err;
+          }
+        }
+        setIslamicEventDefs(defsRes?.definitions ?? []);
+      } catch {
+        setIslamicEventDefs([]);
+      }
+      return { ok: true };
     }
 
-    // Re-generate for the current year.
-    await ensureIslamicEventsForYearInternal(new Date().getFullYear());
+    const definitionIds = islamicEventDefs
+      .filter((d) => !d.isHidden)
+      .map((d) => d.id);
+    if (definitionIds.length === 0) {
+      return { ok: false, reason: "no-enabled-definitions" };
+    }
+
+    let res;
+    try {
+      try {
+        res = await APIClient.resetIslamicEventsForDefinitions(definitionIds);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          res = await OfflineClient.resetIslamicEventsForDefinitions(
+            definitionIds,
+          );
+        } else {
+          throw err;
+        }
+      }
+    } catch (err) {
+      const msg = err.message ?? "Failed to reset Islamic events";
+      setError(msg);
+      return { ok: false, error: msg };
+    }
+
+    const nextStart = res?.generatedYearsStart ?? null;
+    const nextEnd = res?.generatedYearsEnd ?? null;
+    setGeneratedYearsRange({ start: nextStart, end: nextEnd });
+    if (isAuth) {
+      setUser((prev) => {
+        const base = prev?.toJSON ? prev.toJSON() : prev;
+        const updated = createUser(base);
+        updated.updateProfile({
+          generatedYearsStart: nextStart,
+          generatedYearsEnd: nextEnd,
+        });
+        return updated;
+      });
+    }
+
+    const evRange = eventsQueryRange({
+      generatedYearsStart: nextStart,
+      generatedYearsEnd: nextEnd,
+    });
+    try {
+      let reloadRes;
+      try {
+        reloadRes = isAuth
+          ? await APIClient.getEvents(evRange)
+          : await OfflineClient.getEvents(evRange);
+      } catch (reloadErr) {
+        if (shouldFallbackToOffline(reloadErr) && isAuth) {
+          reloadRes = await OfflineClient.getEvents(evRange);
+        } else {
+          throw reloadErr;
+        }
+      }
+      saveEvents(reloadRes?.events ?? []);
+    } catch {
+      const idSet = new Set(definitionIds);
+      const next = eventsRef.current.filter(
+        (e) =>
+          e.islamicDefinitionId == null ||
+          !idSet.has(e.islamicDefinitionId),
+      );
+      saveEvents(next);
+    }
+
+    return { ok: true };
   }
 
   // ── Derived state ───────────────────────────────────────────────────────
@@ -340,7 +648,7 @@ export function CalendarProvider({ children }) {
       value={{
         events: visibleEvents,
         allEvents: events,
-        providers,
+        calendarProviders,
         currentView,
         changeView,
         loading,
@@ -350,11 +658,14 @@ export function CalendarProvider({ children }) {
         addEvent,
         updateEvent,
         removeEvent,
+        refreshEventData,
 
         // Islamic event definitions (with isHidden flags)
         islamicEventDefs,
         toggleIslamicEvent,
-        ensureIslamicEventsForYear,
+        ensureIslamicEventsForYears,
+        generatedYearsRange,
+        fetchExpandedEventsForRange,
 
         // Backend sync / refresh (syncToBackend is now a no-op)
         syncToBackend,

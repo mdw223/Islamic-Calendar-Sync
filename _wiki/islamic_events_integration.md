@@ -61,7 +61,7 @@ Users can show/hide individual event types via per-user preferences stored in th
 
 ## Data Flow
 
-1. **User created** (guest session or Google OAuth) → backend auto-generates Islamic events for the current Gregorian year via `generateForNewUser()`.
+1. **User created** (Google OAuth or email verification) → backend auto-generates Islamic events for the current Gregorian year via `generateForNewUser()`.
 2. **On mount**, the frontend loads events and definitions in parallel (`GET /events` + `GET /definitions`).
 3. **When navigating** to a new Gregorian year, the frontend calls `POST /events/generate` with that year. The backend upserts events idempotently — duplicates are silently skipped.
 4. **Toggling** an event type calls `PUT /definitions/:definitionId` which updates the user's preference **and** sets `Hide` on all matching events in one transaction.
@@ -156,7 +156,7 @@ Calling `POST /events/generate` for the same year twice results in zero duplicat
 
 ### Auto-Generation on User Creation
 
-Both `CreateGuestSession.js` and `passport.js` (Google OAuth callback) fire-and-forget a call to `IslamicEventService.generateForNewUser(userId)` after user creation. This ensures a new user sees Islamic events on first load without an extra client round-trip.
+`passport.js` (Google OAuth callback) fires a call to `IslamicEventService.generateForNewUser(userId)` after user creation. This ensures a new user sees Islamic events on first load without an extra client round-trip.
 
 ---
 

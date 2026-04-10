@@ -2,7 +2,9 @@ import { getToken } from "./AuthToken.js";
 
 function handleResponse(response) {
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const err = new Error(`HTTP error! status: ${response.status}`);
+    err.status = response.status;
+    throw err;
   }
   return response.json();
 }
@@ -68,13 +70,25 @@ export default class HTTPClient {
     return handleResponse(response);
   }
 
-  // DELETE request
+  // DELETE request (204 No Content has no JSON body)
   static async delete(url) {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'DELETE',
       credentials: 'include',
       headers: authHeaders(),
     });
-    return handleResponse(response);
+    if (!response.ok) {
+      const err = new Error(`HTTP error! status: ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+    return JSON.parse(text);
   }
 }

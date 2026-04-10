@@ -34,17 +34,29 @@ export default class UserDOA {
     return row ? User.fromRow(row) : null;
   }
 
+  static async findAuthProviderName(userId) {
+    const result = await query(
+      `SELECT apt.name
+       FROM "User" u
+       JOIN authprovidertype apt ON apt.authprovidertypeid = u.authprovidertypeid
+       WHERE u.userid = $1`,
+      [userId],
+    );
+    return result.rows[0]?.name ?? null;
+  }
+
   /**
    * Create a new user with minimal fields (Email, Name).
-   * @param {{ email: string, name: string }} userData
+   * Defaults to Email auth provider type.
+   * @param {{ email: string, name: string, authProviderTypeId?: number }} userData
    * @returns {Promise<ReturnType<User.fromRow>>}
    */
-  static async createUser({ email, name }) {
+  static async createUser({ email, name, authProviderTypeId = 4 }) {
     const result = await query(
-      `INSERT INTO "User" (email, name, createdat, updatedat)
-       VALUES ($1, $2, NOW(), NOW())
+      `INSERT INTO "User" (email, name, authprovidertypeid, createdat, updatedat)
+       VALUES ($1, $2, $3, NOW(), NOW())
        RETURNING *`,
-      [email, name],
+      [email, name, authProviderTypeId],
     );
     return User.fromRow(result.rows[0]);
   }
@@ -85,10 +97,10 @@ export default class UserDOA {
     return this.updateUser(userId, { language });
   }
 
-  static async updateEventConfiguration(userId, start, end) {
+  static async updateGeneratedYearsRange(userId, start, end) {
     return this.updateUser(userId, {
-      eventconfigurationstart: start,
-      eventconfigurationend: end,
+      generatedyearsstart: start,
+      generatedyearsend: end,
     });
   }
 
@@ -112,50 +124,5 @@ export default class UserDOA {
 
   static async updateSalt(userId, salt) {
     return this.updateUser(userId, { salt });
-  }
-
-  /**
-   * Create a guest user with only a session ID (no email/name).
-   * @param {string} sessionId - Cryptographically random session ID
-   * @returns {Promise<ReturnType<User.fromRow>>}
-   */
-  static async createGuestUser(sessionId) {
-    const result = await query(
-      `INSERT INTO "User" (isguest, sessionid, createdat, updatedat)
-       VALUES (true, $1, NOW(), NOW())
-       RETURNING *`,
-      [sessionId],
-    );
-    return User.fromRow(result.rows[0]);
-  }
-
-  /**
-   * Find a user by their guest session ID.
-   * @param {string} sessionId
-   * @returns {Promise<ReturnType<User.fromRow>|null>}
-   */
-  static async findBySessionId(sessionId) {
-    const result = await query(
-      `SELECT * FROM "User" WHERE sessionid = $1`,
-      [sessionId],
-    );
-    const row = result.rows[0];
-    return row ? User.fromRow(row) : null;
-  }
-
-  /**
-   * Upgrade a guest user to a registered user (set email, name, clear guest flag).
-   * Preserves the existing UserId so all events remain associated.
-   * @param {number} userId
-   * @param {{ email: string, name: string }} data
-   * @returns {Promise<ReturnType<User.fromRow>|null>}
-   */
-  static async upgradeGuestUser(userId, { email, name }) {
-    return this.updateUser(userId, {
-      isguest: false,
-      sessionid: null,
-      email,
-      name,
-    });
   }
 }

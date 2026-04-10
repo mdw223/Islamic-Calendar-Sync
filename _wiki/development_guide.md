@@ -20,9 +20,52 @@ This is a full-stack application with:
 ### Docker Compose Files
 
 - `compose.yml` - Development environment configuration
-- `compose-test.yml` - Testing environment configuration
+- `compose.test.yml` - Testing environment configuration
 
 ## Development Workflow
+
+## Starting the Production Environment
+
+### Prerequisites
+
+- Ensure you have `compose.prod.yml` and `.env.prod` in the project root.
+- Production images should be built using `Dockerfile.prod` for the frontend and a production-ready `Dockerfile` for the backend.
+
+### Start Production Stack
+
+```bash
+docker compose -f compose.prod.yml up -d --build
+```
+
+### Stopping Production Services
+
+```bash
+docker compose -f compose.prod.yml down
+```
+
+### Accessing Production
+
+- **Frontend**: http://localhost:5000
+- **Backend API**: http://localhost/api
+- **Database**: localhost:5432 (credentials from .env.prod)
+
+### Environment Variables
+
+- Production environment variables are loaded from `.env.prod`.
+
+### Container Names (Production)
+
+- api_service_prod (port 3000)
+- react_app_prod (port 5000)
+- ics_postgres_db_prod (port 5432)
+- nginx_proxy_prod (port 8080)
+
+### Notes
+
+- For production, hot reloading is typically disabled.
+- Make sure to use secure credentials and review `.env.prod` for sensitive values.
+
+---
 
 ### Starting the Development Environment
 
@@ -35,7 +78,7 @@ docker compose up -d
 
 ```bash
 # Start testing stack
-docker compose -f compose-test.yml up -d
+docker compose -f compose.test.yml up -d
 ```
 
 ### Container Management
@@ -85,7 +128,7 @@ The `-d` flag stands for "detached mode," meaning the containers will run in the
 docker compose down
 
 # Stop testing services
-docker compose -f compose-test.yml down
+docker compose -f compose.test.yml down
 
 # Stop services and remove volumes (resets database)
 docker compose down -v
@@ -143,10 +186,10 @@ docker compose up -d
 
 ```bash
 # Stop services and remove testing database volume
-docker compose -f compose-test.yml down -v
+docker compose -f compose.test.yml down -v
 
 # Restart with fresh database
-docker compose -f compose-test.yml up -d
+docker compose -f compose.test.yml up -d
 ```
 
 ## Development Tips
@@ -199,13 +242,13 @@ docker compose stop
 
 ```bash
 # Start testing environment
-docker compose -f compose-test.yml up -d
+docker compose -f compose.test.yml up -d
 
 # View logs
-docker compose -f compose-test.yml logs -f
+docker compose -f compose.test.yml logs -f
 
 # Stop testing environment
-docker compose -f compose-test.yml down
+docker compose -f compose.test.yml down
 ```
 
 #### Debugging
@@ -262,7 +305,7 @@ docker network inspect app-network
 project/
 ├── _wiki                          # Wiki pages
 ├── compose.yml                    # Development configuration
-├── compose-test.yml               # Testing configuration
+├── compose.test.yml               # Testing configuration
 ├── .env                           # Development environment variables
 ├── .dockerignore                  # Docker build exclusions
 ├── .gitignore                     # Git exclusions
@@ -280,6 +323,16 @@ project/
 ├── proxy/                         # Nginx reverse proxy
 │   └── nginx.conf
 └── Sql.Migrations/                # Database initialization scripts
+
+### Applying incremental DB migrations (existing databases)
+
+For databases that were already initialized earlier, run migration files manually instead of relying on container init scripts.
+
+Example:
+
+```bash
+docker exec -i ics_postgres_db_dev psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} < Sql.Migrations/001_subscription_definition_selection.sql
+```
 ```
 
 ## Architecture

@@ -11,18 +11,23 @@ export class User {
     this.updatedAt = null;
     this.lastLogin = null;
     this.isAdmin = null;
-    this.isGuest = null;
-    this.sessionId = null;
     this.language = null;
-    this.eventConfigurationStart = null;
-    this.eventConfigurationEnd = null;
+    this.generatedYearsStart = null;
+    this.generatedYearsEnd = null;
     this.prayerConfigurationStart = null;
     this.prayerConfigurationEnd = null;
     this.calculationMethodId = null;
     this.hanafi = null;
+    this.use24HourTime = null;
     this.salt = null;
     this.emailUpdates = null;
     this.notifications = null;
+    this.authProviderTypeId = null;
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.expiresAt = null;
+    this.scopes = null;
+    this.isExpired = null;
   }
 
   /**
@@ -39,18 +44,23 @@ export class User {
     user.updatedAt = row.updatedat;
     user.lastLogin = row.lastlogin;
     user.isAdmin = row.isadmin;
-    user.isGuest = row.isguest ?? false;
-    user.sessionId = row.sessionid ?? null;
     user.language = row.language;
-    user.eventConfigurationStart = row.eventconfigurationstart;
-    user.eventConfigurationEnd = row.eventconfigurationend;
+    user.generatedYearsStart = row.generatedyearsstart;
+    user.generatedYearsEnd = row.generatedyearsend;
     user.prayerConfigurationStart = row.prayerconfigurationstart;
     user.prayerConfigurationEnd = row.prayerconfigurationend;
     user.calculationMethodId = row.calculationmethodid;
     user.hanafi = row.hanafi;
+    user.use24HourTime = row.use24hourtime ?? false;
     user.salt = row.salt;
     user.emailUpdates = row.emailupdates;
     user.notifications = row.notifications;
+    user.authProviderTypeId = row.authprovidertypeid;
+    user.accessToken = row.accesstoken;
+    user.refreshToken = row.refreshtoken;
+    user.expiresAt = row.expiresat;
+    user.scopes = row.scopes;
+    user.isExpired = row.isexpired ?? true;
     return user;
   }
 
@@ -60,16 +70,17 @@ export class User {
       email: this.email,
       name: this.name,
       isAdmin: this.isAdmin,
-      isGuest: this.isGuest,
       language: this.language,
-      eventConfigurationStart: this.eventConfigurationStart,
-      eventConfigurationEnd: this.eventConfigurationEnd,
+      generatedYearsStart: this.generatedYearsStart,
+      generatedYearsEnd: this.generatedYearsEnd,
       prayerConfigurationStart: this.prayerConfigurationStart,
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
+      use24HourTime: this.use24HourTime,
       emailUpdates: this.emailUpdates,
-      notifications: this.notifications
+      notifications: this.notifications,
+      lastLogin: this.lastLogin,
     };
   }
 }

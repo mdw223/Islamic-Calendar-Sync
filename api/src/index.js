@@ -4,13 +4,11 @@ import { appConfig, sessionConfig } from "./Config.js";
 import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
-import { AuthMiddleware } from "./middleware/AuthMiddleware.js";
 import responseSanitizer from "./middleware/ResponseSanitizer.js";
 import passport from "passport";
 import session from "express-session";
 import { optionalJwtAuth } from "./Passport.js";
 import cookieParser from "cookie-parser";
-import guestSessionMiddleware from "./middleware/GuestSessionMiddleware.js";
 
 const app = express();
 
@@ -30,8 +28,6 @@ app.use(
 app.use(passport.initialize());
 // Optional JWT: set req.user when Authorization: Bearer <token> is valid; otherwise leave req.user undefined
 app.use(optionalJwtAuth);
-// Guest session: if no JWT user, create/restore a guest user from an HMAC-signed cookie
-app.use(guestSessionMiddleware);
 
 app.use(requestLogger);
 app.use(responseSanitizer); // Strip redacted keys (salt, tokens, etc.) from res.json() bodies

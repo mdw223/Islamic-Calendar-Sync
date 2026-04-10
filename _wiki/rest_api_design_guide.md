@@ -53,11 +53,11 @@ The API uses JWT (JSON Web Tokens) for authentication.
 - Tokens expire after 24 hours
 - Refresh tokens are valid for 30 days
 
-**Guest vs Registered Users:**
+**Access Model:**
 
-- Guest users: Limited access, no authentication required
-- Registered users: Full access, authentication required
+- Registered users: Full access to backend persistence, authentication required
 - Admin users: Administrative access, authentication required with admin role
+- Optional frontend guest mode: local/offline-only experience with temporary browser storage
 
 ---
 
@@ -582,7 +582,7 @@ GET /users/{userId}/prayers
     "prayerTypeName": "Fard",
     "description": "The pre-dawn prayer...",
     "hide": false,
-    "isCustom": false
+    "isTask": false
   }
 ]
 ```
@@ -750,7 +750,7 @@ GET /users/{userId}/events
     "hide": false,
     "eventTypeId": 1,
     "eventTypeName": "Ramadan",
-    "isCustom": false
+    "isTask": false
   }
 ]
 ```
@@ -1049,5 +1049,4 @@ GET /users/{userId}/prayers?page=1&limit=50
 - All timestamps are in ISO 8601 format (UTC)
 - All requests and responses use `application/json` content type
 - Rate limiting: 1000 requests per hour per user
-- Guest users have limited rate: 100 requests per hour per IP
 - HTTPS is required for all requests in production

@@ -1,44 +1,44 @@
 import { query } from "../../db/DBConnection.js";
-import { Provider } from "../../models/Provider.js";
+import { CalendarProvider } from "../../models/CalendarProvider.js";
 
 /**
- * Data access layer for the PROVIDER table.
- * Returns Provider objects (camelCase) via Provider.fromRow.
+ * Data access layer for the CalendarProvider table.
+ * Returns CalendarProvider objects (camelCase) via CalendarProvider.fromRow.
  */
-export default class ProviderDOA {
+export default class CalendarProviderDOA {
   /**
-   * Get all providers for a user.
+   * Get all calendar providers for a user.
    * @param {number} userId
-   * @returns {Promise<Provider[]>}
+   * @returns {Promise<CalendarProvider[]>}
    */
   static async findAllByUserId(userId) {
     const result = await query(
-      "SELECT * FROM provider WHERE userid = $1 ORDER BY createdat ASC",
+      "SELECT * FROM calendarprovider WHERE userid = $1 ORDER BY createdat ASC",
       [userId],
     );
-    return result.rows.map(Provider.fromRow);
+    return result.rows.map(CalendarProvider.fromRow);
   }
 
   /**
    * @param {number} userId
-   * @param {number} providerTypeId
-   * @returns {Promise<ReturnType<Provider.fromRow>|null>}
+   * @param {number} calendarProviderTypeId
+   * @returns {Promise<ReturnType<CalendarProvider.fromRow>|null>}
    */
-  static async findByUserAndType(userId, providerTypeId) {
+  static async findByUserAndType(userId, calendarProviderTypeId) {
     const result = await query(
-      "SELECT * FROM provider WHERE userid = $1 AND providertypeid = $2",
-      [userId, providerTypeId],
+      "SELECT * FROM calendarprovider WHERE userid = $1 AND calendarprovidertypeid = $2",
+      [userId, calendarProviderTypeId],
     );
     const row = result.rows[0];
-    return row ? Provider.fromRow(row) : null;
+    return row ? CalendarProvider.fromRow(row) : null;
   }
 
   /**
-   * @returns {Promise<ReturnType<Provider.fromRow>>}
+   * @returns {Promise<ReturnType<CalendarProvider.fromRow>>}
    */
-  static async createProvider({
+  static async createCalendarProvider({
     userId,
-    providerTypeId,
+    calendarProviderTypeId,
     email,
     accessToken,
     refreshToken,
@@ -48,8 +48,8 @@ export default class ProviderDOA {
     isActive = true,
   }) {
     const result = await query(
-      `INSERT INTO provider (
-         providertypeid,
+      `INSERT INTO calendarprovider (
+         calendarprovidertypeid,
          email,
          userid,
          createdat,
@@ -64,7 +64,7 @@ export default class ProviderDOA {
        VALUES ($1, $2, $3, NOW(), NOW(), $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
-        providerTypeId,
+        calendarProviderTypeId,
         email,
         userId,
         expiresAt,
@@ -75,10 +75,10 @@ export default class ProviderDOA {
         isActive,
       ],
     );
-    return Provider.fromRow(result.rows[0]);
+    return CalendarProvider.fromRow(result.rows[0]);
   }
 
-  static async updateTokens(providerId, {
+  static async updateTokens(calendarProviderId, {
     accessToken,
     refreshToken,
     expiresAt,
@@ -86,16 +86,16 @@ export default class ProviderDOA {
     isActive = true,
   }) {
     await query(
-      `UPDATE provider
+      `UPDATE calendarprovider
        SET accesstoken = $2,
            refreshtoken = COALESCE($3, refreshtoken),
            expiresat = $4,
            scopes = COALESCE($5, scopes),
            isactive = $6,
            updatedat = NOW()
-       WHERE providerid = $1`,
+       WHERE calendarproviderid = $1`,
       [
-        providerId,
+        calendarProviderId,
         accessToken,
         refreshToken,
         expiresAt,

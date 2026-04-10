@@ -3,17 +3,20 @@
 
 -- Drop tables if they exist (in reverse order of dependencies)
 DROP TABLE IF EXISTS Event CASCADE;
+DROP TABLE IF EXISTS UserLocation CASCADE;
 DROP TABLE IF EXISTS EventType CASCADE;
 DROP TABLE IF EXISTS Prayer CASCADE;
 DROP TABLE IF EXISTS PrayerType CASCADE;
 DROP TABLE IF EXISTS CalculationMethod CASCADE;
 DROP TABLE IF EXISTS Calendar CASCADE;
-DROP TABLE IF EXISTS Provider CASCADE;
-DROP TABLE IF EXISTS ProviderType CASCADE;
-DROP TABLE IF EXISTS Settings CASCADE;
+DROP TABLE IF EXISTS CalendarProvider CASCADE;
+DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
+DROP TABLE IF EXISTS SubscriptionDefinitionSelection CASCADE;
+DROP TABLE IF EXISTS SubscriptionToken CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
+DROP TABLE IF EXISTS AuthProviderType CASCADE;
 
 -- Create CalculationMethod table
 CREATE TABLE CalculationMethod (
@@ -21,9 +24,15 @@ CREATE TABLE CalculationMethod (
     Name VARCHAR(100) NOT NULL
 );
 
--- Create ProviderType table
-CREATE TABLE ProviderType (
-    ProviderTypeId SERIAL PRIMARY KEY,
+-- Create AuthProviderType table (authentication methods for users)
+CREATE TABLE AuthProviderType (
+    AuthProviderTypeId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL
+);
+
+-- Create CalendarProviderType table (calendar integration providers)
+CREATE TABLE CalendarProviderType (
+    CalendarProviderTypeId SERIAL PRIMARY KEY,
     Name VARCHAR(100) NOT NULL
 );
 
@@ -36,23 +45,52 @@ CREATE TABLE "User" (
     UpdatedAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     LastLogin TIMESTAMP,
     IsAdmin BOOLEAN DEFAULT FALSE,
-    IsGuest BOOLEAN NOT NULL DEFAULT FALSE,
-    SessionID VARCHAR(255) NULL UNIQUE,
-    Timezone VARCHAR(100),
-    Latitude VARCHAR(50),
-    Longitude VARCHAR(50),
     Language VARCHAR(10),
-    EventConfigurationStart TIMESTAMP NULL,
-    EventConfigurationEnd TIMESTAMP NULL,
+    GeneratedYearsStart INTEGER NULL,
+    GeneratedYearsEnd INTEGER NULL,
     PrayerConfigurationStart TIMESTAMP NULL,
     PrayerConfigurationEnd TIMESTAMP NULL,
     CalculationMethodId INTEGER NULL,
     Hanafi BOOLEAN DEFAULT FALSE,
+    Use24HourTime BOOLEAN NOT NULL DEFAULT FALSE,
     Salt VARCHAR(255),
     EmailUpdates BOOLEAN DEFAULT TRUE,
     Notifications BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT
+    AuthProviderTypeId INTEGER NOT NULL,
+    AccessToken VARCHAR(500),
+    RefreshToken VARCHAR(500),
+    ExpiresAt TIMESTAMP,
+    Scopes VARCHAR(1000),
+    IsExpired BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (CalculationMethodId) REFERENCES CalculationMethod(CalculationMethodId) ON DELETE RESTRICT,
+    FOREIGN KEY (AuthProviderTypeId) REFERENCES AuthProviderType(AuthProviderTypeId) ON DELETE RESTRICT
 );
+
+-- Stores opaque subscription-feed tokens per user (multi-link support).
+CREATE TABLE SubscriptionToken (
+    SubscriptionTokenId SERIAL PRIMARY KEY,
+    UserId INTEGER NOT NULL,
+    Name VARCHAR(100) NULL,
+    TokenHash VARCHAR(64) NOT NULL UNIQUE,
+    Salt VARCHAR(255) NOT NULL,
+    CreatedAt BIGINT NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_subscriptiontoken_userid ON SubscriptionToken(UserId);
+CREATE INDEX idx_subscriptiontoken_tokenhash ON SubscriptionToken(TokenHash);
+
+-- Selected definitions for each subscription URL (includes pseudo definitions).
+CREATE TABLE SubscriptionDefinitionSelection (
+        SubscriptionTokenId INTEGER NOT NULL,
+        DefinitionId VARCHAR(256) NOT NULL,
+        CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (SubscriptionTokenId, DefinitionId),
+        FOREIGN KEY (SubscriptionTokenId) REFERENCES SubscriptionToken(SubscriptionTokenId) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_subdefselection_tokenid
+    ON SubscriptionDefinitionSelection(SubscriptionTokenId);
 
 -- Create Log table (server-side application logs; values are redacted/sanitized at write time)
 CREATE TABLE Log (
@@ -80,10 +118,10 @@ CREATE INDEX idx_log_level ON Log(Level);
 CREATE INDEX idx_log_requestid ON Log(RequestId);
 CREATE INDEX idx_log_userid ON Log(UserId);
 
--- Create Provider table
-CREATE TABLE Provider (
-    ProviderId SERIAL PRIMARY KEY,
-    ProviderTypeId INTEGER NOT NULL,
+-- Create CalendarProvider table
+CREATE TABLE CalendarProvider (
+    CalendarProviderId SERIAL PRIMARY KEY,
+    CalendarProviderTypeId INTEGER NOT NULL,
     Name VARCHAR(100),
     Email VARCHAR(255),
     UserId INTEGER NOT NULL,
@@ -95,7 +133,21 @@ CREATE TABLE Provider (
     Scopes VARCHAR(1000),
     Salt VARCHAR(255),
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
-    FOREIGN KEY (ProviderTypeId) REFERENCES ProviderType(ProviderTypeId) ON DELETE RESTRICT,
+    FOREIGN KEY (CalendarProviderTypeId) REFERENCES CalendarProviderType(CalendarProviderTypeId) ON DELETE RESTRICT,
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
+);
+
+-- Saved user locations for explicit timezone-aware generation/export.
+CREATE TABLE UserLocation (
+    UserLocationId SERIAL PRIMARY KEY,
+    UserId INTEGER NOT NULL,
+    Name VARCHAR(150) NOT NULL,
+    Latitude VARCHAR(50),
+    Longitude VARCHAR(50),
+    Timezone VARCHAR(100) NOT NULL,
+    IsDefault BOOLEAN NOT NULL DEFAULT FALSE,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
@@ -129,7 +181,6 @@ CREATE TABLE Provider (
 --     PrayerTypeId INTEGER NOT NULL,
 --     Description TEXT,
 --     Hide BOOLEAN NOT NULL DEFAULT FALSE,
---     IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
 --     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 --     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 --     FOREIGN KEY (PrayerConfigurationId) REFERENCES PrayerConfiguration(PrayerConfigurationId) ON DELETE CASCADE,
@@ -146,35 +197,31 @@ CREATE TABLE EventType (
 CREATE TABLE Event (
     EventId SERIAL PRIMARY KEY,
     Name VARCHAR(1024) NOT NULL,
-    StartDate TIMESTAMP NOT NULL,
-    EndDate TIMESTAMP NOT NULL,
+    StartDate TIMESTAMP NULL,
+    EndDate TIMESTAMP NULL,
     IsAllDay BOOLEAN NOT NULL DEFAULT FALSE,
     Description TEXT,
+    Location VARCHAR(1024),
     Hide BOOLEAN NOT NULL DEFAULT FALSE,
     EventTypeId INTEGER NOT NULL,
-    IsCustom BOOLEAN NOT NULL DEFAULT FALSE,
     IsTask BOOLEAN NOT NULL DEFAULT FALSE,
-    -- Stable string key for Islamic calendar events (e.g. "ramadan_begins_1447").
-    -- When present, used for upsert deduplication: the partial unique index below
-    -- prevents a user from syncing the same Islamic event twice.
-    IslamicEventKey VARCHAR(256),
-    -- The definition ID from islamicEvents.json (e.g. "ramadan_begins").
-    -- Null for ordinary user-created events.
+    HijriMonth INTEGER,
+    HijriDay INTEGER,
+    DurationDays INTEGER,
+    RRule VARCHAR(512) NULL,
+    EventTimezone VARCHAR(100) NULL,
     IslamicDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UserId INTEGER NOT NULL,
+    UserId INTEGER NULL,
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
     FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
 );
 
--- Partial unique index: only enforces uniqueness when IslamicEventKey is not NULL.
--- PostgreSQL treats NULLs as not equal in regular UNIQUE constraints, so two rows
--- with IslamicEventKey = NULL would not conflict — which is correct for user-created
--- events. The partial index targets only Islamic calendar events.
-CREATE UNIQUE INDEX idx_event_islamic_key
-    ON Event (UserId, IslamicEventKey)
-    WHERE IslamicEventKey IS NOT NULL;
+-- One Islamic series master per user + definition (see Sql.Migrations/002_islamic_event_masters.sql for dedup on existing DBs).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_event_user_islamic_def
+  ON event (userid, islamicdefinitionid)
+  WHERE islamicdefinitionid IS NOT NULL;
 
 -- User-level show/hide preferences for Islamic event definitions.
 -- Stores which definitions a user has hidden in the sidebar panel.
@@ -220,8 +267,15 @@ CREATE TABLE UserIslamicDefinitionPreference (
 -- CREATE TRIGGER update_event_updated_at BEFORE UPDATE ON Event
 --     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- -- Insert default provider types
-INSERT INTO ProviderType (Name) VALUES 
+-- Insert default auth provider types (authentication methods)
+INSERT INTO AuthProviderType (Name) VALUES 
+    ('Google'),
+    ('Microsoft'),
+    ('Apple'),
+    ('Email');
+
+-- Insert default calendar provider types (calendar integration providers)
+INSERT INTO CalendarProviderType (Name) VALUES 
     ('Google Calendar'),
     ('Microsoft Outlook'),
     ('Apple Calendar'),

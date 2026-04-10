@@ -3,18 +3,28 @@ export const AuthUser = Object.freeze({
     SAME_USER: 1, 
     ADMIN: 2, 
     VALID_USER: 4, // authenticated
-    GUEST_USER: 8,
     SUBSCRIBED_USER: 16 // additional features
 });
 
 /**
- * Enum-like mapping for ProviderType identifiers.
- * Backed by the PROVIDER_TYPE table (ProviderTypeId, Name).
+ * Enum-like mapping for AuthProviderType identifiers.
+ * Backed by the AuthProviderType table (AuthProviderTypeId, Name).
  */
-export const ProviderTypeId = Object.freeze({
+export const AuthProviderTypeId = Object.freeze({
   GOOGLE: 1,
   MICROSOFT: 2,
   APPLE: 3,
+  EMAIL: 4,
+});
+
+/**
+ * Enum-like mapping for CalendarProviderType identifiers.
+ * Backed by the CalendarProviderType table (CalendarProviderTypeId, Name).
+ */
+export const CalendarProviderTypeId = Object.freeze({
+  GOOGLE_CALENDAR: 1,
+  MICROSOFT_OUTLOOK: 2,
+  APPLE_CALENDAR: 3,
   CALCOM: 4,
 });
 
@@ -27,4 +37,8 @@ export const EventTypeId = Object.freeze({
   EID: 2,
   JUMAH: 3,
   CUSTOM: 4,
+});
+
+export const SubscriptionDefinitionId = Object.freeze({
+  INCLUDE_USER_CREATED_EVENTS: "include_user_created_events",
 });

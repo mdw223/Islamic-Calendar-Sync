@@ -7,14 +7,81 @@ import React, {
 } from "react";
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
+import OfflineClient from "../util/OfflineClient";
 import { setToken, clearToken } from "../util/AuthToken";
 
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
+  const [userLocations, setUserLocations] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [ready, setReady] = useState(false);
+
+  const refreshSubscriptions = useCallback(async () => {
+    if (!user?.isLoggedIn) {
+      setSubscriptions([]);
+      return [];
+    }
+    try {
+      const data = await APIClient.getSubscriptionUrls();
+      const items = data?.subscriptionUrls ?? [];
+      setSubscriptions(items);
+      return items;
+    } catch {
+      setSubscriptions([]);
+      return [];
+    }
+  }, [user?.isLoggedIn]);
+
+  const loadOfflineGuestState = useCallback(async () => {
+    const [offlineLocations, offlineProfile] = await Promise.all([
+      OfflineClient.getUserLocations(),
+      OfflineClient.getUserProfile(),
+    ]);
+    setUserLocations(offlineLocations?.userLocations ?? []);
+    setUser((prev) => {
+      const nextUser = createUser(prev?.toJSON?.() ?? defaultUser);
+      nextUser.updateProfile({
+        language: offlineProfile?.user?.language ?? null,
+        hanafi: !!offlineProfile?.user?.hanafi,
+        use24HourTime: !!offlineProfile?.user?.use24HourTime,
+      });
+      return nextUser;
+    });
+  }, []);
+
+  // Sync any IndexedDB data to the backend, then clear local stores.
+  const syncOfflineData = async () => {
+    try {
+      const hasData = await OfflineClient.hasData();
+      if (!hasData) return;
+      const data = await OfflineClient.getAllDataForSync();
+      if (!data) return;
+      const {
+        events,
+        preferences,
+        userLocations: offlineUserLocations,
+        userProfile,
+      } = data;
+      if (events.length > 0) await APIClient.syncOfflineEvents(events);
+      if (preferences.length > 0)
+        await APIClient.syncOfflinePreferences(preferences);
+      if (offlineUserLocations?.length > 0) {
+        await APIClient.syncOfflineUserLocations(offlineUserLocations);
+      }
+      if (userProfile) {
+        await APIClient.updateCurrentUser({
+          language: userProfile.language,
+          hanafi: userProfile.hanafi,
+          use24HourTime: userProfile.use24HourTime,
+        });
+      }
+      await OfflineClient.clearAll();
+    } catch (err) {
+      console.error("Offline sync failed:", err);
+    }
+  };
 
   // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
   useEffect(() => {
@@ -33,18 +100,35 @@ export const UserProvider = ({ children }) => {
     }
 
     let cancelled = false;
+
     APIClient.getCurrentUser()
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return;
         if (data?.success && data?.user) {
-          // Always set the user — even if isGuest is true (guest users now have a userId).
-          setUser(createUser(data.user));
+          await syncOfflineData();
+          const refreshed = await APIClient.getCurrentUser();
+          const nextUser = createUser(refreshed?.user ?? data.user);
+          setUser(nextUser);
+          setUserLocations(nextUser.userLocations ?? []);
+          try {
+            const subscriptionsData = await APIClient.getSubscriptionUrls();
+            setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+          } catch {
+            setSubscriptions([]);
+          }
         } else {
           setUser(createUser(defaultUser));
+          setSubscriptions([]);
+          await loadOfflineGuestState();
         }
       })
-      .catch((err) => {
-        if (!cancelled) setUser(createUser(defaultUser));
+      .catch(() => {
+        if (!cancelled) {
+          setUser(createUser(defaultUser));
+          setSubscriptions([]);
+          loadOfflineGuestState()
+            .catch(() => setUserLocations([]));
+        }
       })
       .finally(() => {
         if (!cancelled) setReady(true);
@@ -54,10 +138,18 @@ export const UserProvider = ({ children }) => {
     };
   }, []);
 
-  const login = useCallback((userData) => {
+  const login = useCallback(async (userData) => {
+    await syncOfflineData();
     const newUser = createUser(userData);
     newUser.login(userData);
     setUser(newUser);
+    setUserLocations(newUser.userLocations ?? []);
+    try {
+      const subscriptionsData = await APIClient.getSubscriptionUrls();
+      setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+    } catch {
+      setSubscriptions([]);
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -66,6 +158,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       clearToken();
       setUser(createUser(defaultUser));
+      setUserLocations([]);
       setSubscriptions([]);
     }
   }, []);
@@ -74,24 +167,123 @@ export const UserProvider = ({ children }) => {
     const updatedUser = createUser(user.toJSON());
     updatedUser.updateProfile(updates);
     setUser(updatedUser);
+    if (updates?.userLocations) {
+      setUserLocations(updates.userLocations);
+    }
   };
+
+  const refreshUser = useCallback(async () => {
+    const data = await APIClient.getCurrentUser();
+    if (data?.success && data?.user) {
+      const nextUser = createUser(data.user);
+      setUser(nextUser);
+      setUserLocations(nextUser.userLocations ?? []);
+      try {
+        const subscriptionsData = await APIClient.getSubscriptionUrls();
+        setSubscriptions(subscriptionsData?.subscriptionUrls ?? []);
+      } catch {
+        setSubscriptions([]);
+      }
+      return nextUser;
+    }
+    setSubscriptions([]);
+    return null;
+  }, []);
+
+  const saveUserProfile = useCallback(
+    async (updates) => {
+      if (user?.isLoggedIn) {
+        const data = await APIClient.updateCurrentUser(updates);
+        if (data?.success && data?.user) {
+          const nextUser = createUser(data.user);
+          nextUser.updateProfile({
+            userLocations,
+            authProviderName: user?.authProviderName ?? null,
+            authProviderTypeId: user?.authProviderTypeId ?? null,
+          });
+          setUser(nextUser);
+        } else {
+          updateUser(updates);
+        } 
+      } else {
+        await OfflineClient.updateUser(updates);
+        updateUser(updates);
+      }
+    },
+    [updateUser, user, userLocations],
+  );
+
+  const addUserLocation = useCallback(
+    async (location) => {
+      if (userLocations.length >= 3) {
+        throw new Error("You can save up to 3 locations.");
+      }
+
+      let created;
+      if (user?.isLoggedIn) {
+        const res = await APIClient.createUserLocation(location);
+        created = res?.userLocation;
+      } else {
+        const res = await OfflineClient.createUserLocation(location);
+        created = res?.userLocation;
+      }
+      const next = [...userLocations, created].slice(0, 3);
+      setUserLocations(next);
+      updateUser({ userLocations: next });
+      return created;
+    },
+    [updateUser, user?.isLoggedIn, userLocations],
+  );
+
+  const updateUserLocation = useCallback(
+    async (userLocationId, updates) => {
+      let updated;
+      if (user?.isLoggedIn) {
+        const res = await APIClient.updateUserLocation(userLocationId, updates);
+        updated = res?.userLocation;
+      } else {
+        const res = await OfflineClient.updateUserLocation(
+          userLocationId,
+          updates,
+        );
+        updated = res?.userLocation;
+      }
+      const next = userLocations.map((location) =>
+        location.userlocationid === userLocationId ||
+        location.userLocationId === userLocationId
+          ? updated
+          : location,
+      );
+      setUserLocations(next);
+      updateUser({ userLocations: next });
+      return updated;
+    },
+    [updateUser, user?.isLoggedIn, userLocations],
+  );
+
+  const removeUserLocation = useCallback(
+    async (userLocationId) => {
+      if (user?.isLoggedIn) {
+        await APIClient.deleteUserLocation(userLocationId);
+      } else {
+        await OfflineClient.deleteUserLocation(userLocationId);
+      }
+      const next = userLocations.filter(
+        (location) =>
+          location.userlocationid !== userLocationId &&
+          location.userLocationId !== userLocationId,
+      );
+      setUserLocations(next);
+      updateUser({ userLocations: next });
+    },
+    [updateUser, user?.isLoggedIn, userLocations],
+  );
 
   const updateUserPreferences = (preferences) => {
     const updatedUser = createUser(user.toJSON());
     updatedUser.updatePreferences(preferences);
     setUser(updatedUser);
   };
-
-  /**
-   * Explicitly create a guest session via POST /auth/guest.
-   * Called when the user clicks "Continue as Guest" in the auth prompt.
-   */
-  const startGuestSession = useCallback(async () => {
-    const data = await APIClient.createGuestSession();
-    if (data?.success && data?.user) {
-      setUser(createUser(data.user));
-    }
-  }, []);
 
   // True when the initial session check is done and no user was found.
   // Used to show the auth prompt modal.
@@ -108,9 +300,16 @@ export const UserProvider = ({ children }) => {
         updateUserPreferences,
         subscriptions,
         setSubscriptions,
+        userLocations,
+        setUserLocations,
+        refreshUser,
+        saveUserProfile,
+        addUserLocation,
+        updateUserLocation,
+        removeUserLocation,
+        refreshSubscriptions,
         ready,
         showAuthPrompt,
-        startGuestSession,
       }}
     >
       {children}

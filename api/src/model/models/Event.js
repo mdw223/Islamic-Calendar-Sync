@@ -7,16 +7,20 @@ export class Event {
   constructor() {
     this.eventId = null;
     this.name = null;
+    this.location = null;
     this.startDate = null;
     this.endDate = null;
     this.isAllDay = null;
     this.description = null;
     this.hide = null;
     this.eventTypeId = null;
-    this.isCustom = null;
     this.isTask = null;
-    this.islamicEventKey = null;
     this.islamicDefinitionId = null;
+    this.hijriMonth = null;
+    this.hijriDay = null;
+    this.durationDays = null;
+    this.rrule = null;
+    this.eventTimezone = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -31,17 +35,20 @@ export class Event {
   static fromRequest(body) {
     const event = new Event();
     event.name = body.name ?? null;
+    event.location = body.location ?? null;
     event.startDate = body.startDate ?? null;
     event.endDate = body.endDate ?? null;
     event.isAllDay = body.isAllDay ?? false;
     event.description = sanitizeDescription(body.description);
-    event.hide = body.hide ?? false;
     event.eventTypeId = body.eventTypeId ?? null;
-    event.isCustom = body.isCustom ?? false;
     event.isTask = body.isTask ?? false;
-    // Optional — present only for Islamic-calendar events from the frontend.
-    event.islamicEventKey = body.islamicEventKey ?? null;
     event.islamicDefinitionId = body.islamicDefinitionId ?? null;
+    event.hijriMonth = body.hijriMonth ?? null;
+    event.hijriDay = body.hijriDay ?? null;
+    event.durationDays = body.durationDays ?? null;
+    event.rrule = body.rrule ?? null;
+    event.eventTimezone = body.eventTimezone ?? null;
+    event.hide = body.hide ?? false
     return event;
   }
 
@@ -54,16 +61,20 @@ export class Event {
     const event = new Event();
     event.eventId = row.eventid;
     event.name = row.name;
+    event.location = row.location ?? null;
     event.startDate = row.startdate;
     event.endDate = row.enddate;
     event.isAllDay = row.isallday;
     event.description = row.description;
     event.hide = row.hide;
     event.eventTypeId = row.eventtypeid;
-    event.isCustom = row.iscustom;
     event.isTask = row.istask;
-    event.islamicEventKey = row.islamiceventkey ?? null;
     event.islamicDefinitionId = row.islamicdefinitionid ?? null;
+    event.hijriMonth = row.hijrimonth ?? null;
+    event.hijriDay = row.hijriday ?? null;
+    event.durationDays = row.durationdays ?? null;
+    event.rrule = row.rrule ?? null;
+    event.eventTimezone = row.eventtimezone ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -74,16 +85,20 @@ export class Event {
     return {
       eventId: this.eventId,
       name: this.name,
+      location: this.location,
       startDate: this.startDate,
       endDate: this.endDate,
       isAllDay: this.isAllDay,
       description: this.description,
       hide: this.hide,
       eventTypeId: this.eventTypeId,
-      isCustom: this.isCustom,
       isTask: this.isTask,
-      islamicEventKey: this.islamicEventKey,
       islamicDefinitionId: this.islamicDefinitionId,
+      hijriMonth: this.hijriMonth,
+      hijriDay: this.hijriDay,
+      durationDays: this.durationDays,
+      rrule: this.rrule,
+      eventTimezone: this.eventTimezone,
       userId: this.userId,
     }
   }

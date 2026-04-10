@@ -14,17 +14,17 @@ function fromApiRow(row) {
     updatedAt: row.updatedat ?? null,
     lastLogin: row.lastlogin ?? null,
     isAdmin: row.isadmin ?? false,
-    isGuest: row.isguest ?? false,
-    timezone: row.timezone ?? null,
-    latitude: row.latitude ?? null,
-    longitude: row.longitude ?? null,
     language: row.language ?? null,
-    eventConfigurationStart: row.eventconfigurationstart ?? null,
-    eventConfigurationEnd: row.eventconfigurationend ?? null,
+    generatedYearsStart: row.generatedyearsstart ?? null,
+    generatedYearsEnd: row.generatedyearsend ?? null,
     prayerConfigurationStart: row.prayerconfigurationstart ?? null,
     prayerConfigurationEnd: row.prayerconfigurationend ?? null,
     calculationMethodId: row.calculationmethodid ?? null,
     hanafi: row.hanafi ?? false,
+    use24HourTime: row.use24hourtime ?? row.use24HourTime ?? false,
+    authProviderTypeId: row.authprovidertypeid ?? null,
+    authProviderName: row.authprovidername ?? row.authProviderName ?? null,
+    userLocations: row.userlocations ?? row.userLocations ?? [],
   };
 }
 
@@ -37,19 +37,19 @@ export const defaultUser = {
   updatedAt: null,
   lastLogin: null,
   isAdmin: false,
-  isGuest: false,
-  timezone: null,
-  latitude: null,
-  longitude: null,
   language: null,
-  eventConfigurationStart: null,
-  eventConfigurationEnd: null,
+  generatedYearsStart: null,
+  generatedYearsEnd: null,
   prayerConfigurationStart: null,
   prayerConfigurationEnd: null,
   calculationMethodId: null,
   hanafi: false,
+  use24HourTime: false,
   notifications: true,
   emailUpdates: false,
+  authProviderTypeId: null,
+  authProviderName: null,
+  userLocations: [],
 };
 
 export class User {
@@ -64,17 +64,17 @@ export class User {
     this.updatedAt = normalized.updatedAt ?? null;
     this.lastLogin = normalized.lastLogin ?? null;
     this.isAdmin = normalized.isAdmin ?? false;
-    this.isGuest = normalized.isGuest ?? false;
-    this.timezone = normalized.timezone ?? null;
-    this.latitude = normalized.latitude ?? null;
-    this.longitude = normalized.longitude ?? null;
     this.language = normalized.language ?? null;
-    this.eventConfigurationStart = normalized.eventConfigurationStart ?? null;
-    this.eventConfigurationEnd = normalized.eventConfigurationEnd ?? null;
+    this.authProviderTypeId = normalized.authProviderTypeId ?? null;
+    this.authProviderName = normalized.authProviderName ?? null;
+    this.userLocations = normalized.userLocations ?? [];
+    this.generatedYearsStart = normalized.generatedYearsStart ?? null;
+    this.generatedYearsEnd = normalized.generatedYearsEnd ?? null;
     this.prayerConfigurationStart = normalized.prayerConfigurationStart ?? null;
     this.prayerConfigurationEnd = normalized.prayerConfigurationEnd ?? null;
     this.calculationMethodId = normalized.calculationMethodId ?? null;
     this.hanafi = normalized.hanafi ?? false;
+    this.use24HourTime = normalized.use24HourTime ?? false;
     this.notifications = normalized.preferences?.notifications ?? true;
     this.emailUpdates = normalized.preferences?.emailUpdates ?? false;
   }
@@ -96,15 +96,16 @@ export class User {
       this.updatedAt = normalized.updatedAt ?? this.updatedAt;
       this.lastLogin = normalized.lastLogin ?? new Date().toISOString();
       this.isAdmin = normalized.isAdmin ?? this.isAdmin;
-      this.isGuest = normalized.isGuest ?? false;
-      this.timezone = normalized.timezone ?? this.timezone;
-      this.latitude = normalized.latitude ?? this.latitude;
-      this.longitude = normalized.longitude ?? this.longitude;
       this.language = normalized.language ?? this.language;
-      this.eventConfigurationStart =
-        normalized.eventConfigurationStart ?? this.eventConfigurationStart;
-      this.eventConfigurationEnd =
-        normalized.eventConfigurationEnd ?? this.eventConfigurationEnd;
+      this.authProviderTypeId =
+        normalized.authProviderTypeId ?? this.authProviderTypeId;
+      this.authProviderName =
+        normalized.authProviderName ?? this.authProviderName;
+      this.userLocations = normalized.userLocations ?? this.userLocations;
+      this.generatedYearsStart =
+        normalized.generatedYearsStart ?? this.generatedYearsStart;
+      this.generatedYearsEnd =
+        normalized.generatedYearsEnd ?? this.generatedYearsEnd;
       this.prayerConfigurationStart =
         normalized.prayerConfigurationStart ?? this.prayerConfigurationStart;
       this.prayerConfigurationEnd =
@@ -112,6 +113,7 @@ export class User {
       this.calculationMethodId =
         normalized.calculationMethodId ?? this.calculationMethodId;
       this.hanafi = normalized.hanafi ?? this.hanafi;
+      this.use24HourTime = normalized.use24HourTime ?? this.use24HourTime;
     }
   }
 
@@ -131,16 +133,17 @@ export class User {
     const allowed = [
       "name",
       "email",
-      "timezone",
-      "latitude",
-      "longitude",
       "language",
-      "eventConfigurationStart",
-      "eventConfigurationEnd",
+      "authProviderTypeId",
+      "authProviderName",
+      "userLocations",
+      "generatedYearsStart",
+      "generatedYearsEnd",
       "prayerConfigurationStart",
       "prayerConfigurationEnd",
       "calculationMethodId",
       "hanafi",
+      "use24HourTime",
     ];
     allowed.forEach((key) => {
       if (key in updates) this[key] = updates[key];
@@ -157,17 +160,17 @@ export class User {
       updatedAt: this.updatedAt,
       lastLogin: this.lastLogin,
       isAdmin: this.isAdmin,
-      timezone: this.timezone,
-      latitude: this.latitude,
-      longitude: this.longitude,
       language: this.language,
-      eventConfigurationStart: this.eventConfigurationStart,
-      eventConfigurationEnd: this.eventConfigurationEnd,
+      authProviderTypeId: this.authProviderTypeId,
+      authProviderName: this.authProviderName,
+      userLocations: this.userLocations,
+      generatedYearsStart: this.generatedYearsStart,
+      generatedYearsEnd: this.generatedYearsEnd,
       prayerConfigurationStart: this.prayerConfigurationStart,
       prayerConfigurationEnd: this.prayerConfigurationEnd,
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
-      isGuest: this.isGuest,
+      use24HourTime: this.use24HourTime,
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,
@@ -177,7 +180,7 @@ export class User {
 
 export const createUser = (data = {}) => new User(data);
 
-export const createGuestUser = () => new User(defaultUser);
+export const createAnonymousUser = () => new User(defaultUser);
 
 /** Session-based: user is logged in if they have a userId (from API/cookie). */
 export const isUserLoggedIn = (user) =>
@@ -185,7 +188,7 @@ export const isUserLoggedIn = (user) =>
 
 export const userFromApiResponse = (response) => {
   const raw = response?.user ?? response;
-  return raw ? new User(raw) : createGuestUser();
+  return raw ? new User(raw) : createAnonymousUser();
 };
 
 export const validateUserEmail = (email) => {

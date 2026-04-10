@@ -4,7 +4,9 @@ export const appConfig = {
   PORT: process.env.API_PORT || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
   TRUST_PROXY: true,
-  BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000"
+  BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000",
+  SUBSCRIPTION_URL: process.env.SUBSCRIPTION_URL || process.env.APP_BASE_URL,
+  API_SECRET: process.env.API_SECRET || 'secret'
 };
 
 // JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.
@@ -38,11 +40,7 @@ export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-production",
 };
 
-// Guest session: HMAC-signed cookie for unauthenticated users. Set GUEST_SESSION_SECRET in production.
-export const guestSessionConfig = {
-  COOKIE_NAME: 'guestSessionId',
-  SECRET: process.env.GUEST_SESSION_SECRET || sessionConfig.SECRET,
-  COOKIE_MAX_AGE_MS: 30 * 24 * 60 * 60 * 1000, // 30 days
+export const subscriptionConfig = {
+  DEFAULT_RANGE_YEARS: Number(process.env.SUBSCRIPTION_DEFAULT_RANGE_YEARS) || 2,
+  MAX_ACTIVE_URLS: Number(process.env.SUBSCRIPTION_MAX_ACTIVE_URLS) || 3,
 };
-
-

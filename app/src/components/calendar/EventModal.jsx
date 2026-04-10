@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,12 +14,25 @@ import {
   Switch,
   TextField,
   Typography,
+  Checkbox,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import DOMPurify from "dompurify";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import {
+  DatePicker,
+  DateTimePicker,
+  LocalizationProvider,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import { useCalendar } from "../../contexts/CalendarContext";
-import { EventTypeId } from "../../constants";
+import { useUser } from "../../contexts/UserContext";
+import { EventTypeId } from "../../Constants";
 import RichTextEditor from "../RichTextEditor";
+import { buildRecurrenceRRule } from "../../util/recurrenceBuilder";
+import { parseUserRRuleToRecurrenceForm } from "../../util/parseUserRRule";
 
 /** Map enum entries to {id, name} pairs for the dropdown. */
 const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
@@ -30,15 +42,25 @@ const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
 
 const DEFAULT_FORM = {
   name: "",
+  location: "",
   startDate: "",
   endDate: "",
   isAllDay: false,
   eventTypeId: EventTypeId.RAMADAN,
-  isCustom: false,
   isTask: false,
   description: "",
   hide: false,
+  useLocalTimezone: true,
+  eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
+  recurrenceFreq: "none",
+  recurrenceInterval: 1,
+  recurrenceEndType: "never",
+  recurrenceUntil: "",
+  recurrenceCount: 10,
+  recurrenceWeekdays: [],
 };
+
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return "";
@@ -46,9 +68,31 @@ function toDatetimeLocal(isoString) {
   return isoString.slice(0, 16);
 }
 
+function parseFormDateTime(value) {
+  if (!value) return null;
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed : null;
+}
+
+function formatFormDateTime(value) {
+  return value?.isValid?.() ? value.format("YYYY-MM-DDTHH:mm") : "";
+}
+
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent } = useCalendar();
+  const { addEvent, updateEvent, removeEvent, refreshEventData } =
+    useCalendar();
+  const { userLocations, user } = useUser();
+  const navigate = useNavigate();
   const isEdit = Boolean(event);
+  const isIslamicEdit = isEdit && Boolean(event?.islamicDefinitionId);
+  const localTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+  const locationTimezoneOptions = (userLocations ?? [])
+    .map((location) => ({
+      label: location?.name ?? location?.timezone,
+      value: location?.timezone,
+    }))
+    .filter((option) => !!option.value);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -58,17 +102,38 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     if (open) {
       setError(null);
       if (isEdit) {
-        setForm({
-          name: event.name ?? "",
-          startDate: toDatetimeLocal(event.startDate),
-          endDate: toDatetimeLocal(event.endDate),
-          isAllDay: event.isAllDay ?? false,
-          eventTypeId: event.eventTypeId ?? EventTypeId.CUSTOM,
-          isCustom: event.isCustom ?? false,
-          isTask: event.isTask ?? false,
-          description: event.description ?? "",
-          hide: event.hide ?? false,
-        });
+        const base = {
+          name: event?.name ?? "",
+          location: event?.location ?? "",
+          startDate: toDatetimeLocal(event?.startDate),
+          endDate: toDatetimeLocal(event?.endDate),
+          isAllDay: event?.isAllDay ?? false,
+          eventTypeId: event?.eventTypeId ?? EventTypeId.CUSTOM,
+          isTask: event?.isTask ?? false,
+          description: event?.description ?? "",
+          hide: event?.hide ?? false,
+          useLocalTimezone:
+            !event?.eventTimezone || event.eventTimezone === localTimezone,
+          eventTimezone: event?.eventTimezone ?? localTimezone,
+          recurrenceFreq: "none",
+          recurrenceInterval: 1,
+          recurrenceEndType: "never",
+          recurrenceUntil: "",
+          recurrenceCount: 10,
+          recurrenceWeekdays: [],
+        };
+        if (!event?.islamicDefinitionId && event?.rrule) {
+          const parsed = parseUserRRuleToRecurrenceForm(event.rrule);
+          if (parsed) {
+            base.recurrenceFreq = parsed.recurrenceFreq;
+            base.recurrenceInterval = parsed.recurrenceInterval;
+            base.recurrenceEndType = parsed.recurrenceEndType;
+            base.recurrenceUntil = parsed.recurrenceUntil;
+            base.recurrenceCount = parsed.recurrenceCount;
+            base.recurrenceWeekdays = parsed.recurrenceWeekdays;
+          }
+        }
+        setForm(base);
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
         // "YYYY-MM-DDThh:mm" (from WeekView / DayView slot clicks).
@@ -90,10 +155,20 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           : toDatetimeLocal(
               new Date(Date.now() + 60 * 60 * 1000).toISOString(),
             );
-        setForm({ ...DEFAULT_FORM, startDate: base, endDate: end });
+        const startAsDate = initialDate
+          ? new Date(hasTime ? initialDate : `${initialDate}T09:00`)
+          : new Date();
+        setForm({
+          ...DEFAULT_FORM,
+          startDate: base,
+          endDate: end,
+          useLocalTimezone: true,
+          eventTimezone: localTimezone,
+          recurrenceWeekdays: [startAsDate.getDay()],
+        });
       }
     }
-  }, [open, isEdit, event, initialDate]);
+  }, [open, isEdit, event, initialDate, localTimezone]);
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -105,11 +180,24 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       setError("Name is required.");
       return;
     }
+    if (form.isAllDay) {
+      const startDay = (form.startDate ?? "").slice(0, 10);
+      const endDay = (form.endDate ?? "").slice(0, 10);
+      if (startDay && endDay && endDay < startDay) {
+        setError("End date must be on or after start date for all-day events.");
+        return;
+      }
+    }
     setError(null);
     setSaving(true);
     try {
       const payload = {
-        ...form,
+        name: form.name,
+        location: form.location,
+        isAllDay: form.isAllDay,
+        eventTypeId: form.eventTypeId,
+        isTask: form.isTask,
+        hide: form.hide,
         description: form.description
           ? DOMPurify.sanitize(form.description)
           : "",
@@ -117,11 +205,42 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           ? new Date(form.startDate).toISOString()
           : null,
         endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
+        eventTimezone: form.useLocalTimezone
+          ? localTimezone
+          : form.eventTimezone,
       };
+
+      if (!isIslamicEdit && form.startDate) {
+        const dt = new Date(form.startDate);
+        const rrule = buildRecurrenceRRule(
+          {
+            freq: form.recurrenceFreq,
+            interval: form.recurrenceInterval,
+            byweekday: form.recurrenceWeekdays,
+            endType: form.recurrenceEndType,
+            untilDate: form.recurrenceUntil,
+            count: form.recurrenceCount,
+          },
+          dt,
+        );
+        payload.rrule = rrule;
+      }
+
+      if (isIslamicEdit) {
+        delete payload.startDate;
+        delete payload.endDate;
+      }
+
       if (isEdit) {
-        await updateEvent(event.eventId, payload);
+        const savedEvent = await updateEvent(event.eventId, payload);
+        if (savedEvent?.eventId) {
+          void refreshEventData(savedEvent.eventId).catch(() => {});
+        }
       } else {
-        await addEvent(payload);
+        const savedEvent = await addEvent(payload);
+        if (savedEvent?.eventId) {
+          void refreshEventData(savedEvent.eventId).catch(() => {});
+        }
       }
       onClose();
     } catch (err) {
@@ -171,6 +290,14 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             inputProps={{ maxLength: 1024 }}
           />
 
+          <TextField
+            label="Location"
+            value={form.location}
+            onChange={(e) => handleChange("location", e.target.value)}
+            fullWidth
+            inputProps={{ maxLength: 1024 }}
+          />
+
           <FormControlLabel
             control={
               <Switch
@@ -181,39 +308,281 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             label="All Day"
           />
 
-          <TextField
-            label="Start"
-            type={form.isAllDay ? "date" : "datetime-local"}
-            value={
-              form.isAllDay
-                ? (form.startDate || "").slice(0, 10)
-                : form.startDate
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.useLocalTimezone}
+                onChange={(e) =>
+                  handleChange("useLocalTimezone", e.target.checked)
+                }
+              />
             }
-            onChange={(e) =>
-              handleChange(
-                "startDate",
-                form.isAllDay ? `${e.target.value}T00:00` : e.target.value,
-              )
-            }
-            fullWidth
-            InputLabelProps={{ shrink: true }}
+            label={`Use local timezone (${localTimezone})`}
           />
 
-          <TextField
-            label="End"
-            type={form.isAllDay ? "date" : "datetime-local"}
-            value={
-              form.isAllDay ? (form.endDate || "").slice(0, 10) : form.endDate
-            }
-            onChange={(e) =>
-              handleChange(
-                "endDate",
-                form.isAllDay ? `${e.target.value}T23:59` : e.target.value,
-              )
-            }
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-          />
+          {!form.useLocalTimezone && (
+            <FormControl fullWidth>
+              <InputLabel id="event-timezone-label">Timezone</InputLabel>
+              <Select
+                labelId="event-timezone-label"
+                label="Timezone"
+                value={form.eventTimezone}
+                onChange={(e) => handleChange("eventTimezone", e.target.value)}
+                disabled={locationTimezoneOptions.length === 0}
+              >
+                {locationTimezoneOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {!form.useLocalTimezone &&
+            (!userLocations || userLocations.length === 0) && (
+              <Button size="small" onClick={() => navigate("/settings")}>
+                Add saved locations in Settings
+              </Button>
+            )}
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            {form.isAllDay ? (
+              <>
+                <DatePicker
+                  label="Start"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) =>
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T00:00` : "",
+                    )
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DatePicker
+                  label="End"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) =>
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T23:59` : "",
+                    )
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            ) : user?.use24HourTime ? (
+              <>
+                <DatePicker
+                  label="Start Date"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) => {
+                    const timePart =
+                      parseFormDateTime(form.startDate)?.format("HH:mm") ?? "00:00";
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T${timePart}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <TimePicker
+                  label="Start Time (24-hour)"
+                  ampm={false}
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) => {
+                    const datePart =
+                      parseFormDateTime(form.startDate)?.format("YYYY-MM-DD") ?? "";
+                    handleChange(
+                      "startDate",
+                      value?.isValid?.() && datePart
+                        ? `${datePart}T${value.format("HH:mm")}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DatePicker
+                  label="End Date"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) => {
+                    const timePart =
+                      parseFormDateTime(form.endDate)?.format("HH:mm") ?? "00:00";
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T${timePart}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <TimePicker
+                  label="End Time (24-hour)"
+                  ampm={false}
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) => {
+                    const datePart =
+                      parseFormDateTime(form.endDate)?.format("YYYY-MM-DD") ?? "";
+                    handleChange(
+                      "endDate",
+                      value?.isValid?.() && datePart
+                        ? `${datePart}T${value.format("HH:mm")}`
+                        : "",
+                    );
+                  }}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            ) : (
+              <>
+                <DateTimePicker
+                  label="Start"
+                  value={parseFormDateTime(form.startDate)}
+                  onChange={(value) =>
+                    handleChange("startDate", formatFormDateTime(value))
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DateTimePicker
+                  label="End"
+                  value={parseFormDateTime(form.endDate)}
+                  onChange={(value) =>
+                    handleChange("endDate", formatFormDateTime(value))
+                  }
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </>
+            )}
+          </LocalizationProvider>
+
+          {!isIslamicEdit && (
+            <>
+              <Typography variant="subtitle2" color="text.secondary">
+                Recurrence
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel id="recurrence-freq-label">Repeat</InputLabel>
+                <Select
+                  labelId="recurrence-freq-label"
+                  label="Repeat"
+                  value={form.recurrenceFreq}
+                  onChange={(e) =>
+                    handleChange("recurrenceFreq", e.target.value)
+                  }
+                >
+                  <MenuItem value="none">Does not repeat</MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+
+              {form.recurrenceFreq !== "none" && (
+                <TextField
+                  label="Repeat every (interval)"
+                  type="number"
+                  inputProps={{ min: 1, max: 999 }}
+                  value={form.recurrenceInterval}
+                  onChange={(e) =>
+                    handleChange(
+                      "recurrenceInterval",
+                      Math.max(1, parseInt(e.target.value, 10) || 1),
+                    )
+                  }
+                  fullWidth
+                />
+              )}
+
+              {form.recurrenceFreq === "weekly" && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {WEEKDAY_LABELS.map((label, dayIndex) => (
+                    <FormControlLabel
+                      key={label}
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={form.recurrenceWeekdays.includes(dayIndex)}
+                          onChange={() => {
+                            setForm((prev) => {
+                              const set = new Set(prev.recurrenceWeekdays);
+                              if (set.has(dayIndex)) set.delete(dayIndex);
+                              else set.add(dayIndex);
+                              let next = [...set].sort((a, b) => a - b);
+                              if (next.length === 0) next = [dayIndex];
+                              return {
+                                ...prev,
+                                recurrenceWeekdays: next,
+                              };
+                            });
+                          }}
+                        />
+                      }
+                      label={label}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              {form.recurrenceFreq !== "none" && (
+                <>
+                  <FormControl fullWidth>
+                    <InputLabel id="recurrence-end-label">Ends</InputLabel>
+                    <Select
+                      labelId="recurrence-end-label"
+                      label="Ends"
+                      value={form.recurrenceEndType}
+                      onChange={(e) =>
+                        handleChange("recurrenceEndType", e.target.value)
+                      }
+                    >
+                      <MenuItem value="never">Never</MenuItem>
+                      <MenuItem value="until">On date</MenuItem>
+                      <MenuItem value="count">After N occurrences</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {form.recurrenceEndType === "until" && (
+                    <TextField
+                      label="End repeat on"
+                      type="date"
+                      value={form.recurrenceUntil}
+                      onChange={(e) =>
+                        handleChange("recurrenceUntil", e.target.value)
+                      }
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                  {form.recurrenceEndType === "count" && (
+                    <TextField
+                      label="Number of occurrences"
+                      type="number"
+                      inputProps={{ min: 1, max: 999 }}
+                      value={form.recurrenceCount}
+                      onChange={(e) =>
+                        handleChange(
+                          "recurrenceCount",
+                          Math.max(1, parseInt(e.target.value, 10) || 1),
+                        )
+                      }
+                      fullWidth
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {isIslamicEdit && (
+            <Typography variant="caption" color="text.secondary">
+              Dates and Hijri recurrence for this event are managed when you
+              generate Islamic calendar years. You can still edit name,
+              description, and visibility.
+            </Typography>
+          )}
 
           <FormControl fullWidth>
             <InputLabel id="event-type-label">Event Type</InputLabel>
@@ -235,15 +604,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={form.isCustom}
-                  onChange={(e) => handleChange("isCustom", e.target.checked)}
-                />
-              }
-              label="Custom"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
                   checked={form.isTask}
                   onChange={(e) => handleChange("isTask", e.target.checked)}
                 />
@@ -261,6 +621,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               Description
             </Typography>
             <RichTextEditor
+              key={isEdit ? `event-${event?.eventId}` : "new-event"}
               value={form.description}
               onChange={(html) => handleChange("description", html)}
               placeholder="Add a description…"

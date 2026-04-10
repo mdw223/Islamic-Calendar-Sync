@@ -30,7 +30,7 @@ import {
 } from "@mui/material";
 import { Calendar, Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import { useCalendar } from "../contexts/CalendarContext";
-import { readLS, writeLS } from "../util/localStorage";
+import { readLS, writeLS } from "../util/LocalStorage";
 import EventModal from "./calendar/EventModal";
 
 // ── Data type registry ────────────────────────────────────────────────────

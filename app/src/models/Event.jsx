@@ -1,4 +1,4 @@
-import { EventTypeId } from "../constants";
+import { EventTypeId } from "../Constants";
 
 // ── Allowed eventTypeId values ──────────────────────────────────────────────
 const VALID_EVENT_TYPE_IDS = new Set(Object.values(EventTypeId));
@@ -23,16 +23,20 @@ function toDate(v) {
 export const defaultEvent = Object.freeze({
   eventId: null,
   name: null,
+  location: null,
   startDate: null,
   endDate: null,
   isAllDay: true,
   description: null,
   hide: false,
   eventTypeId: EventTypeId.CUSTOM,
-  isCustom: false,
   isTask: false,
-  islamicEventKey: null,
   islamicDefinitionId: null,
+  hijriMonth: null,
+  hijriDay: null,
+  durationDays: null,
+  rrule: null,
+  eventTimezone: null,
 });
 
 // ── Normalise a raw API row (lowercase keys) ───────────────────────────────
@@ -42,16 +46,20 @@ export function fromApiRow(row) {
   return {
     eventId: row.eventid ?? null,
     name: row.name ?? null,
+    location: row.location ?? null,
     startDate: row.startdate ?? null,
     endDate: row.enddate ?? null,
     isAllDay: row.isallday ?? true,
     description: row.description ?? null,
     hide: row.hide ?? false,
     eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
-    isCustom: row.iscustom ?? false,
     isTask: row.istask ?? false,
-    islamicEventKey: row.islamiceventkey ?? null,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
+    hijriMonth: row.hijrimonth ?? null,
+    hijriDay: row.hijriday ?? null,
+    durationDays: row.durationdays ?? null,
+    rrule: row.rrule ?? null,
+    eventTimezone: row.eventtimezone ?? null,
   };
 }
 
@@ -70,16 +78,20 @@ export class Event {
     // ── Assign fields ────────────────────────────────────────────────────
     this.eventId = normalized.eventId ?? null;
     this.name = normalized.name ?? null;
+    this.location = normalized.location ?? null;
     this.startDate = normalized.startDate ?? null;
     this.endDate = normalized.endDate ?? null;
     this.isAllDay = normalized.isAllDay ?? true;
     this.description = normalized.description ?? null;
     this.hide = normalized.hide ?? false;
     this.eventTypeId = normalized.eventTypeId ?? EventTypeId.CUSTOM;
-    this.isCustom = normalized.isCustom ?? false;
     this.isTask = normalized.isTask ?? false;
-    this.islamicEventKey = normalized.islamicEventKey ?? null;
+    this.hijriMonth = normalized.hijriMonth ?? null;
+    this.hijriDay = normalized.hijriDay ?? null;
+    this.durationDays = normalized.durationDays ?? null;
+    this.rrule = normalized.rrule ?? null;
     this.islamicDefinitionId = normalized.islamicDefinitionId ?? null;
+    this.eventTimezone = normalized.eventTimezone ?? null;
   }
 
   // ── Validation ─────────────────────────────────────────────────────────
@@ -120,7 +132,7 @@ export class Event {
     }
 
     // Boolean coercion sanity — catch accidental string / number values.
-    for (const flag of ["isAllDay", "hide", "isCustom", "isTask"]) {
+    for (const flag of ["isAllDay", "hide", "isTask"]) {
       if (typeof this[flag] !== "boolean") {
         errors.push(`${flag} must be a boolean, got ${typeof this[flag]}.`);
       }
@@ -157,16 +169,20 @@ export class Event {
     return {
       eventId: this.eventId,
       name: this.name,
+      location: this.location,
       startDate: this.startDate,
       endDate: this.endDate,
       isAllDay: this.isAllDay,
       description: this.description,
       hide: this.hide,
       eventTypeId: this.eventTypeId,
-      isCustom: this.isCustom,
       isTask: this.isTask,
-      islamicEventKey: this.islamicEventKey,
       islamicDefinitionId: this.islamicDefinitionId,
+      hijriMonth: this.hijriMonth,
+      hijriDay: this.hijriDay,
+      durationDays: this.durationDays,
+      rrule: this.rrule,
+      eventTimezone: this.eventTimezone,
     };
   }
 }

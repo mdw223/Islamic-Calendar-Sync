@@ -1,4 +1,9 @@
+import crypto from "crypto";
 import { AuthUser } from "../Constants.js";
+import UserDOA from "../model/db/doa/UserDOA.js";
+import SubscriptionTokenDOA from "../model/db/doa/SubscriptionTokenDOA.js";
+import jwt from "jsonwebtoken";
+import {appConfig} from '../Config.js'
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
@@ -28,9 +33,6 @@ export function AuthMiddleware(req, res, next) {
     userRoles |= AuthUser.VALID_USER;
     if (user.isAdmin) {
       userRoles |= AuthUser.ADMIN;
-    }
-    if (user.isGuest) {
-      userRoles |= AuthUser.GUEST_USER;
     }
     if (requestedUserId && user.userId == requestedUserId) {
       userRoles |= AuthUser.SAME_USER;
@@ -83,5 +85,58 @@ export function Auth(allowedRoles) {
       })
     }
 };
+
+/**
+ * GET /subscription/events?token=<opaque hex>: hash token, load user, reject if missing/revoked.
+ */
+export async function RequireSubscriptionToken(req, res, next) {
+  try {
+    const token = req.query.token;
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    const decoded = jwt.decode(token);
+    const userId = decoded?.userId;
+    if (!userId) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token, "utf8")
+      .digest("hex");
+    const subscription = await SubscriptionTokenDOA.findActiveByUserIdAndHash(
+      userId,
+      tokenHash,
+    );
+    if (!subscription) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    const tokenSecret = appConfig.API_SECRET + subscription.salt;
+    const verified = jwt.verify(token, tokenSecret);
+    if (!verified?.userId || verified.userId !== userId) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    const user = await UserDOA.findById(verified.userId);
+    if (!user) {
+      return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+    }
+
+    req.user = user;
+    req.subscriptionToken = subscription;
+    return next();
+  } catch {
+    return res.status(403).json({ success: false, message: "Invalid or revoked token" });
+  }
+}
+
+export function GenerateToken(user, salt) {
+  const tokenSecret = appConfig.API_SECRET + salt;
+  return jwt.sign({ userId: user.userId }, tokenSecret);
+}
+
 
 export default Auth;

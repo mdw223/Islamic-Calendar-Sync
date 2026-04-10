@@ -26,16 +26,21 @@ Islamic Calendar Sync is designed to help users generate and customize prayer ti
 
 Can login via email or OAuth, configure settings, generate personal Islamic calendar events and prayer times to their calendar provider.
 Users contain an event configuration such as the range of dates to add Islamic calendar events. Users can specify start and end dates for the range they want to add holidays in their calendar provider.
-Users contain location and language settings (`Timezone`, `Latitude`, `Longitude`, `Language`) stored directly on the user record to determine prayer time accuracy. Always asks the user to confirm their current location and language.
+Users contain language settings on the user record. Location/timezone settings are now stored in `UserLocation` records (up to 3 saved locations per user) and selected per feature flow.
 Users contain a prayer configuration for specifying the range for which to generate prayer times, method of Asr calculation, method of prayer time calculation (Hanafi), and other configuration options.
+Users contain authentication provider information (`AuthProviderTypeId`) to specify which authentication method the user account uses (Google, Microsoft, Apple, or Email). OAuth credentials (access tokens, refresh tokens, expiry, scopes) are stored directly on the User for authentication purposes.
 
-### Provider
+### AuthProviderType
 
-The calendar provider a user uses for OAuth or creating events via API. Includes tokens, email, etc. A user is not required to have a calendar provider unless they want to use OAuth or use the API to create events.
+The authentication method used by a user to log in (enum): Google, Microsoft, Apple, or Email. This specifies how the user authenticates with the application, separate from calendar integration providers.
 
-### ProviderType
+### CalendarProvider
 
-The type of calendar provider like Google, Outlook, etc. (enum).
+The calendar provider a user connects for calendar integration via API. Includes calendar-specific tokens, email, etc. A user is not required to have a calendar provider unless they want to use the API to create events in an external calendar system. This is separate from authentication - used specifically for calendar API access.
+
+### CalendarProviderType
+
+The type of calendar provider like Google Calendar, Microsoft Outlook, Apple Calendar, etc. (enum).
 
 ### Calendar
 
@@ -56,6 +61,11 @@ All the types of prayers as enum (Sunnah, Fard, Taraweeh, etc.).
 ### Event
 
 An Islamic calendar event or task that has start and end date, description with virtues that are customizable. This can be Sunnah fasts, Ramadan, white days, etc. Users can customize these events, and they can save them to the back end. Users can also make custom events like Qur'an.
+Event now supports `EventTimezone` to preserve the timezone context used for generation and export.
+
+### UserLocation
+
+Saved location profile for a user (name + coordinates + IANA timezone). Used to explicitly select where event generation/export should be anchored instead of relying on device timezone.
 
 ### EventType
 
@@ -81,9 +91,6 @@ erDiagram
         timestamp UpdatedAt
         timestamp LastLogin
         boolean IsAdmin
-        varchar Timezone
-        varchar Latitude
-        varchar Longitude
         varchar Language
         timestamp EventConfigurationStart
         timestamp EventConfigurationEnd
@@ -94,6 +101,38 @@ erDiagram
         varchar Salt
         boolean EmailUpdates
         boolean Notifications
+        int AuthProviderTypeId FK
+        varchar AccessToken
+        varchar RefreshToken
+        timestamp ExpiresAt
+        varchar Scopes
+        boolean IsExpired
+    }
+
+    AuthProviderType {
+        int AuthProviderTypeId PK
+        varchar Name
+    }
+
+    CalendarProviderType {
+        int CalendarProviderTypeId PK
+        varchar Name
+    }
+
+    CalendarProvider {
+        int CalendarProviderId PK
+        int CalendarProviderTypeId FK
+        varchar Name
+        varchar Email
+        int UserId FK
+        varchar AccessToken
+        varchar RefreshToken
+        timestamp CreatedAt
+        timestamp UpdatedAt
+        timestamp ExpiresAt
+        varchar Scopes
+        varchar Salt
+        boolean IsActive
     }
 
     Log {
@@ -120,27 +159,6 @@ erDiagram
         varchar Name
     }
 
-    ProviderType {
-        int ProviderTypeId PK
-        varchar Name
-    }
-
-    Provider {
-        int ProviderId PK
-        int ProviderTypeId FK
-        varchar Name
-        varchar Email
-        int UserId FK
-        varchar AccessToken
-        varchar RefreshToken
-        timestamp CreatedAt
-        timestamp UpdatedAt
-        timestamp ExpiresAt
-        varchar Scopes
-        varchar Salt
-        boolean IsActive
-    }
-
     EventType {
         int EventTypeId PK
         varchar Name
@@ -151,15 +169,27 @@ erDiagram
         varchar Name
         timestamp StartDate
         timestamp EndDate
+        varchar EventTimezone
         boolean IsAllDay
         text Description
         boolean Hide
         int EventTypeId FK
-        boolean IsCustom
         boolean IsTask
         timestamp CreatedAt
         timestamp UpdatedAt
         int UserId FK
+    }
+
+    UserLocation {
+        int UserLocationId PK
+        int UserId FK
+        varchar Name
+        varchar Latitude
+        varchar Longitude
+        varchar Timezone
+        boolean IsDefault
+        timestamp CreatedAt
+        timestamp UpdatedAt
     }
 
     %% Commented out in init.sql — planned for future implementation
@@ -167,7 +197,7 @@ erDiagram
         int CalendarId PK
         varchar Name
         varchar IdentifierId
-        int ProviderId FK
+        int CalendarProviderId FK
         timestamp CreatedAt
         timestamp UpdatedAt
         varchar Color
@@ -189,18 +219,19 @@ erDiagram
         int PrayerTypeId FK
         text Description
         boolean Hide
-        boolean IsCustom
         timestamp CreatedAt
         timestamp UpdatedAt
     }
 
-    User ||--o{ Provider : "connects to"
-    Provider }o--|| ProviderType : "is type"
+    User }o--|| AuthProviderType : "authenticates with"
+    User ||--o{ CalendarProvider : "connects to"
+    CalendarProvider }o--|| CalendarProviderType : "is type"
     User }o--|| CalculationMethod : "uses"
     User ||--o{ Event : "generates"
+    User ||--o{ UserLocation : "saves"
     Event }o--|| EventType : "is type"
     User ||--o{ Log : "produces"
-    Provider ||--o{ Calendar : "contains"
+    CalendarProvider ||--o{ Calendar : "contains"
     User ||--o{ Prayer : "generates"
     Prayer }o--|| PrayerType : "is type"
 ```
@@ -209,32 +240,17 @@ erDiagram
 
 ## 4. Entity Interaction Flow
 
-1. **User** authenticates and creates/updates their profile, optionally connecting with a **Provider**, then specifies language and location in **Settings**.
+1. **User** authenticates via **AuthProviderType** (Google, Microsoft, Apple, or Email). OAuth credentials (access tokens, refresh tokens) are stored directly on the **User** for authentication purposes. User can optionally connect with a **CalendarProvider** for calendar API integration (separate from authentication), then specifies language and location in **Settings**.
 
 2. **User** triggers calendar generation which creates **Prayer** times and **Event** entries based on their configurations.
 
 3. **User** can preview **Prayer** times and **Events** before final export.
 
-4. Islamic calendar events from **Event** and prayer times from **Prayer** are exported to their **Calendar** via **Provider**.
+4. Islamic calendar events from **Event** and prayer times from **Prayer** are exported to their **Calendar** via **CalendarProvider**.
 
 ---
 
 ## 5. User Roles and Permissions
-
-### Guest User
-
-**Description**: Unauthenticated user with limited features and temporary data storage.
-
-**Permissions**:
-
-- Can configure settings, event and prayer configurations temporarily
-- Can generate and edit prayer times and Islamic calendar events
-- Preview calendar generation (but not with calendar provider events)
-- Download ICS files (limited to current session)
-- Generate a URL for calendar subscription
-- **Cannot** save settings or create custom events permanently
-
----
 
 ### Registered User
 
@@ -242,12 +258,11 @@ erDiagram
 
 **Permissions**:
 
-- Everything Guest User can do
 - Save prayer settings permanently
 - Create and manage custom events and prayers
 - Create calendar subscriptions
-- Preview calendar with the events from their provider for scheduling
-- Connect to calendar providers via OAuth
+- Preview calendar with the events from their calendar provider for scheduling
+- Connect to calendar providers via OAuth for calendar API integration
 - Access personal dashboard and history
 - Persist all configurations and customizations
 
@@ -275,5 +290,6 @@ erDiagram
 
 - **Flexibility**: Users can choose to use the system without connecting a calendar provider by downloading ICS files or using subscription URLs.
 - **Customization**: Both prayers and events can be customized with descriptions, times, and visibility settings.
-- **Privacy**: Guest users have temporary storage, while registered users have persistent, secure storage of their preferences.
-- **Scalability**: The enum-based approach for types allows easy addition of new prayer types, event types, and provider types.
+- **Privacy**: Offline guest mode uses temporary browser-local storage, while registered users have persistent, server-backed storage of their preferences.
+- **Scalability**: The enum-based approach for types allows easy addition of new prayer types, event types, authentication provider types, and calendar provider types.
+- **Separation of Concerns**: Authentication (via AuthProviderType) is separate from calendar integration (via CalendarProvider). OAuth credentials are stored on the User for authentication, while CalendarProvider is specifically for calendar API access.

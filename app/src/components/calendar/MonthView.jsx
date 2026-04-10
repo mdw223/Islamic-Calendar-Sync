@@ -1,8 +1,14 @@
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES } from "../../constants";
-import { toDateKey, sameDay, EventChip } from "./CalendarHelpers.jsx";
-import { getHijriParts } from "../../util/hijriUtils";
+import { DAY_NAMES } from "../../Constants";
+import {
+  toDateKey,
+  sameDay,
+  EventChip,
+  getEventDayKeysInRange,
+  eventIsAllDayMultiDay,
+} from "./CalendarHelpers.jsx";
+import { getHijriParts } from "../../util/HijriUtils";
 import { Moon } from "lucide-react";
 
 /**
@@ -40,13 +46,134 @@ export default function MonthView({
 
   const eventsByDay = useMemo(() => {
     const map = {};
-    events.forEach((ev) => {
-      const key = (ev.startDate ?? "").slice(0, 10);
-      if (!map[key]) map[key] = [];
-      map[key].push(ev);
+    const rangeStartKey = toDateKey(new Date(year, month, 1));
+    const rangeEndKey = toDateKey(new Date(year, month + 1, 0));
+    const eventsForDayChips = events.filter((ev) => !eventIsAllDayMultiDay(ev));
+    eventsForDayChips.forEach((ev) => {
+      const dayKeys = getEventDayKeysInRange(ev, rangeStartKey, rangeEndKey);
+      dayKeys.forEach((key) => {
+        if (!map[key]) map[key] = [];
+        map[key].push(ev);
+      });
     });
     return map;
-  }, [events]);
+  }, [events, year, month]);
+
+  const { connectedSegments, spanLaneCountByRow } = useMemo(() => {
+    const rangeStartKey = toDateKey(new Date(year, month, 1));
+    const rangeEndKey = toDateKey(new Date(year, month + 1, 0));
+
+    // Maps each dateKey within the month to its grid coordinates.
+    const dayKeyToCell = {};
+    for (let d = 1; d <= days; d++) {
+      const cellIndex = startOffset + (d - 1);
+      const rowIndex = Math.floor(cellIndex / 7);
+      const colIndex = cellIndex % 7;
+      dayKeyToCell[toDateKey(new Date(year, month, d))] = {
+        rowIndex,
+        colIndex,
+      };
+    }
+
+    const segments = [];
+    const allDayMultiDayEvents = events.filter((ev) =>
+      eventIsAllDayMultiDay(ev),
+    );
+
+    allDayMultiDayEvents.forEach((ev) => {
+      const overlapKeys = getEventDayKeysInRange(
+        ev,
+        rangeStartKey,
+        rangeEndKey,
+      );
+
+      let current = null;
+      overlapKeys.forEach((key) => {
+        const cell = dayKeyToCell[key];
+        if (!cell) return;
+
+        if (!current) {
+          current = {
+            event: ev,
+            rowIndex: cell.rowIndex,
+            startColIndex: cell.colIndex,
+            endColIndex: cell.colIndex,
+          };
+          return;
+        }
+
+        const isSameRowConsecutive =
+          cell.rowIndex === current.rowIndex &&
+          cell.colIndex === current.endColIndex + 1;
+
+        if (isSameRowConsecutive) {
+          current.endColIndex = cell.colIndex;
+        } else {
+          segments.push(current);
+          current = {
+            event: ev,
+            rowIndex: cell.rowIndex,
+            startColIndex: cell.colIndex,
+            endColIndex: cell.colIndex,
+          };
+        }
+      });
+
+      if (current) segments.push(current);
+    });
+
+    // Keep a stable render order.
+    segments.sort((a, b) => {
+      if (a.rowIndex !== b.rowIndex) return a.rowIndex - b.rowIndex;
+      return a.startColIndex - b.startColIndex;
+    });
+
+    const laneCountByRow = {};
+    const segmentsWithLanes = [];
+
+    // Assign non-overlapping lanes per calendar row so multi-day bars stack.
+    const byRow = {};
+    segments.forEach((seg) => {
+      if (!byRow[seg.rowIndex]) byRow[seg.rowIndex] = [];
+      byRow[seg.rowIndex].push(seg);
+    });
+
+    Object.entries(byRow).forEach(([rowKey, rowSegments]) => {
+      const rowIndex = Number(rowKey);
+      const laneEndByIndex = [];
+
+      rowSegments.forEach((seg) => {
+        let lane = laneEndByIndex.findIndex(
+          (laneEndCol) => seg.startColIndex > laneEndCol,
+        );
+        if (lane === -1) {
+          lane = laneEndByIndex.length;
+          laneEndByIndex.push(seg.endColIndex);
+        } else {
+          laneEndByIndex[lane] = seg.endColIndex;
+        }
+
+        segmentsWithLanes.push({
+          ...seg,
+          lane,
+        });
+      });
+
+      laneCountByRow[rowIndex] = laneEndByIndex.length;
+    });
+
+    // Keep stable order after lane assignment.
+    segmentsWithLanes.sort((a, b) => {
+      if (a.rowIndex !== b.rowIndex) return a.rowIndex - b.rowIndex;
+      if (a.lane !== b.lane) return a.lane - b.lane;
+      return a.startColIndex - b.startColIndex;
+    });
+
+    return {
+      connectedSegments: segmentsWithLanes,
+      spanLaneCountByRow: laneCountByRow,
+    };
+  }, [events, year, month, days, startOffset]);
 
   const cells = useMemo(() => {
     const result = [];
@@ -88,10 +215,24 @@ export default function MonthView({
         }}
       >
         {cells.map((day, idx) => {
-          if (!day) return <Box key={`empty-${idx}`} sx={{ minWidth: 0 }} />;
+          const rowIndex = Math.floor(idx / 7);
+          const colIndex = idx % 7;
+          const gridCellSx = {
+            gridRow: rowIndex + 1,
+            gridColumn: colIndex + 1,
+            zIndex: 1,
+          };
+
+          if (!day) {
+            return (
+              <Box key={`empty-${idx}`} sx={{ minWidth: 0, ...gridCellSx }} />
+            );
+          }
 
           const cellDate = new Date(year, month, day);
           const key = toDateKey(cellDate);
+          const laneCount = spanLaneCountByRow[rowIndex] ?? 0;
+          const reservedTopPx = laneCount * 22;
           const isToday = sameDay(cellDate, today);
           const dayEvents = eventsByDay[key] ?? [];
           const hijri = hijriByDay[day];
@@ -102,7 +243,8 @@ export default function MonthView({
               variant="outlined"
               onClick={() => onDayClick(key)}
               sx={{
-                minHeight: 90,
+                ...gridCellSx,
+                minHeight: 90 + reservedTopPx,
                 minWidth: 0,
                 p: 0.75,
                 cursor: "pointer",
@@ -167,12 +309,13 @@ export default function MonthView({
                   flexDirection: "column",
                   gap: 0.25,
                   flex: 1,
+                  mt: reservedTopPx > 0 ? `${reservedTopPx}px` : 0,
                   mx: { xs: -0.75, sm: 0 },
                 }}
               >
                 {dayEvents.slice(0, 3).map((ev) => (
                   <EventChip
-                    key={ev.eventId}
+                    key={`${ev.eventId}-${ev.startDate ?? ""}`}
                     event={ev}
                     onClick={onEventClick}
                     theme={theme}
@@ -191,6 +334,24 @@ export default function MonthView({
             </Paper>
           );
         })}
+
+        {connectedSegments.map((seg) => (
+          <Box
+            key={`${seg.event.eventId}-${seg.event.startDate ?? ""}-${seg.rowIndex}-${seg.startColIndex}`}
+            sx={{
+              gridRow: seg.rowIndex + 1,
+              gridColumn: `${seg.startColIndex + 1} / ${seg.endColIndex + 2}`,
+              zIndex: 2,
+              mt: `calc(30px + ${seg.lane * 22}px)`,
+              px: { xs: 0.5, sm: 1 },
+              pointerEvents: "auto",
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            <EventChip event={seg.event} onClick={onEventClick} theme={theme} />
+          </Box>
+        ))}
       </Box>
     </Box>
   );

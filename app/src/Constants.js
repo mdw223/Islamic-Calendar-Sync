@@ -36,4 +36,8 @@ export const EventTypeId = Object.freeze({
   EID: 2,
   JUMAH: 3,
   CUSTOM: 4,
-}); // TODO: maybe will remove later
+});
+
+export const SubscriptionDefinitionId = Object.freeze({
+  INCLUDE_USER_CREATED_EVENTS: "include_user_created_events",
+});

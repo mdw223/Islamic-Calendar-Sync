@@ -1,12 +1,10 @@
 import express from 'express';
 import { defaultLogger, extractUserId } from '../../middleware/Logger.js';
 import { pool } from '../../model/db/DBConnection.js';
-import { sendJson } from '../SendJson.js';
-
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  return sendJson(res, {
+  return res.json({
         status: 'OK', 
         timestamp: new Date().toISOString(),
         version: '1.0.0'
@@ -16,7 +14,7 @@ router.get('/', (req, res) => {
 router.get("/db", async (req, res) => {
     try {
       await pool.query("SELECT 1");
-      return sendJson(res, { status: "OK", database: "connected" });
+      return res.json({ status: "OK", database: "connected" });
     } catch (err) {
       defaultLogger.error("Database connection error", {
         requestId: req?.requestId,
@@ -25,7 +23,7 @@ router.get("/db", async (req, res) => {
         path: req?.originalUrl?.split("?")[0] ?? req?.url,
         error: err,
       });
-      return sendJson(res, {
+      return res.status(503).json({
         status: "ERROR",
         database: "disconnected",
         error: {
@@ -34,7 +32,7 @@ router.get("/db", async (req, res) => {
           address: err.address,
           port: err.port,
         },
-      }, 503);
+      });
     }
   });
 

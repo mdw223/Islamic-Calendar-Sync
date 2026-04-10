@@ -1,7 +1,7 @@
 import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES, MONTH_NAMES } from "../../constants";
-import { getHijriMonthRangeLabel, getHijriParts } from "../../util/hijriUtils";
+import { DAY_NAMES, MONTH_NAMES } from "../../Constants";
+import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
 
 /**
  * Returns a YYYY-MM-DD string for a given Date, used as a stable map key
@@ -9,6 +9,35 @@ import { getHijriMonthRangeLabel, getHijriParts } from "../../util/hijriUtils";
  */
 export function toDateKey(date) {
   return date.toISOString().slice(0, 10);
+}
+
+function toLocalDateKeyFromIso(isoString) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function toDateKeyFromIsoInTimezone(isoString, timezone) {
+  if (!isoString || !timezone) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const pick = (type) => parts.find((p) => p.type === type)?.value ?? "";
+  const y = pick("year");
+  const m = pick("month");
+  const day = pick("day");
+  if (!y || !m || !day) return "";
+  return `${y}-${m}-${day}`;
 }
 
 /**
@@ -41,6 +70,91 @@ export function sameDay(a, b) {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+/**
+ * Returns true if the given event overlaps the provided day key (YYYY-MM-DD).
+ * The overlap check is inclusive of both `startDate` and `endDate`.
+ */
+export function eventOverlapsDateKey(event, dateKey) {
+  if (!event || !dateKey) return false;
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
+  if (!startKey) return false;
+
+  // ISO date keys are lexicographically sortable (YYYY-MM-DD).
+  return startKey <= dateKey && dateKey <= endKey;
+}
+
+function addDaysUTC(date, n) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+/**
+ * Returns an array of YYYY-MM-DD keys for every day the event overlaps,
+ * clamped to the provided range keys (inclusive).
+ */
+export function getEventDayKeysInRange(event, rangeStartKey, rangeEndKey) {
+  if (!event || !rangeStartKey || !rangeEndKey) return [];
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
+  if (!startKey) return [];
+
+  const clampedStartKey = startKey < rangeStartKey ? rangeStartKey : startKey;
+  const clampedEndKey = endKey > rangeEndKey ? rangeEndKey : endKey;
+  if (clampedEndKey < clampedStartKey) return [];
+
+  const startDateUTC = new Date(`${clampedStartKey}T00:00:00.000Z`);
+  const endDateUTC = new Date(`${clampedEndKey}T00:00:00.000Z`);
+
+  const keys = [];
+  for (
+    let d = startDateUTC;
+    d.getTime() <= endDateUTC.getTime();
+    d = addDaysUTC(d, 1)
+  ) {
+    keys.push(d.toISOString().slice(0, 10));
+  }
+
+  return keys;
+}
+
+/**
+ * Returns inclusive ISO date keys (YYYY-MM-DD) for the event range.
+ * Falls back `endKey` to `startKey` when `endDate` is missing.
+ */
+export function getEventStartEndDateKeys(event) {
+  const allDayStartFromTimezone = event?.isAllDay
+    ? toDateKeyFromIsoInTimezone(event?.startDate ?? "", event?.eventTimezone ?? "")
+    : "";
+  const allDayEndFromTimezone = event?.isAllDay
+    ? toDateKeyFromIsoInTimezone(
+        event?.endDate ?? event?.startDate ?? "",
+        event?.eventTimezone ?? "",
+      )
+    : "";
+  const startKey = event?.isAllDay
+    ? (allDayStartFromTimezone || toLocalDateKeyFromIso(event?.startDate ?? ""))
+    : (event?.startDate ?? "").slice(0, 10);
+  if (!startKey) return { startKey: null, endKey: null };
+
+  const endKeyRaw = event?.isAllDay
+    ? (allDayEndFromTimezone ||
+      toLocalDateKeyFromIso(event?.endDate ?? event?.startDate ?? ""))
+    : (event?.endDate ?? event?.startDate ?? "").slice(0, 10);
+  const endKey = endKeyRaw || startKey;
+  return { startKey, endKey: endKey < startKey ? startKey : endKey };
+}
+
+/**
+ * True when an event should be treated as a multi-day all-day range for
+ * connected UI rendering (spans more than one day).
+ */
+export function eventIsAllDayMultiDay(event) {
+  if (!event?.isAllDay) return false;
+  const { startKey, endKey } = getEventStartEndDateKeys(event);
+  if (!startKey || !endKey) return false;
+  return endKey > startKey;
 }
 
 /**
