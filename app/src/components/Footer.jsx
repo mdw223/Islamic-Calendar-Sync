@@ -3,11 +3,13 @@ import {
   Box,
   Container,
   Grid,
+  Link,
   Typography,
   Stack,
   IconButton,
   Divider,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router";
 import { Github, Twitter, Mail } from "lucide-react";
 
 const Footer = () => {
@@ -85,6 +87,19 @@ const Footer = () => {
               >
                 Terms
               </Typography>
+              <Link
+                component={RouterLink}
+                to="/data-policy"
+                underline="none"
+                color="text.secondary"
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
+              >
+                Data Policy
+              </Link>
             </Stack>
           </Grid>
           <Grid item xs={12} md={4}>

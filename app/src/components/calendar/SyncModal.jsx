@@ -21,6 +21,7 @@ import {
   Link as LinkIcon,
   CalendarSync,
   ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -78,6 +79,7 @@ export default function SyncModal({ open, onClose, user }) {
     ensureIslamicEventsForYears,
     generatedYearsRange,
     fetchExpandedEventsForRange,
+    islamicEventDefs,
   } = useCalendar();
   const { userLocations } = useUser();
   const navigate = useNavigate();
@@ -98,12 +100,24 @@ export default function SyncModal({ open, onClose, user }) {
   );
 
   const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
+  const [downloadScope, setDownloadScope] = useState("selected");
+  const [downloadError, setDownloadError] = useState("");
   const isLoggedIn = user?.isLoggedIn;
+
+  const enabledIslamicDefinitionIds = useMemo(
+    () =>
+      islamicEventDefs
+        .filter((def) => !def.isHidden)
+        .map((def) => def.id),
+    [islamicEventDefs],
+  );
 
   useEffect(() => {
     if (!open) return;
     const defaultTimezone = locationOptions[0]?.timezone ?? browserTimezone;
     setSelectedTimezone(defaultTimezone);
+    setDownloadScope("selected");
+    setDownloadError("");
   }, [browserTimezone, locationOptions, open]);
 
   const toggleYear = useCallback((year) => {
@@ -116,7 +130,16 @@ export default function SyncModal({ open, onClose, user }) {
   }, []);
 
   const handleDownload = useCallback(async () => {
+    setDownloadError("");
     if (selectedYears.size === 0) return;
+    const includeAll = downloadScope === "all";
+
+    if (!includeAll && enabledIslamicDefinitionIds.length === 0) {
+      setDownloadError(
+        "No Islamic events are enabled in the side panel. Enable at least one event or switch to All Islamic events.",
+      );
+      return;
+    }
 
     const years = [...selectedYears];
     const genStart = generatedYearsRange?.start;
@@ -134,6 +157,7 @@ export default function SyncModal({ open, onClose, user }) {
       if (missingYears.length > 0) {
         await ensureIslamicEventsForYears(missingYears, {
           timezone: selectedTimezone,
+          includeAll,
         });
       }
 
@@ -143,16 +167,21 @@ export default function SyncModal({ open, onClose, user }) {
       const to = `${maxY}-12-31`;
 
       if (isLoggedIn) {
-        await APIClient.downloadEventsIcs({ years });
+        await APIClient.downloadEventsIcs({ years, includeAll });
         return;
       }
 
       const fetched = await fetchExpandedEventsForRange({ from, to });
       const selectedSet = new Set(years);
+      const selectedDefinitionIdSet = new Set(enabledIslamicDefinitionIds);
       const filtered = fetched.filter((ev) => {
         if (!ev.startDate) return false;
         const y = new Date(ev.startDate).getFullYear();
-        return selectedSet.has(y);
+        if (!selectedSet.has(y)) return false;
+        if (includeAll) return true;
+
+        if (!ev.islamicDefinitionId) return true;
+        return selectedDefinitionIdSet.has(ev.islamicDefinitionId);
       });
 
       const yearString = years.sort((a, b) => a - b).join(",");
@@ -186,7 +215,9 @@ export default function SyncModal({ open, onClose, user }) {
       setIsGenerating(false);
     }
   }, [
+    downloadScope,
     ensureIslamicEventsForYears,
+    enabledIslamicDefinitionIds,
     fetchExpandedEventsForRange,
     generatedYearsRange?.end,
     generatedYearsRange?.start,
@@ -210,6 +241,29 @@ export default function SyncModal({ open, onClose, user }) {
             Export your events to a .ics file you can import into any calendar
             app.
           </Typography>
+
+          <FormControl size="small" sx={{ minWidth: 240, mb: 1 }}>
+            <InputLabel id="sync-islamic-scope-label">Islamic events</InputLabel>
+            <Select
+              labelId="sync-islamic-scope-label"
+              value={downloadScope}
+              label="Islamic events"
+              onChange={(event) => {
+                setDownloadScope(event.target.value);
+                setDownloadError("");
+              }}
+            >
+              <MenuItem value="selected">Only enabled in side panel</MenuItem>
+              <MenuItem value="all">All Islamic events</MenuItem>
+            </Select>
+          </FormControl>
+
+          {!!downloadError && (
+            <Alert severity="warning" sx={{ mb: 1 }}>
+              {downloadError}
+            </Alert>
+          )}
+
           {(!userLocations || userLocations.length === 0) && (
             <Alert severity="info" sx={{ mb: 1 }}>
               No saved locations yet.{" "}
@@ -228,6 +282,18 @@ export default function SyncModal({ open, onClose, user }) {
               disabled={isGenerating || selectedYears.size === 0}
             >
               {isGenerating ? "Generating…" : "Download .ics"}
+            </Button>
+
+            <Button
+              size="small"
+              variant="outlined"
+              endIcon={<ArrowRight size={14} />}
+              onClick={() => {
+                onClose();
+                navigate("/export");
+              }}
+            >
+              Customize export
             </Button>
 
             <Button

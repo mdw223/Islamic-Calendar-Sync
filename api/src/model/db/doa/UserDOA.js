@@ -125,4 +125,12 @@ export default class UserDOA {
   static async updateSalt(userId, salt) {
     return this.updateUser(userId, { salt });
   }
+
+  static async deleteUser(userId) {
+    const result = await query(
+      `DELETE FROM "User" WHERE userid = $1`,
+      [userId],
+    );
+    return result.rowCount > 0;
+  }
 }

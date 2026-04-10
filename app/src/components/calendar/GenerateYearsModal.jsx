@@ -25,12 +25,14 @@ export default function GenerateYearsModal({
   userLocations,
   browserTimezone,
   generatedYearsRange,
+  enabledIslamicDefinitionCount,
   onGoToSettings,
 }) {
   const [selectedYears, setSelectedYears] = useState(
     () => new Set([currentYear]),
   );
   const [selectedTimezone, setSelectedTimezone] = useState(browserTimezone);
+  const [generationScope, setGenerationScope] = useState("selected");
   const [generateError, setGenerateError] = useState("");
 
   const yearChoices = useMemo(
@@ -58,6 +60,7 @@ export default function GenerateYearsModal({
     setGenerateError("");
     setSelectedYears(new Set([currentYear]));
     setSelectedTimezone(locationOptions?.[0]?.timezone ?? browserTimezone);
+    setGenerationScope("selected");
   }, [open, currentYear, locationOptions, browserTimezone]);
 
   const toggleYear = useCallback((year) => {
@@ -92,8 +95,21 @@ export default function GenerateYearsModal({
       return;
     }
 
+    if (
+      generationScope === "selected" &&
+      Number(enabledIslamicDefinitionCount ?? 0) === 0
+    ) {
+      setGenerateError(
+        "No Islamic events are enabled in the side panel. Enable at least one event or switch to All Islamic events.",
+      );
+      return;
+    }
+
     try {
-      await onGenerate(yearsToGenerate, selectedTimezone);
+      await onGenerate(yearsToGenerate, {
+        timezone: selectedTimezone,
+        includeAll: generationScope === "all",
+      });
       // Parent closes modal on success.
     } catch (e) {
       setGenerateError(e?.message ?? "Failed to generate events.");
@@ -103,6 +119,8 @@ export default function GenerateYearsModal({
     isGenerating,
     maxGenerateYear,
     onGenerate,
+    generationScope,
+    enabledIslamicDefinitionCount,
     selectedTimezone,
     selectedYears,
   ]);
@@ -136,6 +154,25 @@ export default function GenerateYearsModal({
             </Button>
           </Alert>
         )}
+
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Islamic event scope
+          </Typography>
+          <FormControl size="small" fullWidth>
+            <InputLabel id="generate-scope-label">Scope</InputLabel>
+            <Select
+              labelId="generate-scope-label"
+              value={generationScope}
+              label="Scope"
+              onChange={(event) => setGenerationScope(event.target.value)}
+              disabled={isGenerating}
+            >
+              <MenuItem value="selected">Only enabled in side panel</MenuItem>
+              <MenuItem value="all">All Islamic events</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>

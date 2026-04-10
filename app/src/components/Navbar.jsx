@@ -21,12 +21,12 @@ import {
 } from "@mui/material";
 import {
   Calendar,
+  Download,
   Sun,
   Moon,
   Leaf,
   Menu as MenuIcon,
   X,
-  Clock,
   Star,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -52,6 +52,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Calendar", path: "/calendar", icon: <Calendar size={18} /> },
+    { name: "Export", path: "/export", icon: <Download size={18} /> },
     { name: "Subscriptions", path: "/subscriptions", icon: <Star size={18} /> },
     { name: "Settings", path: "/settings", icon: <SettingsIcon size={18} /> },
   ];

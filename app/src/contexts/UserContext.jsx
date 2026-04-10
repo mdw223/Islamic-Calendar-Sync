@@ -163,6 +163,17 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      await APIClient.deleteAccount();
+    } finally {
+      clearToken();
+      setUser(createUser(defaultUser));
+      setUserLocations([]);
+      setSubscriptions([]);
+    }
+  }, []);
+
   const updateUser = (updates) => {
     const updatedUser = createUser(user.toJSON());
     updatedUser.updateProfile(updates);
@@ -296,6 +307,7 @@ export const UserProvider = ({ children }) => {
         setUser,
         login,
         logout,
+        deleteAccount,
         updateUser,
         updateUserPreferences,
         subscriptions,

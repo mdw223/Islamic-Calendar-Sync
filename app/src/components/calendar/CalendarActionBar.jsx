@@ -45,8 +45,12 @@ export default function CalendarActionBar({
   isRefreshing,
   refreshFeedback,
 }) {
-  const { resetCalendar, ensureIslamicEventsForYears, generatedYearsRange } =
-    useCalendar();
+  const {
+    resetCalendar,
+    ensureIslamicEventsForYears,
+    generatedYearsRange,
+    islamicEventDefs,
+  } = useCalendar();
   const { userLocations } = useUser();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
@@ -87,16 +91,26 @@ export default function CalendarActionBar({
   }, [isGenerating]);
 
   const handleGenerateYears = useCallback(
-    async (yearsToGenerate, timezone) => {
+    async (yearsToGenerate, options = {}) => {
+      const timezone = options?.timezone ?? browserTimezone;
+      const includeAll = options?.includeAll === true;
       setIsGenerating(true);
       try {
-        await ensureIslamicEventsForYears(yearsToGenerate, { timezone });
+        await ensureIslamicEventsForYears(yearsToGenerate, {
+          timezone,
+          includeAll,
+        });
         setGenerateModalOpen(false);
       } finally {
         setIsGenerating(false);
       }
     },
-    [ensureIslamicEventsForYears],
+    [browserTimezone, ensureIslamicEventsForYears],
+  );
+
+  const enabledIslamicDefinitionCount = useMemo(
+    () => islamicEventDefs.filter((def) => !def.isHidden).length,
+    [islamicEventDefs],
   );
 
   const openResetDialog = useCallback(() => {
@@ -247,6 +261,7 @@ export default function CalendarActionBar({
         userLocations={userLocations}
         browserTimezone={browserTimezone}
         generatedYearsRange={generatedYearsRange}
+        enabledIslamicDefinitionCount={enabledIslamicDefinitionCount}
         onGoToSettings={() => navigate("/settings")}
       />
 

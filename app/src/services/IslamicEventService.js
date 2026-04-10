@@ -260,9 +260,15 @@ export function buildIslamicMasterRowsForYears(years, definitions, timezone = nu
  * @param {number[]} years - Array of Gregorian years
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForOfflineUser(years, timezone = null) {
+export async function generateForOfflineUser(
+  years,
+  timezone = null,
+  includeAll = false,
+) {
   const mergedDefs = await getMergedDefinitions();
-  const allMasters = buildIslamicMasterRowsForYears(years, mergedDefs, timezone);
+  const allDefs = getBaseDefinitions().map((def) => ({ ...def, isHidden: false }));
+  const defs = includeAll ? allDefs : mergedDefs;
+  const allMasters = buildIslamicMasterRowsForYears(years, defs, timezone);
 
   if (allMasters.length === 0) {
     return { events: [], generatedCount: 0 };

@@ -231,14 +231,23 @@ export function CalendarProvider({ children }) {
     if (requestedYears.length === 0) return;
 
     const timezone = options?.timezone ?? null;
+    const includeAll = options?.includeAll === true;
 
     try {
       let res;
       try {
-        res = await APIClient.generateEvents(requestedYears, timezone);
+        res = await APIClient.generateEvents(
+          requestedYears,
+          timezone,
+          includeAll,
+        );
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.generateEvents(requestedYears, timezone);
+          res = await OfflineClient.generateEvents(
+            requestedYears,
+            timezone,
+            includeAll,
+          );
         } else {
           throw err;
         }

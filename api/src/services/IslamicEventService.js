@@ -51,8 +51,15 @@ export async function getMergedDefinitions(userId) {
  * @param {number[]} years - Array of Gregorian years.
  * @returns {Promise<{ events: Object[], generatedCount: number }>}
  */
-export async function generateForUser(userId, years, timezone = null) {
-  const mergedDefs = await getMergedDefinitions(userId);
+export async function generateForUser(
+  userId,
+  years,
+  timezone = null,
+  includeAll = false,
+) {
+  const mergedDefs = includeAll
+    ? getBaseDefinitions().map((def) => ({ ...def, isHidden: false }))
+    : await getMergedDefinitions(userId);
 
   const allMasters = buildIslamicMasterRowsForYears(years, mergedDefs, timezone);
 
