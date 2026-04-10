@@ -63,6 +63,10 @@ export default class APIClient {
     return HTTPClient.post("/users/logout");
   }
 
+  static async deleteAccount() {
+    return HTTPClient.delete("/users/me");
+  }
+
   // ── Calendar Providers ─────────────────────────────────────────────────────
 
   /**

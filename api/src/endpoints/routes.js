@@ -6,6 +6,7 @@ import { googleLogin, googleRedirect } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
 import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
+import DeleteCurrentUser from './users/DeleteCurrentUser.js';
 import GetCalendarProviders from './calendar-providers/GetCalendarProviders.js';
 import GetEvents from './events/GetEvents.js';
 import GetEventsIcs from './events/GetEventsIcs.js';
@@ -44,6 +45,7 @@ router.get("/subscription/events", RequireSubscriptionToken, GetSubscriptionEven
 // AUTH
 router.get("/users/me", Auth(AuthUser.VALID_USER), GetCurrentUser);
 router.put("/users/me", Auth(AuthUser.VALID_USER), UpdateCurrentUser);
+router.delete("/users/me", Auth(AuthUser.VALID_USER), DeleteCurrentUser);
 router.post("/users/send-code", SendVerificationCode);
 router.post("/users/verify-code", VerifyCode);
 router.post("/users/logout", Auth(AuthUser.VALID_USER), Logout);

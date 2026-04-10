@@ -5,12 +5,17 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -34,6 +39,7 @@ export default function Settings() {
     userLocations,
     subscriptions,
     setSubscriptions,
+    deleteAccount,
     saveUserProfile,
     addUserLocation,
     removeUserLocation,
@@ -55,6 +61,9 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [isLookingUpCity, setIsLookingUpCity] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteWorking, setDeleteWorking] = useState(false);
 
   const subscriptionSectionRef = useRef(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
@@ -192,6 +201,27 @@ export default function Settings() {
       await navigator.clipboard.writeText(subscriptionUrl);
     } catch {
       setSubscriptionActionError("Could not copy to clipboard.");
+    }
+  }
+
+  function closeDeleteDialog() {
+    if (deleteWorking) return;
+    setDeleteDialogOpen(false);
+    setDeleteConfirmText("");
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteWorking) return;
+    setError("");
+    setDeleteWorking(true);
+    try {
+      await deleteAccount();
+      closeDeleteDialog();
+      navigate("/");
+    } catch (err) {
+      setError(err?.message ?? "Failed to delete account.");
+    } finally {
+      setDeleteWorking(false);
     }
   }
 
@@ -454,6 +484,70 @@ export default function Settings() {
           {error}
         </Typography>
       )}
+
+      {isLoggedIn && (
+        <Paper variant="outlined" sx={{ p: 2, borderColor: "error.main" }}>
+          <Typography variant="h6" color="error" sx={{ mb: 1 }}>
+            Danger Zone
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            Deleting your account is permanent. All your account data and associated
+            records will be removed.
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <Button
+              component={RouterLink}
+              to="/data-policy"
+              variant="outlined"
+            >
+              Data Policy
+            </Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              Delete Account
+            </Button>
+          </Stack>
+        </Paper>
+      )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Delete your account?</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            This action is irreversible and will delete your profile, locations,
+            subscriptions, calendar providers, and related account data.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            label='Type "DELETE" to confirm'
+            value={deleteConfirmText}
+            disabled={deleteWorking}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} disabled={deleteWorking}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleteWorking || deleteConfirmText !== "DELETE"}
+            onClick={handleDeleteAccount}
+          >
+            {deleteWorking ? "Deleting..." : "Delete Account"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
