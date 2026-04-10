@@ -31,6 +31,15 @@ function parseYearsQuery(rawYears) {
     return { years: Array.from(new Set(years)).sort((a, b) => a - b) };
 }
 
+function parseBooleanQuery(raw) {
+    if (raw == null) return { value: null };
+    if (typeof raw === 'boolean') return { value: raw };
+    const normalized = String(raw).trim().toLowerCase();
+    if (normalized === 'true') return { value: true };
+    if (normalized === 'false') return { value: false };
+    return { error: 'Query parameter "includeAll" must be true or false.' };
+}
+
 function filterBySubscriptionSelection(expandedEvents, selection) {
     if (!selection || !Array.isArray(selection.selectedDefinitionIds)) {
         return expandedEvents;
@@ -61,10 +70,19 @@ export default async function GetEventsIcs(req, res) {
     try {
         const userEvents = await EventDOA.findAllByUserId(req.user.userId);
         const { years, error } = parseYearsQuery(req.query.years);
+        const { value: includeAll, error: includeAllError } = parseBooleanQuery(
+            req.query.includeAll,
+        );
         if (error) {
             return res.status(400).json({
                 success: false,
                 message: error,
+            });
+        }
+        if (includeAllError) {
+            return res.status(400).json({
+                success: false,
+                message: includeAllError,
             });
         }
 
@@ -98,8 +116,16 @@ export default async function GetEventsIcs(req, res) {
                 return selectedYears.has(y);
             })
             : expanded;
+        const scopeFiltered =
+            includeAll == null
+                ? yearFiltered
+                : yearFiltered.filter((ev) => {
+                    if (includeAll) return true;
+                    if (!ev?.islamicDefinitionId) return true;
+                    return ev.hide !== true;
+                });
         const filtered = filterBySubscriptionSelection(
-            yearFiltered,
+            scopeFiltered,
             req.subscriptionSelection,
         );
         const icsText = buildIcsString(filtered, {addSubscriptionUrl: true});

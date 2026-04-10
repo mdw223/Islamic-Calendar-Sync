@@ -117,6 +117,9 @@ export default class APIClient {
       qs.set("from", query.from);
       qs.set("to", query.to);
     }
+    if (typeof query.includeAll === "boolean") {
+      qs.set("includeAll", String(query.includeAll));
+    }
 
     const token = getToken();
     const headers = {};
@@ -201,8 +204,8 @@ export default class APIClient {
    * @param {number[]} years - Array of Gregorian years, e.g. [2025, 2026]
    * @returns {Promise<{ success: boolean, events: Object[], generatedCount: number }>}
    */
-  static async generateEvents(years, timezone = null) {
-    return HTTPClient.post("/events/generate", { years, timezone });
+  static async generateEvents(years, timezone = null, includeAll = false) {
+    return HTTPClient.post("/events/generate", { years, timezone, includeAll });
   }
 
   /**

@@ -19,7 +19,7 @@
 import { generateForUser } from "../../services/IslamicEventService.js";
 export default async function GenerateEvents(req, res) {
   try {
-    const { years, timezone = null } = req.body;
+    const { years, timezone = null, includeAll = false } = req.body;
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 5; // Allow generating up to 5 years in advance (inclusive)
 
@@ -44,10 +44,18 @@ export default async function GenerateEvents(req, res) {
       });
     }
 
+    if (typeof includeAll !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: 'Optional "includeAll" must be a boolean.',
+      });
+    }
+
     const { events, generatedCount } = await generateForUser(
       req.user.userId,
       years,
       timezone,
+      includeAll,
     );
 
     return res.status(201).json({

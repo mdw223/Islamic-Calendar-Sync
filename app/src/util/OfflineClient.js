@@ -151,8 +151,8 @@ export default class OfflineClient {
     return { start: minY, end: maxY };
   }
 
-  static async generateEvents(years, timezone = null) {
-    const result = await generateForOfflineUser(years, timezone);
+  static async generateEvents(years, timezone = null, includeAll = false) {
+    const result = await generateForOfflineUser(years, timezone, includeAll);
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
     const existing = await db.generationMeta.get("generatedYearsRange");
