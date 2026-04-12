@@ -1,4 +1,5 @@
 // abstracts the env file to be able to change the values
+import { AuthProviderKey } from "./Constants.js";
 
 export const appConfig = {
   PORT: process.env.API_PORT || 3000,
@@ -34,6 +35,30 @@ export const googleAuthConfig = {
   CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL
 };
+
+export const microsoftAuthConfig = {
+  CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
+  CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
+  CALLBACK_URL: process.env.MICROSOFT_CALLBACK_URL,
+  TENANT: process.env.MICROSOFT_TENANT,
+  SCOPE: process.env.MICROSOFT_SCOPE,
+};
+
+export const appleAuthConfig = {
+  CLIENT_ID: process.env.APPLE_CLIENT_ID,
+  TEAM_ID: process.env.APPLE_TEAM_ID,
+  KEY_ID: process.env.APPLE_KEY_ID,
+  CALLBACK_URL: process.env.APPLE_CALLBACK_URL,
+  PRIVATE_KEY: process.env.APPLE_PRIVATE_KEY,
+  PRIVATE_KEY_LOCATION: process.env.APPLE_PRIVATE_KEY_LOCATION,
+  SCOPE: process.env.APPLE_SCOPE,
+};
+
+export const authProviderConfig = Object.freeze({
+  [AuthProviderKey.GOOGLE]: googleAuthConfig,
+  [AuthProviderKey.MICROSOFT]: microsoftAuthConfig,
+  [AuthProviderKey.APPLE]: appleAuthConfig,
+});
 
 // Session (required by passport-openidconnect for Google OAuth state). Set SESSION_SECRET in production.
 export const sessionConfig = {

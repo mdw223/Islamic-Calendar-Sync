@@ -4,8 +4,6 @@ import Transport from "winston-transport";
 import { query as dbQuery } from "../model/db/DBConnection.js";
 import { logConfig } from "../Config.js";
 
-// TODO: use a service like BetterStack for logging when deploying to production
-
 /**
  * Logging levels examples: logger.info('message'), logger.error('message'), logger.warn('message'), logger.debug('message'), logger.verbose('message'), logger.silly('message')
  * How to log with custom format: logger.info({ message: 'message', userId: 'userId', className: 'className', methodName: 'methodName', ...rest })
