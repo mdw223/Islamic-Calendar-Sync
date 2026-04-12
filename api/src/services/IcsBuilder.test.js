@@ -52,4 +52,25 @@ describe("IcsBuilder", () => {
     expect(ics).toContain("END:VCALENDAR");
     expect(ics).not.toContain("BEGIN:VEVENT");
   });
+
+  test("falls back to VALUE=DATE-TIME when no timezone is available", () => {
+    const ics = buildIcsString(
+      [
+        {
+          name: "No TZ",
+          description: "desc",
+          location: "",
+          startDate: "2026-03-23T09:30:00.000Z",
+          endDate: "2026-03-23T10:00:00.000Z",
+          isAllDay: false,
+          eventTimezone: null,
+        },
+      ],
+      { defaultTimezone: "" },
+    );
+
+    expect(ics).toContain("DTSTART;VALUE=DATE-TIME:");
+    expect(ics).toContain("DTEND;VALUE=DATE-TIME:");
+    expect(ics).not.toContain("DTSTART;TZID=");
+  });
 });
