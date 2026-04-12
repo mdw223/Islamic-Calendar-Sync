@@ -3,11 +3,14 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, googleAuthConfig, jwtConfig } from "./Config.js";
+import { appConfig, googleAuthConfig, jwtConfig, smtpConfig } from "./Config.js";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
 import { AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
 import { generateForNewUser } from "./services/IslamicEventService.js";
+import { Strategy as MagicLinkStrategy } from "passport-magic-link";
+import { Resend } from "resend";
+import MagicLinkTokenDOA from "./model/db/doa/MagicLinkTokenDOA.js";
 
 /**
  * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
@@ -158,6 +161,185 @@ export const googleRedirect = [
   }),
   googleRedirectHandler,
 ];
+
+/**
+ * Initialize Resend client for sending magic-link emails
+ */
+const resend = new Resend(smtpConfig.SMTP_PROVIDER_API_KEY);
+
+/**
+ * Persist token usage in DB so token one-time checks survive restarts and multi-instance deployments.
+ */
+class DbMagicLinkStorage {
+  async set(key, value) {
+    await MagicLinkTokenDOA.replaceUserTokens(String(key), value || {});
+  }
+
+  async get(key) {
+    return MagicLinkTokenDOA.getUserTokens(String(key));
+  }
+
+  async delete(key) {
+    return MagicLinkTokenDOA.deleteUserTokens(String(key));
+  }
+}
+
+/**
+ * Magic-link strategy with Resend email integration.
+ * When user requests a magic link:
+ *   1. sendToken callback: generate token and email to user
+ *   2. verify callback: user clicks link, token validated, user authenticated
+ */
+passport.use(
+  new MagicLinkStrategy(
+    {
+      secret: jwtConfig.SECRET,
+      userFields: ["email"],
+      tokenField: "token",
+      ttl: 600, // 10 minutes
+      allowPost: true,
+      passReqToCallbacks: false,
+      verifyUserAfterToken: true,
+      storage: new DbMagicLinkStorage(),
+    },
+    // sendToken callback: called when user requests magic link
+    async (user, token) => {
+      try {
+        if (!user.email) {
+          throw new Error("User email is required for magic link");
+        }
+
+        // Construct full magic-link URL
+        const magicLink = `${appConfig.BASE_URL}/api/auth/magiclink/verify?token=${encodeURIComponent(token)}`;
+
+        // Send email via Resend
+        const { error } = await resend.emails.send({
+          from: smtpConfig.SMTP_EMAIL,
+          to: user.email,
+          subject: "Sign in to Islamic Calendar Sync",
+          html: `
+            <h3>Hello!</h3>
+            <p>Click the link below to sign in to Islamic Calendar Sync:</p>
+            <p><a href="${magicLink}">Sign In</a></p>
+            <p>This link expires in 10 minutes.</p>
+          `,
+        });
+
+        if (error) {
+          defaultLogger.error("Failed to send magic link email", {
+            email: user.email,
+            error,
+          });
+          throw error;
+        }
+
+        defaultLogger.info("Magic link email sent", { email: user.email });
+        return true;
+      } catch (err) {
+        defaultLogger.error("Error in sendToken callback", { error: err });
+        throw err;
+      }
+    },
+    // verify callback: called when user clicks the token link
+    async (user) => {
+      try {
+        if (!user.email) {
+          throw new Error("User email is required for authentication");
+        }
+
+        // Find or create user by email
+        let dbUser = await UserDOA.getUserByEmail(user.email);
+
+        if (!dbUser) {
+          // New user: create account with EMAIL auth provider
+          dbUser = await UserDOA.createUser({
+            email: user.email,
+            name: user.email, // Use email as fallback name
+            authProviderTypeId: AuthProviderTypeId.EMAIL,
+          });
+          defaultLogger.info("New user created via magic link", {
+            email: user.email,
+            userId: dbUser.userId,
+          });
+        }
+
+        // Update last login timestamp
+        await UserDOA.updateLastLogin(dbUser.userId);
+        defaultLogger.info("Magic link login successful", {
+          email: user.email,
+          userId: dbUser.userId,
+        });
+
+        return dbUser;
+      } catch (err) {
+        defaultLogger.error("Error in verify callback", { error: err });
+        throw err;
+      }
+    }
+  )
+);
+
+/**
+ * POST /auth/magiclink/send
+ * Request a magic link email.
+ * Expected POST body: { email: "user@example.com" }
+ */
+export const magicLinkSend = [
+  passport.authenticate("magiclink", {
+    action: "requestToken",
+    failureRedirect: "/login?error=magic_link_send_failed",
+    session: false,
+  }),
+  (req, res, next) => {
+    res.json({
+      success: true,
+      message: "Check your email for a magic link to sign in.",
+    });
+  },
+];
+
+/**
+ * GET /login/check-email
+ * Page informing user to check their email for the magic link
+ */
+export const checkEmailPage = (req, res, next) => {
+  res.json({
+    status: "success",
+    message: "Check your email for a magic link to sign in.",
+  });
+};
+
+/**
+ * GET /auth/magiclink/verify
+ * Verify the token from the magic link and log the user in.
+ * Query param: ?token=<magic_token>
+ */
+export const magicLinkVerify = [
+  passport.authenticate("magiclink", {
+    action: "acceptToken",
+    failureRedirect: "/login?error=invalid_token",
+    session: false,
+    userPrimaryKey: "email",
+  }),
+  (req, res, next) => {
+    try {
+      // User is authenticated; issue JWT
+      const token = signToken(req.user);
+      const frontendBase = appConfig.BASE_URL;
+
+      // Redirect to frontend with token in hash
+      res.redirect(
+        `${frontendBase}#token=${encodeURIComponent(token)}`
+      );
+    } catch (err) {
+      defaultLogger.error("Error in magic link verify handler", {
+        error: err,
+      });
+      res.redirect(`${appConfig.BASE_URL}/login?error=callback_failed`);
+    }
+  },
+];
+
 
 /**
    * Find or create a user based on a Google profile.

@@ -2,7 +2,7 @@ import express from 'express';
 import healthRoutes from "./health/Health.js";
 import { SendVerificationCode, VerifyCode, Logout } from "./users/LoginUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
-import { googleLogin, googleRedirect } from "../Passport.js";
+import { googleLogin, googleRedirect, magicLinkSend, checkEmailPage, magicLinkVerify } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
 import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
@@ -53,6 +53,10 @@ router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUser
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
+// Magic-link login
+router.post("/auth/magiclink/send", ...magicLinkSend);
+router.get("/login/check-email", checkEmailPage);
+router.get("/auth/magiclink/verify", ...magicLinkVerify);
 
 // Subscription management (Bearer JWT)
 router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);
