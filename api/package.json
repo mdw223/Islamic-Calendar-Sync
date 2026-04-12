@@ -6,7 +6,9 @@
     "type": "module",
     "scripts": {
         "start": "nodemon -L src/index.js",
-        "test": "jest"
+        "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+        "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
+        "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand"
     },
     "dependencies": {
         "cookie-parser": "^1.4.7",

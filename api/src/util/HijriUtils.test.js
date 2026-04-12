@@ -57,4 +57,94 @@ describe("HijriUtils all-day normalization", () => {
       expect(row.endDate.endsWith("T12:00:00.000Z")).toBe(true);
     }
   });
+
+  test("buildIslamicRecurrenceFields handles monthly special case and generic monthly", async () => {
+    const { buildIslamicRecurrenceFields } = await import("./HijriUtils.js");
+
+    const special = buildIslamicRecurrenceFields({
+      repeatsEachMonth: true,
+      hijriDay: 13,
+      hijriMonth: 7,
+      durationDays: 3,
+    });
+    expect(special.rrule).toBe("FREQ=MONTHLY;BYMONTHDAY=13,14,15");
+
+    const generic = buildIslamicRecurrenceFields({
+      repeatsEachMonth: true,
+      hijriDay: 5,
+      hijriMonth: 8,
+      durationDays: 2,
+    });
+    expect(generic.rrule).toBe("FREQ=MONTHLY;BYMONTHDAY=5,6");
+  });
+
+  test("buildIslamicRecurrenceFields handles annual missing/interval cases", async () => {
+    const { buildIslamicRecurrenceFields } = await import("./HijriUtils.js");
+
+    const missing = buildIslamicRecurrenceFields({
+      repeatsEachMonth: false,
+      hijriMonth: null,
+      hijriDay: 1,
+      durationDays: 1,
+    });
+    expect(missing.rrule).toBeNull();
+
+    const interval = buildIslamicRecurrenceFields({
+      repeatsEachMonth: false,
+      hijriMonth: 9,
+      hijriDay: 1,
+      durationDays: 2,
+    });
+    expect(interval.rrule).toBe("FREQ=YEARLY;BYMONTH=9;BYMONTHDAY=1;INTERVAL=2");
+  });
+
+  test("getHijriNumericParts returns numeric day/month/year", async () => {
+    const { getHijriNumericParts } = await import("./HijriUtils.js");
+    const parts = getHijriNumericParts(new Date("2026-03-23T12:00:00.000Z"));
+
+    expect(Number.isInteger(parts.day)).toBe(true);
+    expect(Number.isInteger(parts.month)).toBe(true);
+    expect(Number.isInteger(parts.year)).toBe(true);
+    expect(parts.day).toBeGreaterThan(0);
+    expect(parts.month).toBeGreaterThan(0);
+    expect(parts.year).toBeGreaterThan(0);
+  });
+
+  test("buildIslamicMasterRowsForYears handles empty years and hidden definitions", async () => {
+    const { buildIslamicMasterRowsForYears } = await import("./HijriUtils.js");
+
+    expect(buildIslamicMasterRowsForYears([], [definition], "UTC")).toEqual([]);
+
+    const visible = {
+      ...definition,
+      repeatsEachMonth: false,
+      isHidden: false,
+    };
+    const hidden = {
+      ...definition,
+      id: "hidden-id",
+      isHidden: true,
+    };
+
+    const rows = buildIslamicMasterRowsForYears([2026, 2027], [visible, hidden], "UTC");
+    expect(rows.length).toBe(1);
+    expect(rows[0].islamicDefinitionId).toBe("test-id");
+  });
+
+  test("generateIslamicEventsForYear supports repeatsEachMonth definitions", async () => {
+    const { generateIslamicEventsForYear } = await import("./HijriUtils.js");
+
+    const monthly = {
+      ...definition,
+      id: "monthly-id",
+      repeatsEachMonth: true,
+      durationDays: 1,
+      hijriDay: 1,
+      hijriMonth: null,
+    };
+
+    const rows = generateIslamicEventsForYear(2026, [monthly], "UTC");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.some((r) => r.islamicDefinitionId === "monthly-id")).toBe(true);
+  });
 });
