@@ -22,7 +22,7 @@
     "@mui/x-date-pickers": "^8.27.2",
     "dayjs": "^1.11.20",
     "dexie": "^4.3.0",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.3.2",
     "lexical": "^0.41.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
