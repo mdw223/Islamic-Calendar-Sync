@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { Box, Paper, Typography } from "@mui/material";
-import { Languages } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Box, IconButton, Paper, Typography } from "@mui/material";
+import { Languages, X } from "lucide-react";
 
 const SCRIPT_ID = "google-translate-script";
 
@@ -37,9 +37,15 @@ const loadGoogleTranslate = () => {
 };
 
 const GoogleTranslateWidget = () => {
+  const [isClosed, setIsClosed] = useState(false);
+
   useEffect(() => {
     loadGoogleTranslate();
   }, []);
+
+  if (isClosed) {
+    return null;
+  }
 
   return (
     <Paper
@@ -67,6 +73,14 @@ const GoogleTranslateWidget = () => {
         </Typography>
         <Box id="google_translate_element" sx={{ mt: 0.5 }} />
       </Box>
+      <IconButton
+        size="small"
+        aria-label="Close translate widget"
+        onClick={() => setIsClosed(true)}
+        sx={{ ml: 0.25 }}
+      >
+        <X size={14} />
+      </IconButton>
     </Paper>
   );
 };
