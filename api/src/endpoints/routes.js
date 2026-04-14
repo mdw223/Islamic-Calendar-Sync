@@ -1,6 +1,6 @@
 import express from 'express';
 import healthRoutes from "./health/Health.js";
-import { SendVerificationCode, VerifyCode, Logout } from "./users/LoginUser.js";
+import { Logout } from "./users/LoginUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
 import { googleLogin, googleRedirect } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
@@ -46,8 +46,6 @@ router.get("/subscription/events", RequireSubscriptionToken, GetSubscriptionEven
 router.get("/users/me", Auth(AuthUser.VALID_USER), GetCurrentUser);
 router.put("/users/me", Auth(AuthUser.VALID_USER), UpdateCurrentUser);
 router.delete("/users/me", Auth(AuthUser.VALID_USER), DeleteCurrentUser);
-router.post("/users/send-code", SendVerificationCode);
-router.post("/users/verify-code", VerifyCode);
 router.post("/users/logout", Auth(AuthUser.VALID_USER), Logout);
 router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUserById);
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex

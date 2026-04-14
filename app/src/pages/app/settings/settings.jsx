@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Link as RouterLink, useNavigate } from "react-router";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router";
 import {
   Alert,
   Box,
@@ -31,9 +31,18 @@ import { useCalendar } from "../../../contexts/CalendarContext";
 import APIClient from "../../../util/ApiClient";
 
 const LANGUAGE_OPTIONS = ["en", "ar", "ur", "fr", "tr", "id"];
+const SECTION_SCROLL_MARGIN = "160px";
+
+const SECTION_HASHES = {
+  profile: "profile",
+  subscription: "calendar-subscription",
+  locations: "saved-locations",
+  danger: "danger-zone",
+};
 
 export default function Settings() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     userLocations,
@@ -65,10 +74,55 @@ export default function Settings() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteWorking, setDeleteWorking] = useState(false);
 
+  const profileSectionRef = useRef(null);
   const subscriptionSectionRef = useRef(null);
+  const locationsSectionRef = useRef(null);
+  const dangerSectionRef = useRef(null);
+  const skipNextHashScrollRef = useRef(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionActionError, setSubscriptionActionError] = useState("");
   const [maxActiveUrls, setMaxActiveUrls] = useState(3);
+
+  const currentHash = location.hash.replace(/^#/, "");
+  const sectionRefs = useMemo(
+    () => ({
+      [SECTION_HASHES.profile]: profileSectionRef,
+      [SECTION_HASHES.subscription]: subscriptionSectionRef,
+      [SECTION_HASHES.locations]: locationsSectionRef,
+      [SECTION_HASHES.danger]: dangerSectionRef,
+    }),
+    [],
+  );
+
+  const sectionNavItems = useMemo(
+    () => [
+      {
+        id: SECTION_HASHES.profile,
+        label: "Profile",
+      },
+      ...(isLoggedIn
+        ? [
+            {
+              id: SECTION_HASHES.subscription,
+              label: "Calendar subscription",
+            },
+          ]
+        : []),
+      {
+        id: SECTION_HASHES.locations,
+        label: "Saved Locations",
+      },
+      ...(isLoggedIn
+        ? [
+            {
+              id: SECTION_HASHES.danger,
+              label: "Danger Zone",
+            },
+          ]
+        : []),
+    ],
+    [isLoggedIn],
+  );
 
   const loadSubscriptionUrls = useCallback(async () => {
     if (!isLoggedIn) return;
@@ -99,16 +153,33 @@ export default function Settings() {
   }, [loadSubscriptionUrls]);
 
   useEffect(() => {
-    if (
-      window.location.hash === "#calendar-subscription" &&
-      subscriptionSectionRef.current
-    ) {
-      subscriptionSectionRef.current.scrollIntoView({
+    if (skipNextHashScrollRef.current) {
+      skipNextHashScrollRef.current = false;
+      return;
+    }
+
+    if (!currentHash) {
+      return;
+    }
+
+    const targetRef = sectionRefs[currentHash];
+    const targetElement = targetRef?.current;
+    if (!targetElement) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      targetElement.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    }
-  }, [subscriptions]);
+      if (typeof targetElement.focus === "function") {
+        targetElement.focus({ preventScroll: true });
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentHash, isLoggedIn, sectionRefs]);
 
   const supportedTimezones = useMemo(
     () =>
@@ -116,6 +187,27 @@ export default function Settings() {
         ? Intl.supportedValuesOf("timeZone")
         : ["UTC"],
     [],
+  );
+
+  const scrollToSection = useCallback(
+    (sectionId) => {
+      const targetRef = sectionRefs[sectionId];
+      const targetElement = targetRef?.current;
+      if (!targetElement) {
+        return;
+      }
+
+      skipNextHashScrollRef.current = true;
+      if (currentHash !== sectionId) {
+        navigate({ pathname: location.pathname, search: location.search, hash: sectionId });
+      }
+
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (typeof targetElement.focus === "function") {
+        targetElement.focus({ preventScroll: true });
+      }
+    },
+    [currentHash, location.pathname, location.search, navigate, sectionRefs],
   );
 
   async function handleSaveProfile() {
@@ -229,8 +321,57 @@ export default function Settings() {
     <Box sx={{ p: 3, maxWidth: 900, mx: "auto", display: "grid", gap: 2 }}>
       <Typography variant="h4">Settings</Typography>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.5,
+          position: "sticky",
+          top: 72,
+          zIndex: (theme) => theme.zIndex.appBar - 1,
+          bgcolor: "background.paper",
+        }}
+      >
+        <Box component="nav" aria-label="Settings sections">
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ overflowX: "auto", pb: 0.25 }}
+          >
+            {sectionNavItems.map((section) => {
+              const isActive = currentHash === section.id;
+              return (
+                <Button
+                  key={section.id}
+                  size="small"
+                  variant={isActive ? "contained" : "text"}
+                  color={isActive ? "primary" : "inherit"}
+                  onClick={() => scrollToSection(section.id)}
+                  aria-current={isActive ? "location" : undefined}
+                  sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                >
+                  {section.label}
+                </Button>
+              );
+            })}
+          </Stack>
+        </Box>
+      </Paper>
+
+      <Paper
+        component="section"
+        id={SECTION_HASHES.profile}
+        ref={profileSectionRef}
+        tabIndex={-1}
+        aria-labelledby="settings-profile-title"
+        variant="outlined"
+        sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
+      >
+        <Typography
+          id="settings-profile-title"
+          component="h2"
+          variant="h6"
+          sx={{ mb: 2 }}
+        >
           Profile
         </Typography>
         <Stack spacing={2}>
@@ -317,12 +458,20 @@ export default function Settings() {
 
       {isLoggedIn && (
         <Paper
+          component="section"
           id="calendar-subscription"
           ref={subscriptionSectionRef}
+          tabIndex={-1}
+          aria-labelledby="settings-calendar-subscription-title"
           variant="outlined"
-          sx={{ p: 2 }}
+          sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
         >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography
+            id="settings-calendar-subscription-title"
+            component="h2"
+            variant="h6"
+            sx={{ mb: 1 }}
+          >
             Calendar subscription
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -395,8 +544,21 @@ export default function Settings() {
         </Paper>
       )}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
+      <Paper
+        component="section"
+        id={SECTION_HASHES.locations}
+        ref={locationsSectionRef}
+        tabIndex={-1}
+        aria-labelledby="settings-saved-locations-title"
+        variant="outlined"
+        sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
+      >
+        <Typography
+          id="settings-saved-locations-title"
+          component="h2"
+          variant="h6"
+          sx={{ mb: 1 }}
+        >
           Saved Locations ({userLocations.length}/3)
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -486,8 +648,22 @@ export default function Settings() {
       )}
 
       {isLoggedIn && (
-        <Paper variant="outlined" sx={{ p: 2, borderColor: "error.main" }}>
-          <Typography variant="h6" color="error" sx={{ mb: 1 }}>
+        <Paper
+          component="section"
+          id={SECTION_HASHES.danger}
+          ref={dangerSectionRef}
+          tabIndex={-1}
+          aria-labelledby="settings-danger-zone-title"
+          variant="outlined"
+          sx={{ p: 2, borderColor: "error.main", scrollMarginTop: SECTION_SCROLL_MARGIN }}
+        >
+          <Typography
+            id="settings-danger-zone-title"
+            component="h2"
+            variant="h6"
+            color="error"
+            sx={{ mb: 1 }}
+          >
             Danger Zone
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
