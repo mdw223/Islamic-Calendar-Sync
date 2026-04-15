@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Box, IconButton, Paper, Typography } from "@mui/material";
 import { Languages, X } from "lucide-react";
+import { useUser } from "../contexts/UserContext";
 
 const SCRIPT_ID = "google-translate-script";
 
-const loadGoogleTranslate = () => {
+const loadGoogleTranslate = (pageLanguage = "en") => {
   if (typeof window === "undefined") return;
 
   window.googleTranslateElementInit = () => {
@@ -12,7 +13,7 @@ const loadGoogleTranslate = () => {
 
     new window.google.translate.TranslateElement(
       {
-        pageLanguage: "en",
+        pageLanguage: pageLanguage,
         autoDisplay: false,
       },
       "google_translate_element",
@@ -38,10 +39,96 @@ const loadGoogleTranslate = () => {
 
 const GoogleTranslateWidget = () => {
   const [isClosed, setIsClosed] = useState(false);
+  const { user } = useUser();
+  const userLanguage = user?.language ?? "en";
 
   useEffect(() => {
-    loadGoogleTranslate();
+    const styleId = "google-translate-hide-banner-style";
+    let styleElement = document.getElementById(styleId);
+
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = styleId;
+      styleElement.textContent = `
+        iframe.VIpgJd-ZVi9od-ORHb-OEVmcd.skiptranslate,
+        .goog-te-banner-frame.skiptranslate,
+        .goog-te-banner-frame,
+        iframe.skiptranslate[src="#"] {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+          max-height: 0 !important;
+          max-width: 0 !important;
+          overflow: hidden !important;
+        }
+
+        body {
+          top: 0 !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
+    }
+
+    return () => {
+      styleElement?.remove();
+    };
   }, []);
+
+  useEffect(() => {
+    const hideGoogleTranslateBanner = () => {
+      document
+        .querySelectorAll(
+          'iframe.VIpgJd-ZVi9od-ORHb-OEVmcd.skiptranslate, .goog-te-banner-frame.skiptranslate, .goog-te-banner-frame, iframe.skiptranslate[src="#"]',
+        )
+        .forEach((element) => {
+          element.style.display = "none";
+          element.style.visibility = "hidden";
+          element.style.height = "0";
+          element.style.width = "0";
+          element.style.maxHeight = "0";
+          element.style.maxWidth = "0";
+          element.style.overflow = "hidden";
+        });
+
+      document.body.style.top = "0px";
+    };
+
+    hideGoogleTranslateBanner();
+
+    const observer = new MutationObserver(hideGoogleTranslateBanner);
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const storedClosed = localStorage.getItem('googleTranslateWidgetClosed');
+    const storedTimestamp = localStorage.getItem('googleTranslateWidgetClosedTime');
+    
+    if (storedClosed === 'true' && storedTimestamp) {
+      const timeSinceClosed = Date.now() - parseInt(storedTimestamp);
+      const fifteenMinutesMs = 15 * 60 * 1000;
+      
+      // Hide widget only if it was closed within the last 15 minutes
+      if (timeSinceClosed < fifteenMinutesMs) {
+        setIsClosed(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGoogleTranslate(userLanguage);
+  }, [userLanguage]);
+
+  // Don't show widget for logged-in users
+  if (user?.isLoggedIn) {
+    return null;
+  }
 
   if (isClosed) {
     return null;
@@ -76,7 +163,11 @@ const GoogleTranslateWidget = () => {
       <IconButton
         size="small"
         aria-label="Close translate widget"
-        onClick={() => setIsClosed(true)}
+        onClick={() => {
+          localStorage.setItem('googleTranslateWidgetClosed', 'true');
+          localStorage.setItem('googleTranslateWidgetClosedTime', Date.now().toString());
+          setIsClosed(true);
+        }}
         sx={{ ml: 0.25 }}
       >
         <X size={14} />

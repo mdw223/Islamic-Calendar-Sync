@@ -215,6 +215,17 @@ export default function Settings() {
     await saveUserProfile({ name, language, hanafi, use24HourTime });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    
+    // If language changed for a guest user, set the translate cookie and reload
+    if (language === "en") {
+      document.cookie = "googtrans=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      window.location.reload();
+    } else {
+      const expiryDate = new Date();
+      expiryDate.setTime(expiryDate.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
+      document.cookie = `googtrans=/auto/${language};path=/;expires=${expiryDate.toUTCString()}`;
+      window.location.reload();
+    }
   }
 
   async function handleAddLocation() {
