@@ -175,6 +175,11 @@ export default function MonthView({
     };
   }, [events, year, month, days, startOffset]);
 
+  const maxSpanLaneCount = useMemo(
+    () => Math.max(0, ...Object.values(spanLaneCountByRow)),
+    [spanLaneCountByRow],
+  );
+
   const cells = useMemo(() => {
     const result = [];
     for (let i = 0; i < startOffset; i++) result.push(null);
@@ -188,7 +193,7 @@ export default function MonthView({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
           mb: 0.5,
         }}
       >
@@ -210,7 +215,7 @@ export default function MonthView({
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
           gap: { xs: 0, sm: 0.5 },
         }}
       >
@@ -231,8 +236,7 @@ export default function MonthView({
 
           const cellDate = new Date(year, month, day);
           const key = toDateKey(cellDate);
-          const laneCount = spanLaneCountByRow[rowIndex] ?? 0;
-          const reservedTopPx = laneCount * 22;
+          const reservedTopPx = maxSpanLaneCount * 22;
           const isToday = sameDay(cellDate, today);
           const dayEvents = eventsByDay[key] ?? [];
           const hijri = hijriByDay[day];
@@ -247,14 +251,16 @@ export default function MonthView({
                 minHeight: 90 + reservedTopPx,
                 minWidth: 0,
                 p: 0.75,
+                boxSizing: "border-box",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 gap: 0.25,
                 borderRadius: { xs: 0, sm: "12px" },
                 overflow: "hidden",
-                borderColor: isToday ? "primary.main" : "divider",
-                borderWidth: isToday ? 2 : 1,
+                borderColor: "divider",
+                borderWidth: 1,
+                boxShadow: isToday ? `inset 0 0 0 2px ${theme.palette.primary.main}` : "none",
                 transition: "background-color 0.15s",
                 "&:hover": { bgcolor: "action.hover" },
               }}

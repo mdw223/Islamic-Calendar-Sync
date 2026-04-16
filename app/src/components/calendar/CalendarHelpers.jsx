@@ -304,7 +304,10 @@ export function EventChip({ event, onClick, theme }) {
         onClick(event);
       }}
       sx={{
+        minWidth: 0,
         width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
         justifyContent: "flex-start",
         bgcolor: eventColor(event, theme),
         color: "#fff",
@@ -314,8 +317,9 @@ export function EventChip({ event, onClick, theme }) {
         cursor: "pointer",
         "& .MuiChip-label": {
           px: { xs: 0.25, sm: 0.75 },
+          whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: { xs: "clip", sm: "ellipsis" },
+          textOverflow: "ellipsis",
         },
       }}
     />

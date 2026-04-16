@@ -219,7 +219,7 @@ export default function WeekView({
               sx={{
                 flex: 1,
                 display: "grid",
-                gridTemplateColumns: "repeat(7, 1fr)",
+                gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
                 position: "relative",
               }}
             >
@@ -237,6 +237,8 @@ export default function WeekView({
                       onSlotClick(`${key}T${String(hour).padStart(2, "0")}:00`)
                     }
                     sx={{
+                      minWidth: 0,
+                      overflow: "hidden",
                       borderLeft: 1,
                       borderColor: "divider",
                       cursor: "pointer",
@@ -271,6 +273,8 @@ export default function WeekView({
                       zIndex: 2,
                       mt: `calc(2px + ${span.lane * 22}px)`,
                       px: 0.25,
+                      minWidth: 0,
+                      overflow: "hidden",
                       pointerEvents: "auto",
                       position: "relative",
                       width: "100%",
