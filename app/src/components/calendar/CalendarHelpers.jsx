@@ -1,6 +1,6 @@
 import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES, MONTH_NAMES } from "../../Constants";
+import { DAY_NAMES, MONTH_NAMES, VALID_VIEWS } from "../../Constants";
 import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
 
 /**
@@ -44,6 +44,77 @@ export function dateKeyToLocalDate(dateKey) {
   }
 
   return d;
+}
+
+export function isValidCalendarView(view) {
+  return VALID_VIEWS.includes(view);
+}
+
+export function normalizeCalendarView(view, fallback = "month") {
+  return isValidCalendarView(view) ? view : fallback;
+}
+
+export function coerceCalendarDateForView(date, view) {
+  const next = new Date(date);
+  if (view === "month") {
+    next.setDate(1);
+  }
+  return next;
+}
+
+export function buildCalendarPath(view, date) {
+  const nextView = normalizeCalendarView(view);
+  const nextDate = coerceCalendarDateForView(date, nextView);
+  return `/calendar/${nextView}/${nextDate.getFullYear()}/${
+    nextDate.getMonth() + 1
+  }/${nextDate.getDate()}`;
+}
+
+export function parseCalendarRouteState({
+  view,
+  year,
+  month,
+  day,
+  fallbackView = "month",
+}) {
+  const nextView = normalizeCalendarView(view, fallbackView);
+  const parsedYear = Number.parseInt(year ?? "", 10);
+  const parsedMonth = Number.parseInt(month ?? "", 10);
+  const parsedDay = Number.parseInt(day ?? "", 10);
+
+  if (!Number.isInteger(parsedYear) || !Number.isInteger(parsedMonth)) {
+    return null;
+  }
+
+  if (nextView === "month") {
+    if (parsedMonth < 1 || parsedMonth > 12) return null;
+    return {
+      view: nextView,
+      cursor: new Date(parsedYear, parsedMonth - 1, 1, 12, 0, 0, 0),
+    };
+  }
+
+  if (
+    !Number.isInteger(parsedDay) ||
+    parsedMonth < 1 ||
+    parsedMonth > 12
+  ) {
+    return null;
+  }
+
+  const cursor = new Date(parsedYear, parsedMonth - 1, parsedDay, 12, 0, 0, 0);
+  if (
+    cursor.getFullYear() !== parsedYear ||
+    cursor.getMonth() !== parsedMonth - 1 ||
+    cursor.getDate() !== parsedDay
+  ) {
+    return null;
+  }
+
+  return {
+    view: nextView,
+    cursor,
+  };
 }
 
 function toLocalDateKeyFromIso(isoString) {

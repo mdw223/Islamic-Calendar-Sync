@@ -32,7 +32,11 @@ import {
 import { Calendar, Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import { useCalendar } from "../contexts/CalendarContext";
 import { readLS, writeLS } from "../util/LocalStorage";
-import { getEventStartEndDateKeys } from "./calendar/CalendarHelpers";
+import {
+  buildCalendarPath,
+  dateKeyToLocalDate,
+  getEventStartEndDateKeys,
+} from "./calendar/CalendarHelpers";
 
 // ── Data type registry ────────────────────────────────────────────────────
 // Each entry defines a searchable data type. Add more here in future.
@@ -63,7 +67,7 @@ function loadFilters() {
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function GlobalSearch() {
-  const { allEvents, requestCalendarDateJump } = useCalendar();
+  const { allEvents, currentView } = useCalendar();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
@@ -149,10 +153,12 @@ export default function GlobalSearch() {
   const handleResultClick = (item) => {
     if (item.type === DATA_TYPES.EVENTS) {
       const { startKey } = getEventStartEndDateKeys(item.data);
-      if (startKey) {
-        requestCalendarDateJump(startKey);
+      const date = startKey ? dateKeyToLocalDate(startKey) : null;
+      if (date) {
+        navigate(buildCalendarPath(currentView, date));
+      } else {
+        navigate(buildCalendarPath(currentView, new Date()));
       }
-      navigate("/calendar");
     }
     handleClose();
   };

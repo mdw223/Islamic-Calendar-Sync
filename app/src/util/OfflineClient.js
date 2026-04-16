@@ -65,7 +65,6 @@ export default class OfflineClient {
       ...rest,
       location: rest.location ?? null,
       eventTimezone: rest.eventTimezone ?? null,
-      isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
       islamicDefinitionId: rest.islamicDefinitionId ?? null,
       createdAt: now,
@@ -255,7 +254,6 @@ export default class OfflineClient {
       userProfile: userProfile
         ? {
             language: userProfile.language ?? null,
-            hanafi: !!userProfile.hanafi,
             use24HourTime: !!userProfile.use24HourTime,
           }
         : null,
@@ -299,7 +297,6 @@ export default class OfflineClient {
       success: true,
       user: {
         language: profile?.language ?? null,
-        hanafi: !!profile?.hanafi,
         use24HourTime: !!profile?.use24HourTime,
       },
     };
@@ -313,8 +310,6 @@ export default class OfflineClient {
         updates?.language !== undefined
           ? updates.language
           : (existing?.language ?? null),
-      hanafi:
-        updates?.hanafi !== undefined ? !!updates.hanafi : !!existing?.hanafi,
       use24HourTime:
         updates?.use24HourTime !== undefined
           ? !!updates.use24HourTime

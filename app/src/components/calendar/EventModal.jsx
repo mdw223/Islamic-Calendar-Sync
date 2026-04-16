@@ -65,9 +65,7 @@ const DEFAULT_FORM = {
   endDate: "",
   isAllDay: false,
   eventTypeId: EventTypeId.RAMADAN,
-  isTask: false,
   description: "",
-  hide: false,
   useLocalTimezone: true,
   eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
   recurrenceFreq: "none",
@@ -136,9 +134,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           endDate: toDatetimeLocal(event?.endDate),
           isAllDay: event?.isAllDay ?? false,
           eventTypeId: event?.eventTypeId ?? EventTypeId.CUSTOM,
-          isTask: event?.isTask ?? false,
           description: event?.description ?? "",
-          hide: event?.hide ?? false,
           useLocalTimezone:
             !event?.eventTimezone || event.eventTimezone === localTimezone,
           eventTimezone: event?.eventTimezone ?? localTimezone,
@@ -243,8 +239,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         location: form.location,
         isAllDay: form.isAllDay,
         eventTypeId: form.eventTypeId,
-        isTask: form.isTask,
-        hide: form.hide,
         description: form.description
           ? DOMPurify.sanitize(form.description)
           : "",
@@ -347,7 +341,10 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             inputProps={{ maxLength: 1024 }}
           />
 
-          <FormControlLabel
+          
+
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+            <FormControlLabel
             control={
               <Switch
                 checked={form.isAllDay}
@@ -356,6 +353,119 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             }
             label="All Day"
           />
+            {!isIslamicEdit ? (
+              <Box>
+                <Tooltip title="Change event color">
+                  <IconButton
+                    size="small"
+                    onClick={openColorPicker}
+                    aria-label="Change event color"
+                  >
+                    <Box
+                      sx={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: "50%",
+                        bgcolor: effectiveColor,
+                        border: 1,
+                        borderColor: "divider",
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ) : (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ ml: "auto", pt: 0.5 }}
+              >
+                This Islamic event inherits its color from its definition in the
+                Islamic Events panel.
+              </Typography>
+            )}
+          </Box>
+
+          {!isIslamicEdit && (
+            <Popover
+              open={pickerOpen}
+              anchorEl={anchorEl}
+              onClose={closeColorPicker}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <Box sx={{ p: 1.5, width: 220 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  Event color
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}
+                >
+                  {SWATCH_COLORS.map((color) => (
+                    <IconButton
+                      key={color}
+                      size="small"
+                      onClick={() => setDraftColor(color)}
+                      aria-label={`Use color ${color}`}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: "50%",
+                          bgcolor: color,
+                          border: draftColor.toUpperCase() === color ? 2 : 1,
+                          borderColor:
+                            draftColor.toUpperCase() === color
+                              ? "text.primary"
+                              : "divider",
+                        }}
+                      />
+                    </IconButton>
+                  ))}
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <input
+                    type="color"
+                    value={
+                      HEX_COLOR_RE.test(draftColor)
+                        ? draftColor
+                        : DEFAULT_EVENT_COLOR
+                    }
+                    onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
+                    aria-label="Pick custom color"
+                  />
+                  <TextField
+                    size="small"
+                    value={draftColor}
+                    onChange={(e) => setDraftColor(e.target.value)}
+                    error={!HEX_COLOR_RE.test(draftColor)}
+                    helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
+                  />
+                </Stack>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="flex-end"
+                  sx={{ mt: 1 }}
+                >
+                  <Button size="small" onClick={closeColorPicker}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={applyColor}
+                    disabled={!HEX_COLOR_RE.test(draftColor)}
+                  >
+                    Apply
+                  </Button>
+                </Stack>
+              </Box>
+            </Popover>
+          )}
 
           <FormControlLabel
             control={
@@ -637,7 +747,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             <Typography variant="caption" color="text.secondary">
               Dates and Hijri recurrence for this event are managed when you
               generate Islamic calendar years. You can still edit name,
-              description, and visibility.
+              location, description, and event type.
             </Typography>
           )}
 
@@ -657,131 +767,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             </Select>
           </FormControl>
 
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={form.isTask}
-                  onChange={(e) => handleChange("isTask", e.target.checked)}
-                />
-              }
-              label="Task"
-            />
-
-            {!isIslamicEdit ? (
-              <Box sx={{ pt: 0.75 }}>
-                <Tooltip title="Change event color">
-                  <IconButton
-                    size="small"
-                    onClick={openColorPicker}
-                    aria-label="Change event color"
-                  >
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        bgcolor: effectiveColor,
-                        border: 1,
-                        borderColor: "divider",
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            ) : (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ ml: "auto", pt: 0.5 }}
-              >
-                This Islamic event inherits its color from its definition in the
-                Islamic Events panel.
-              </Typography>
-            )}
-          </Box>
-
-          {!isIslamicEdit && (
-            <Popover
-              open={pickerOpen}
-              anchorEl={anchorEl}
-              onClose={closeColorPicker}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <Box sx={{ p: 1.5, width: 220 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                  Event color
-                </Typography>
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}
-                >
-                  {SWATCH_COLORS.map((color) => (
-                    <IconButton
-                      key={color}
-                      size="small"
-                      onClick={() => setDraftColor(color)}
-                      aria-label={`Use color ${color}`}
-                    >
-                      <Box
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: "50%",
-                          bgcolor: color,
-                          border: draftColor.toUpperCase() === color ? 2 : 1,
-                          borderColor:
-                            draftColor.toUpperCase() === color
-                              ? "text.primary"
-                              : "divider",
-                        }}
-                      />
-                    </IconButton>
-                  ))}
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <input
-                    type="color"
-                    value={
-                      HEX_COLOR_RE.test(draftColor)
-                        ? draftColor
-                        : DEFAULT_EVENT_COLOR
-                    }
-                    onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
-                    aria-label="Pick custom color"
-                  />
-                  <TextField
-                    size="small"
-                    value={draftColor}
-                    onChange={(e) => setDraftColor(e.target.value)}
-                    error={!HEX_COLOR_RE.test(draftColor)}
-                    helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
-                  />
-                </Stack>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  justifyContent="flex-end"
-                  sx={{ mt: 1 }}
-                >
-                  <Button size="small" onClick={closeColorPicker}>
-                    Cancel
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={applyColor}
-                    disabled={!HEX_COLOR_RE.test(draftColor)}
-                  >
-                    Apply
-                  </Button>
-                </Stack>
-              </Box>
-            </Popover>
-          )}
-
           <Box>
             <Typography
               variant="caption"
@@ -799,15 +784,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             />
           </Box>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={form.hide}
-                onChange={(e) => handleChange("hide", e.target.checked)}
-              />
-            }
-            label="Hide from calendar"
-          />
 
         </DialogContent>
 

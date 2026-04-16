@@ -167,7 +167,7 @@ export default class APIClient {
 
   /**
    * Create a new event.
-   * @param {{ name, location?, startDate, endDate, isAllDay, description, hide, eventTypeId, isTask }} eventData
+    * @param {{ name, location?, startDate, endDate, isAllDay, description, hide, eventTypeId }} eventData
    */
   static async createEvent(eventData) {
     const { eventId, ...payload } = eventData;
@@ -177,7 +177,7 @@ export default class APIClient {
   /**
    * Update an existing event by its ID.
    * @param {number} eventId
-   * @param {{ name?, location?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isTask? }} updates
+    * @param {{ name?, location?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId? }} updates
    */
   static async updateEvent(eventId, updates) {
     return HTTPClient.put(`/events/${eventId}`, updates);

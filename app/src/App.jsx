@@ -38,6 +38,8 @@ const router = createBrowserRouter([
           { path: "export", element: <ExportEvents /> },
           { path: "help/subscriptions", element: <SubscriptionsHelp /> },
           { path: "calendar", element: <CalendarPage /> },
+          { path: "calendar/:view/:year/:month/:day", element: <CalendarPage /> },
+          { path: "calendar/:year/:month", element: <CalendarPage /> },
           { path: "data-policy", element: <DataPolicy /> },
         ],
       },

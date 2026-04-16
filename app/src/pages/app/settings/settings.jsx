@@ -58,7 +58,6 @@ export default function Settings() {
   const isLoggedIn = user?.isLoggedIn;
   const [name, setName] = useState(user?.name ?? "");
   const [language, setLanguage] = useState(user?.language ?? "en");
-  const [hanafi, setHanafi] = useState(!!user?.hanafi);
   const [use24HourTime, setUse24HourTime] = useState(!!user?.use24HourTime);
   const [locationName, setLocationName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
@@ -144,7 +143,6 @@ export default function Settings() {
   useEffect(() => {
     setName(user?.name ?? "");
     setLanguage(user?.language ?? "en");
-    setHanafi(!!user?.hanafi);
     setUse24HourTime(!!user?.use24HourTime);
   }, [user]);
 
@@ -212,7 +210,7 @@ export default function Settings() {
 
   async function handleSaveProfile() {
     setError("");
-    await saveUserProfile({ name, language, hanafi, use24HourTime });
+    await saveUserProfile({ name, language, use24HourTime });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     
@@ -409,15 +407,6 @@ export default function Settings() {
               ))}
             </Select>
           </FormControl>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={hanafi}
-                onChange={(e) => setHanafi(e.target.checked)}
-              />
-            }
-            label="Hanafi calculation"
-          />
           <FormControlLabel
             control={
               <Checkbox

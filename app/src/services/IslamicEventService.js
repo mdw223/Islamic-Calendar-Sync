@@ -201,7 +201,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
         eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
-        isTask: false,
         hide: false,
         eventTimezone: timezone,
         rrule: recurrence.rrule,

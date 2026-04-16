@@ -76,9 +76,9 @@ export default class EventDOA {
 
    * @param {{ userId: number, name: string, location?: string, startDate: string, endDate: string,
 
-   *           isAllDay?: boolean, description?: string, hide?: boolean,
+  *           isAllDay?: boolean, description?: string, hide?: boolean,
 
-   *           eventTypeId: number, isTask?: boolean }} data
+  *           eventTypeId: number }} data
 
    * @returns {Promise<Event>}
 
@@ -104,8 +104,6 @@ export default class EventDOA {
 
     eventTypeId,
 
-    isTask = false,
-
     islamicDefinitionId = null,
 
     hijriMonth = null,
@@ -128,7 +126,7 @@ export default class EventDOA {
 
          userid, name, startdate, enddate, isallday,
 
-         description, location, hide, eventtypeid, istask,
+        description, location, hide, eventtypeid,
 
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
 
@@ -136,15 +134,15 @@ export default class EventDOA {
 
        )
 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
 
-               $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+               $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
 
        RETURNING *`,
 
       [userId, name, startDate, endDate, isAllDay, description, location, hide,
 
-       eventTypeId, isTask, islamicDefinitionId, hijriMonth,
+        eventTypeId, islamicDefinitionId, hijriMonth,
 
       hijriDay, durationDays, rrule, eventTimezone, color],
 
@@ -166,7 +164,7 @@ export default class EventDOA {
 
    * @param {number} userId
 
-   * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide, eventTypeId, isTask }>} fields
+  * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide, eventTypeId }>} fields
 
    * @returns {Promise<Event | null>}
 
@@ -191,8 +189,6 @@ export default class EventDOA {
       hide: "hide",
 
       eventTypeId: "eventtypeid",
-
-      isTask: "istask",
 
       islamicDefinitionId: "islamicdefinitionid",
 
@@ -433,7 +429,6 @@ export default class EventDOA {
           description = null,
           hide = false,
           eventTypeId,
-          isTask = false,
           hijriMonth = null,
           hijriDay = null,
           durationDays = null,
@@ -445,10 +440,10 @@ export default class EventDOA {
         const result = await client.query(
           `INSERT INTO event (
              userid, name, startdate, enddate, isallday,
-             description, location, hide, eventtypeid, istask,
+             description, location, hide, eventtypeid,
              islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
            RETURNING *`,
           [
             userId,
@@ -460,7 +455,6 @@ export default class EventDOA {
             location,
             hide,
             eventTypeId,
-            isTask,
             null,
             hijriMonth,
             hijriDay,
@@ -496,7 +490,6 @@ export default class EventDOA {
       description = null,
       hide = false,
       eventTypeId,
-      isTask = false,
       islamicDefinitionId,
       hijriMonth = null,
       hijriDay = null,
@@ -509,10 +502,10 @@ export default class EventDOA {
     const result = await client.query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
-         description, location, hide, eventtypeid, istask,
+         description, location, hide, eventtypeid,
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
        ON CONFLICT (userid, islamicdefinitionid) WHERE islamicdefinitionid IS NOT NULL
        DO UPDATE SET
          name = EXCLUDED.name,
@@ -523,7 +516,6 @@ export default class EventDOA {
          location = EXCLUDED.location,
          hide = EXCLUDED.hide,
          eventtypeid = EXCLUDED.eventtypeid,
-         istask = EXCLUDED.istask,
          hijrimonth = EXCLUDED.hijrimonth,
          hijriday = EXCLUDED.hijriday,
          durationdays = EXCLUDED.durationdays,
@@ -542,7 +534,6 @@ export default class EventDOA {
         location,
         hide,
         eventTypeId,
-        isTask,
         islamicDefinitionId,
         hijriMonth,
         hijriDay,

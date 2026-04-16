@@ -74,8 +74,15 @@ const Navbar = () => {
         opacity: 0.95,
       }}
     >
-      <Container maxWidth="lg">
-        <Toolbar disableGutters sx={{ justifyContent: "space-between" }}>
+      <Container maxWidth={false} disableGutters sx={{ px: 0 }}>
+        <Toolbar
+          disableGutters
+          sx={{
+            justifyContent: "space-between",
+            px: 3,
+            pr: { xs: 1, sm: 2 },
+          }}
+        >
           {/* Logo */}
           <Box
             component={RouterLink}
@@ -85,6 +92,8 @@ const Navbar = () => {
               alignItems: "center",
               textDecoration: "none",
               color: "inherit",
+              flexGrow: 1,
+              minWidth: 0,
             }}
           >
             <Typography
@@ -97,9 +106,24 @@ const Navbar = () => {
             <Typography
               variant="h6"
               noWrap
-              sx={{ fontWeight: 700, display: "block" }}
+              sx={{
+                fontWeight: 700,
+                display: { xs: "block", md: "none" },
+                textAlign: "left",
+              }}
             >
               ICS
+            </Typography>
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                fontWeight: 700,
+                display: { xs: "none", md: "block" },
+                textAlign: "left",
+              }}
+            >
+              Islamic Calendar Sync
             </Typography>
           </Box>
 
