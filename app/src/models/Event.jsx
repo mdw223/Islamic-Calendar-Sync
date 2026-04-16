@@ -31,6 +31,7 @@ export const defaultEvent = Object.freeze({
   hide: false,
   eventTypeId: EventTypeId.CUSTOM,
   islamicDefinitionId: null,
+  attributedDefinitionId: null,
   hijriMonth: null,
   hijriDay: null,
   durationDays: null,
@@ -53,6 +54,7 @@ export function fromApiRow(row) {
     hide: row.hide ?? false,
     eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
+    attributedDefinitionId: row.attributeddefinitionid ?? null,
     hijriMonth: row.hijrimonth ?? null,
     hijriDay: row.hijriday ?? null,
     durationDays: row.durationdays ?? null,
@@ -88,6 +90,7 @@ export class Event {
     this.durationDays = normalized.durationDays ?? null;
     this.rrule = normalized.rrule ?? null;
     this.islamicDefinitionId = normalized.islamicDefinitionId ?? null;
+    this.attributedDefinitionId = normalized.attributedDefinitionId ?? null;
     this.eventTimezone = normalized.eventTimezone ?? null;
   }
 
@@ -174,6 +177,7 @@ export class Event {
       hide: this.hide,
       eventTypeId: this.eventTypeId,
       islamicDefinitionId: this.islamicDefinitionId,
+      attributedDefinitionId: this.attributedDefinitionId,
       hijriMonth: this.hijriMonth,
       hijriDay: this.hijriDay,
       durationDays: this.durationDays,

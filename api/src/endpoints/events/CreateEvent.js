@@ -12,6 +12,10 @@ export default async function CreateEvent(req, res) {
     try {
         const eventData = Event.fromRequest(req.body);
 
+        eventData.attributedDefinitionId =
+            eventData.attributedDefinitionId ?? eventData.islamicDefinitionId ?? null;
+        eventData.islamicDefinitionId = null;
+
         if (!eventData.name || !eventData.startDate || !eventData.endDate || !eventData.eventTypeId) {
             return res.status(400).json({
                 success: false,
@@ -58,12 +62,6 @@ export default async function CreateEvent(req, res) {
                 return res.status(400).json({
                     success: false,
                     message: '"color" must be a hex color string like #1A2B3C.',
-                });
-            }
-            if (eventData.islamicDefinitionId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Definition-linked Islamic events inherit definition color and cannot set per-event color.",
                 });
             }
         }

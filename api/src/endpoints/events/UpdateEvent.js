@@ -46,6 +46,15 @@ export default async function UpdateEvent(req, res) {
             });
         }
 
+        if (userEvent.islamicDefinitionId) {
+            req.body.islamicDefinitionId = userEvent.islamicDefinitionId;
+            req.body.attributedDefinitionId = null;
+        } else {
+            req.body.attributedDefinitionId =
+                req.body.attributedDefinitionId ?? req.body.islamicDefinitionId ?? null;
+            req.body.islamicDefinitionId = null;
+        }
+
         if (req.body.color != null) {
             if (typeof req.body.color !== "string" || !HEX_COLOR_RE.test(req.body.color)) {
                 return res.status(400).json({

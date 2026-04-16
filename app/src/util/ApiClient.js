@@ -246,6 +246,16 @@ export default class APIClient {
     return HTTPClient.put(`/definitions/${definitionId}`, payload);
   }
 
+  /**
+   * Update multiple definition preferences in a single request.
+   *
+   * @param {Array<{ definitionId: string, isHidden: boolean, defaultColor?: string | null }>} preferences
+   * @returns {Promise<{ success: boolean, syncedCount: number }>}
+   */
+  static async updateDefinitionPreferences(preferences) {
+    return HTTPClient.post("/definitions/sync", { preferences });
+  }
+
   // ── Offline → Server sync ─────────────────────────────────────────────────
 
   /**
@@ -266,7 +276,7 @@ export default class APIClient {
    * @returns {Promise<{ success: boolean, syncedCount: number }>}
    */
   static async syncOfflinePreferences(preferences) {
-    return HTTPClient.post("/definitions/sync", { preferences });
+    return APIClient.updateDefinitionPreferences(preferences);
   }
 
   static async getUserLocations() {

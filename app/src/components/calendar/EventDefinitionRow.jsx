@@ -18,6 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo, useState } from "react";
+import { useOptionalUser } from "../../contexts/UserContext";
 
 const SWATCH_COLORS = [
   "#2E7D32",
@@ -33,14 +34,20 @@ const SWATCH_COLORS = [
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 
 /**
- * @param {{ definition: Object, checked: boolean, onChange: Function, onColorChange?: Function }} props
+ * @param {{ definition: Object, checked: boolean, onChange: Function, onColorChange?: Function, allowColorChange?: boolean }} props
  */
 export default function EventDefinitionRow({
   definition,
   checked,
   onChange,
   onColorChange,
+  allowColorChange = true,
 }) {
+  const { user } = useOptionalUser();
+  const showArabicEventText = user?.showArabicEventText !== false;
+  const hasArabicTitle = showArabicEventText && Boolean(definition.titleAr);
+  const rowAlignItems = hasArabicTitle ? "flex-start" : "center";
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [draftColor, setDraftColor] = useState(definition.defaultColor ?? "#7C3AED");
 
@@ -69,7 +76,7 @@ export default function EventDefinitionRow({
   return (
     <ListItem
       disableGutters
-      sx={{ py: 0.25, px: 1, display: "flex", alignItems: "flex-start" }}
+      sx={{ py: 0.25, px: 1, display: "flex", alignItems: rowAlignItems }}
     >
       <FormControlLabel
         control={
@@ -82,109 +89,123 @@ export default function EventDefinitionRow({
         }
         label={
           <Box>
-            {/* Arabic title — right-to-left, slightly larger */}
+            {hasArabicTitle && (
+              <Typography
+                variant="caption"
+                component="div"
+                dir="rtl"
+                sx={{ fontWeight: 600, lineHeight: 1.3, color: "text.primary" }}
+              >
+                {definition.titleAr}
+              </Typography>
+            )}
             <Typography
               variant="caption"
               component="div"
-              dir="rtl"
-              sx={{ fontWeight: 600, lineHeight: 1.3, color: "text.primary" }}
-            >
-              {definition.titleAr}
-            </Typography>
-            {/* English title */}
-            <Typography
-              variant="caption"
-              component="div"
-              sx={{ color: "text.secondary", lineHeight: 1.2 }}
+              sx={{
+                color: hasArabicTitle ? "text.secondary" : "text.primary",
+                lineHeight: 1.2,
+              }}
             >
               {definition.titleEn}
             </Typography>
           </Box>
         }
-        sx={{ m: 0, alignItems: "flex-start" }}
+        sx={{ m: 0, alignItems: rowAlignItems }}
       />
 
-      <Box sx={{ ml: "auto", mr: { xs: 2, sm: 0 }, pt: 0.5 }}>
-        <Tooltip title="Change definition color">
-          <IconButton
-            size="small"
-            onClick={openPicker}
-            aria-label={`Change color for ${definition.titleEn}`}
+      {allowColorChange && (
+        <>
+          <Box
+            sx={{
+              ml: "auto",
+              mr: { xs: 2, sm: 0 },
+              pt: hasArabicTitle ? 0.5 : 0,
+            }}
           >
-            <Box
-              sx={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                bgcolor: effectiveColor,
-                border: 1,
-                borderColor: "divider",
-              }}
-            />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      <Popover
-        open={pickerOpen}
-        anchorEl={anchorEl}
-        onClose={closePicker}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Box sx={{ p: 1.5, width: 220 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-            Definition color
-          </Typography>
-          <Stack direction="row" spacing={0.75} sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}>
-            {SWATCH_COLORS.map((color) => (
+            <Tooltip title="Change definition color">
               <IconButton
-                key={color}
                 size="small"
-                onClick={() => setDraftColor(color)}
-                aria-label={`Use color ${color}`}
+                onClick={openPicker}
+                aria-label={`Change color for ${definition.titleEn}`}
               >
                 <Box
                   sx={{
-                    width: 16,
-                    height: 16,
+                    width: 14,
+                    height: 14,
                     borderRadius: "50%",
-                    bgcolor: color,
-                    border: draftColor.toUpperCase() === color ? 2 : 1,
-                    borderColor: draftColor.toUpperCase() === color ? "text.primary" : "divider",
+                    bgcolor: effectiveColor,
+                    border: 1,
+                    borderColor: "divider",
                   }}
                 />
               </IconButton>
-            ))}
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <input
-              type="color"
-              value={HEX_COLOR_RE.test(draftColor) ? draftColor : "#7C3AED"}
-              onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
-              aria-label="Pick custom color"
-            />
-            <TextField
-              size="small"
-              value={draftColor}
-              onChange={(e) => setDraftColor(e.target.value)}
-              error={!HEX_COLOR_RE.test(draftColor)}
-              helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
-            />
-          </Stack>
-          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1 }}>
-            <Button size="small" onClick={closePicker}>Cancel</Button>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={submitColor}
-              disabled={!HEX_COLOR_RE.test(draftColor)}
-            >
-              Apply
-            </Button>
-          </Stack>
-        </Box>
-      </Popover>
+            </Tooltip>
+          </Box>
+
+          <Popover
+            open={pickerOpen}
+            anchorEl={anchorEl}
+            onClose={closePicker}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <Box sx={{ p: 1.5, width: 220 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Definition color
+              </Typography>
+              <Stack direction="row" spacing={0.75} sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}>
+                {SWATCH_COLORS.map((color) => (
+                  <IconButton
+                    key={color}
+                    size="small"
+                    onClick={() => setDraftColor(color)}
+                    aria-label={`Use color ${color}`}
+                  >
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: "50%",
+                        bgcolor: color,
+                        border: draftColor.toUpperCase() === color ? 2 : 1,
+                        borderColor:
+                          draftColor.toUpperCase() === color ? "text.primary" : "divider",
+                      }}
+                    />
+                  </IconButton>
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <input
+                  type="color"
+                  value={HEX_COLOR_RE.test(draftColor) ? draftColor : "#7C3AED"}
+                  onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
+                  aria-label="Pick custom color"
+                />
+                <TextField
+                  size="small"
+                  value={draftColor}
+                  onChange={(e) => setDraftColor(e.target.value)}
+                  error={!HEX_COLOR_RE.test(draftColor)}
+                  helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
+                />
+              </Stack>
+              <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1 }}>
+                <Button size="small" onClick={closePicker}>Cancel</Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={submitColor}
+                  disabled={!HEX_COLOR_RE.test(draftColor)}
+                >
+                  Apply
+                </Button>
+              </Stack>
+            </Box>
+          </Popover>
+        </>
+      )}
     </ListItem>
   );
 }

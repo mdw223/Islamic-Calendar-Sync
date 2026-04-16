@@ -44,14 +44,31 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useCalendar } from "../../contexts/CalendarContext";
 import EventDefinitionRow from "./EventDefinitionRow";
 import SearchField from "../SearchField";
+import { SubscriptionDefinitionId } from "../../Constants";
 
 export default function IslamicEventsPanel({
   open,
   onToggleOpen,
   isMobile = false,
 }) {
-  const { islamicEventDefs, toggleIslamicEvent, updateIslamicDefinitionColor } =
-    useCalendar();
+  const {
+    islamicEventDefs,
+    toggleIslamicEvent,
+    setAllIslamicEventVisibility,
+    showUserCreatedEvents,
+    toggleUserCreatedEvents,
+    updateIslamicDefinitionColor,
+  } = useCalendar();
+
+  const customDefinition = useMemo(
+    () => ({
+      id: SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+      titleEn: "Include My Created Events",
+      titleAr: null,
+      category: "custom",
+    }),
+    [],
+  );
 
   // ── Search state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -59,13 +76,22 @@ export default function IslamicEventsPanel({
   // Filter definitions by search query (matches titleEn or titleAr).
   const filteredDefs = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return islamicEventDefs;
-    return islamicEventDefs.filter(
+    const allDefs = [customDefinition, ...islamicEventDefs];
+    if (!q) return allDefs;
+    return allDefs.filter(
       (d) =>
         (d.titleEn && d.titleEn.toLowerCase().includes(q)) ||
         (d.titleAr && d.titleAr.includes(q)),
     );
-  }, [islamicEventDefs, search]);
+  }, [customDefinition, islamicEventDefs, search]);
+
+  const CUSTOM_DEFS = useMemo(
+    () =>
+      filteredDefs.filter(
+        (d) => d.id === SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS,
+      ),
+    [filteredDefs],
+  );
 
   // Partition definitions into the three display groups (derived from context).
   const ANNUAL_DEFS = useMemo(
@@ -85,6 +111,7 @@ export default function IslamicEventsPanel({
 
   // Section collapse state — all expanded by default.
   const [sections, setSections] = useState({
+    custom: true,
     annual: true,
     monthly: true,
     monthStart: true,
@@ -94,21 +121,31 @@ export default function IslamicEventsPanel({
 
   // A definition is "checked" when its isHidden flag is false/undefined.
   const isChecked = (id) => {
+    if (id === SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS) {
+      return showUserCreatedEvents;
+    }
     const def = islamicEventDefs.find((d) => d.id === id);
     return def ? !def.isHidden : true;
   };
 
-  // "Select All" is checked when nothing is hidden.
-  const allChecked = islamicEventDefs.every((d) => !d.isHidden);
+  // "Select All" is checked when all rows (including custom) are visible.
+  const allChecked =
+    showUserCreatedEvents && islamicEventDefs.every((d) => !d.isHidden);
 
   // "Select All" is indeterminate when some (but not all) are hidden.
-  const someChecked = !allChecked && !islamicEventDefs.every((d) => d.isHidden);
+  const someChecked =
+    !allChecked &&
+    (showUserCreatedEvents || islamicEventDefs.some((d) => !d.isHidden));
 
   /**
    * Toggle a single definition.
    * Delegates to CalendarContext which handles localStorage + state updates.
    */
-  function handleToggle(id) {
+  function handleToggle(id, checked) {
+    if (id === SubscriptionDefinitionId.INCLUDE_USER_CREATED_EVENTS) {
+      toggleUserCreatedEvents(checked);
+      return;
+    }
     toggleIslamicEvent(id);
   }
 
@@ -118,13 +155,8 @@ export default function IslamicEventsPanel({
    * Otherwise → re-enable everything.
    */
   function handleSelectAll(checked) {
-    for (const def of islamicEventDefs) {
-      // Only call toggle if the state actually needs to change.
-      const currentlyVisible = !def.isHidden;
-      if (checked !== currentlyVisible) {
-        toggleIslamicEvent(def.id);
-      }
-    }
+    setAllIslamicEventVisibility(checked);
+    toggleUserCreatedEvents(checked);
   }
 
   // ── Toggle tab (always visible on the right edge of the panel / left of calendar) ──
@@ -255,6 +287,7 @@ export default function IslamicEventsPanel({
             }}
             onClick={() => {
               setCollapseAll(!collapseAll);
+              toggleSection("custom");
               toggleSection("annual");
               toggleSection("monthly");
               toggleSection("monthStart");
@@ -289,6 +322,43 @@ export default function IslamicEventsPanel({
         {/* ── Scrollable list of definitions ────────────────────────────────── */}
         <Box sx={{ overflowY: "auto", flex: 1 }}>
           <List dense disablePadding>
+            {/* Custom events */}
+            <ListSubheader
+              sx={{
+                lineHeight: "28px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+              onClick={() => toggleSection("custom")}
+            >
+              Custom
+              <ChevronDown
+                size={14}
+                style={{
+                  marginLeft: "auto",
+                  transition: "transform 0.2s",
+                  transform: sections.custom ? "rotate(0deg)" : "rotate(-90deg)",
+                }}
+              />
+            </ListSubheader>
+            <Collapse in={sections.custom}>
+              {CUSTOM_DEFS.map((def) => (
+                <EventDefinitionRow
+                  key={def.id}
+                  definition={def}
+                  checked={isChecked(def.id)}
+                  onChange={handleToggle}
+                  allowColorChange={false}
+                />
+              ))}
+            </Collapse>
+
+            <Divider sx={{ my: 0.5 }} />
+
             {/* Annual events */}
             <ListSubheader
               sx={{

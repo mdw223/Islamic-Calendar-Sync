@@ -220,6 +220,28 @@ export default class OfflineClient {
     };
   }
 
+  static async updateDefinitionPreferences(preferences) {
+    if (!Array.isArray(preferences)) {
+      throw new Error('Expected "preferences" to be an array.');
+    }
+
+    if (preferences.length === 0) {
+      return { success: true, syncedCount: 0 };
+    }
+
+    await Promise.all(
+      preferences.map(({ definitionId, isHidden, defaultColor = null }) =>
+        OfflineClient.updateDefinitionPreference(
+          definitionId,
+          isHidden,
+          defaultColor,
+        ),
+      ),
+    );
+
+    return { success: true, syncedCount: preferences.length };
+  }
+
   // ── Sync helpers ───────────────────────────────────────────────────────
 
   /**
@@ -255,6 +277,8 @@ export default class OfflineClient {
         ? {
             language: userProfile.language ?? null,
             use24HourTime: !!userProfile.use24HourTime,
+            showArabicEventText:
+              userProfile.showArabicEventText !== false,
           }
         : null,
       generatedYearsStart: generationMeta?.generatedYearsStart ?? null,
@@ -298,6 +322,7 @@ export default class OfflineClient {
       user: {
         language: profile?.language ?? null,
         use24HourTime: !!profile?.use24HourTime,
+        showArabicEventText: profile?.showArabicEventText !== false,
       },
     };
   }
@@ -314,6 +339,10 @@ export default class OfflineClient {
         updates?.use24HourTime !== undefined
           ? !!updates.use24HourTime
           : !!existing?.use24HourTime,
+      showArabicEventText:
+        updates?.showArabicEventText !== undefined
+          ? !!updates.showArabicEventText
+          : existing?.showArabicEventText !== false,
       updatedAt: new Date().toISOString(),
     };
     await db.userProfile.put(next);

@@ -15,6 +15,7 @@ export class Event {
     this.hide = null;
     this.eventTypeId = null;
     this.islamicDefinitionId = null;
+    this.attributedDefinitionId = null;
     this.hijriMonth = null;
     this.hijriDay = null;
     this.durationDays = null;
@@ -42,6 +43,7 @@ export class Event {
     event.description = sanitizeDescription(body.description);
     event.eventTypeId = body.eventTypeId ?? null;
     event.islamicDefinitionId = body.islamicDefinitionId ?? null;
+    event.attributedDefinitionId = body.attributedDefinitionId ?? body.islamicDefinitionId ?? null;
     event.hijriMonth = body.hijriMonth ?? null;
     event.hijriDay = body.hijriDay ?? null;
     event.durationDays = body.durationDays ?? null;
@@ -69,6 +71,7 @@ export class Event {
     event.hide = row.hide;
     event.eventTypeId = row.eventtypeid;
     event.islamicDefinitionId = row.islamicdefinitionid ?? null;
+    event.attributedDefinitionId = row.attributeddefinitionid ?? null;
     event.hijriMonth = row.hijrimonth ?? null;
     event.hijriDay = row.hijriday ?? null;
     event.durationDays = row.durationdays ?? null;
@@ -93,6 +96,7 @@ export class Event {
       hide: this.hide,
       eventTypeId: this.eventTypeId,
       islamicDefinitionId: this.islamicDefinitionId,
+      attributedDefinitionId: this.attributedDefinitionId,
       hijriMonth: this.hijriMonth,
       hijriDay: this.hijriDay,
       durationDays: this.durationDays,

@@ -1,6 +1,7 @@
 import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
 import { DAY_NAMES, MONTH_NAMES, VALID_VIEWS } from "../../Constants";
+import { useOptionalUser } from "../../contexts/UserContext";
 import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
 
 /**
@@ -8,7 +9,11 @@ import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
  * when grouping events by day.
  */
 export function toDateKey(date) {
-  return date.toISOString().slice(0, 10);
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 /**
@@ -68,6 +73,22 @@ export function buildCalendarPath(view, date) {
   return `/calendar/${nextView}/${nextDate.getFullYear()}/${
     nextDate.getMonth() + 1
   }/${nextDate.getDate()}`;
+}
+
+export function buildCalendarMonthOptions(year) {
+  if (!Number.isInteger(year)) return [];
+
+  return MONTH_NAMES.map((monthName, monthIndex) => {
+    const hijriLabel = getHijriMonthRangeLabel(year, monthIndex);
+    const gregorianLabel = `${monthName} ${year}`;
+
+    return {
+      monthIndex,
+      gregorianLabel,
+      hijriLabel,
+      label: `${gregorianLabel} · ${hijriLabel}`,
+    };
+  });
 }
 
 export function parseCalendarRouteState({
@@ -288,16 +309,30 @@ export function eventColor(event, theme) {
  */
 export function EventChip({ event, onClick, theme }) {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { user } = useOptionalUser();
+  const showArabicEventText = user?.showArabicEventText !== false;
+
+  const chipLabel = useMemo(() => {
+    const raw = event?.name ?? "";
+    if (!raw.includes("|")) return raw;
+
+    const parts = raw
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) return raw;
+
+    const englishLabel = parts[1] ?? parts[0];
+    if (!showArabicEventText) return englishLabel;
+    if (isMobile) return englishLabel;
+    return raw;
+  }, [event?.name, isMobile, showArabicEventText]);
+
   return (
     <Chip
       key={event.eventId}
-      label={
-        isMobile
-          ? event.name.includes("|")
-            ? event.name.split("|")[1].trim()
-            : event.name
-          : event.name
-      }
+      label={chipLabel}
       size="small"
       onClick={(e) => {
         e.stopPropagation();

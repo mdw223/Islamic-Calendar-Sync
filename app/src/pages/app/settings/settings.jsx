@@ -59,6 +59,9 @@ export default function Settings() {
   const [name, setName] = useState(user?.name ?? "");
   const [language, setLanguage] = useState(user?.language ?? "en");
   const [use24HourTime, setUse24HourTime] = useState(!!user?.use24HourTime);
+  const [showArabicEventText, setShowArabicEventText] = useState(
+    user?.showArabicEventText !== false,
+  );
   const [locationName, setLocationName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -144,6 +147,7 @@ export default function Settings() {
     setName(user?.name ?? "");
     setLanguage(user?.language ?? "en");
     setUse24HourTime(!!user?.use24HourTime);
+    setShowArabicEventText(user?.showArabicEventText !== false);
   }, [user]);
 
   useEffect(() => {
@@ -210,11 +214,23 @@ export default function Settings() {
 
   async function handleSaveProfile() {
     setError("");
-    await saveUserProfile({ name, language, use24HourTime });
+    const previousLanguage = user?.language ?? "en";
+    const languageChanged = previousLanguage !== language;
+
+    await saveUserProfile({
+      name,
+      language,
+      use24HourTime,
+      showArabicEventText,
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     
-    // If language changed for a guest user, set the translate cookie and reload
+    // Refresh only when language changes so translation state updates.
+    if (!languageChanged) {
+      return;
+    }
+
     if (language === "en") {
       document.cookie = "googtrans=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.location.reload();
@@ -430,6 +446,15 @@ export default function Settings() {
               />
             }
             label="Use 24-hour time"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={showArabicEventText}
+                onChange={(e) => setShowArabicEventText(e.target.checked)}
+              />
+            }
+            label="Show Arabic in Islamic event titles and definitions"
           />
           <TextField
             label="Authentication Method"

@@ -22,6 +22,8 @@ function fromApiRow(row) {
     calculationMethodId: row.calculationmethodid ?? null,
     hanafi: row.hanafi ?? false,
     use24HourTime: row.use24hourtime ?? row.use24HourTime ?? false,
+    showArabicEventText:
+      row.showarabiceventtext ?? row.showArabicEventText ?? true,
     authProviderTypeId: row.authprovidertypeid ?? null,
     authProviderName: row.authprovidername ?? row.authProviderName ?? null,
     userLocations: row.userlocations ?? row.userLocations ?? [],
@@ -45,6 +47,7 @@ export const defaultUser = {
   calculationMethodId: null,
   hanafi: false,
   use24HourTime: false,
+  showArabicEventText: true,
   notifications: true,
   emailUpdates: false,
   authProviderTypeId: null,
@@ -75,6 +78,7 @@ export class User {
     this.calculationMethodId = normalized.calculationMethodId ?? null;
     this.hanafi = normalized.hanafi ?? false;
     this.use24HourTime = normalized.use24HourTime ?? false;
+    this.showArabicEventText = normalized.showArabicEventText ?? true;
     this.notifications = normalized.preferences?.notifications ?? true;
     this.emailUpdates = normalized.preferences?.emailUpdates ?? false;
   }
@@ -114,6 +118,8 @@ export class User {
         normalized.calculationMethodId ?? this.calculationMethodId;
       this.hanafi = normalized.hanafi ?? this.hanafi;
       this.use24HourTime = normalized.use24HourTime ?? this.use24HourTime;
+      this.showArabicEventText =
+        normalized.showArabicEventText ?? this.showArabicEventText;
     }
   }
 
@@ -144,6 +150,7 @@ export class User {
       "calculationMethodId",
       "hanafi",
       "use24HourTime",
+      "showArabicEventText",
     ];
     allowed.forEach((key) => {
       if (key in updates) this[key] = updates[key];
@@ -171,6 +178,7 @@ export class User {
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
       use24HourTime: this.use24HourTime,
+      showArabicEventText: this.showArabicEventText,
       emailUpdates: this.emailUpdates,
       notificaitons: this.notifications,
       isLoggedIn: this.isLoggedIn,

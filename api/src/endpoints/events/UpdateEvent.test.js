@@ -108,4 +108,32 @@ describe("UpdateEvent", () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(updateEvent).not.toHaveBeenCalled();
   });
+
+  test("stores attributed definition on a custom event", async () => {
+    findById.mockResolvedValue({ eventId: 5, islamicDefinitionId: null });
+    updateEvent.mockResolvedValue({ eventId: 5, attributedDefinitionId: "ashura" });
+
+    const req = {
+      params: { eventId: "5" },
+      body: { attributedDefinitionId: "ashura", color: "#112233" },
+      user: { userId: 4 },
+    };
+    const res = makeRes();
+
+    await UpdateEvent(req, res);
+
+    expect(updateEvent).toHaveBeenCalledWith(
+      5,
+      4,
+      expect.objectContaining({
+        attributedDefinitionId: "ashura",
+        islamicDefinitionId: null,
+        color: "#112233",
+      }),
+    );
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      event: { eventId: 5, attributedDefinitionId: "ashura" },
+    });
+  });
 });

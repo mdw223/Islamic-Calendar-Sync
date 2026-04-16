@@ -96,7 +96,7 @@ describe("CreateEvent", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("returns 400 when definition-linked event tries per-event color", async () => {
+  test("maps legacy definition field to attribution and allows color", async () => {
     fromRequest.mockReturnValue({
       name: "Test",
       startDate: "2026-01-01",
@@ -105,12 +105,20 @@ describe("CreateEvent", () => {
       islamicDefinitionId: "ashura",
       color: "#112233",
     });
+    createEvent.mockResolvedValue({ eventId: 12 });
     const req = { body: {}, user: { userId: 8 } };
     const res = makeRes();
 
     await CreateEvent(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(createEvent).not.toHaveBeenCalled();
+    expect(createEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 8,
+        islamicDefinitionId: null,
+        attributedDefinitionId: "ashura",
+        color: "#112233",
+      }),
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 });

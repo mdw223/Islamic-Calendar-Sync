@@ -11,6 +11,7 @@ import WeekView from "./WeekView";
 import DayView from "./DayView";
 import {
   buildCalendarPath,
+  buildCalendarMonthOptions,
   toDateKey,
   startOfWeek,
   useToolbarLabel,
@@ -224,6 +225,19 @@ export default function Calendar() {
 
   // ── Toolbar label ───────────────────────────────────────────────────────────
   const toolbarLabel = useToolbarLabel(cursor, currentView);
+  const monthOptions = useMemo(
+    () => buildCalendarMonthOptions(cursor.getFullYear()),
+    [cursor.getFullYear()],
+  );
+
+  function handleMonthSelect(monthIndex) {
+    if (!Number.isInteger(monthIndex)) return;
+
+    setCursor(new Date(cursor.getFullYear(), monthIndex, 1, 12, 0, 0, 0));
+    if (currentView !== "month") {
+      changeView("month");
+    }
+  }
 
   // ── Modal helpers ───────────────────────────────────────────────────────────
 
@@ -264,6 +278,9 @@ export default function Calendar() {
     >
       <CalendarToolbar
         toolbarLabel={toolbarLabel}
+        monthOptions={monthOptions}
+        currentMonthIndex={cursor.getMonth()}
+        onMonthSelect={handleMonthSelect}
         currentView={currentView}
         changeView={handleChangeView}
         goToday={handleGoToday}

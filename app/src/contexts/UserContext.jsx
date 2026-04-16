@@ -11,6 +11,9 @@ import OfflineClient from "../util/OfflineClient";
 import { setToken, clearToken } from "../util/AuthToken";
 
 const UserContext = createContext(undefined);
+const anonymousUserContextValue = {
+  user: createUser(defaultUser),
+};
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(createUser(defaultUser));
@@ -46,6 +49,8 @@ export const UserProvider = ({ children }) => {
         language: offlineProfile?.user?.language ?? null,
         hanafi: !!offlineProfile?.user?.hanafi,
         use24HourTime: !!offlineProfile?.user?.use24HourTime,
+        showArabicEventText:
+          offlineProfile?.user?.showArabicEventText !== false,
       });
       return nextUser;
     });
@@ -75,6 +80,7 @@ export const UserProvider = ({ children }) => {
           language: userProfile.language,
           hanafi: userProfile.hanafi,
           use24HourTime: userProfile.use24HourTime,
+          showArabicEventText: userProfile.showArabicEventText,
         });
       }
       await OfflineClient.clearAll();
@@ -211,6 +217,8 @@ export const UserProvider = ({ children }) => {
             userLocations,
             authProviderName: user?.authProviderName ?? null,
             authProviderTypeId: user?.authProviderTypeId ?? null,
+            showArabicEventText:
+              updates?.showArabicEventText ?? user?.showArabicEventText ?? true,
           });
           setUser(nextUser);
         } else {
@@ -335,4 +343,8 @@ export const useUser = () => {
     throw new Error("useUser must be used within a UserProvider");
   }
   return context;
+};
+
+export const useOptionalUser = () => {
+  return useContext(UserContext) ?? anonymousUserContextValue;
 };

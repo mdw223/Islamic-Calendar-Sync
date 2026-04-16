@@ -34,8 +34,12 @@ import APIClient from "../util/ApiClient";
 import OfflineClient from "../util/OfflineClient";
 import { shouldFallbackToOffline } from "../util/ApiErrorHelper";
 import { useUser } from "./UserContext";
-import { getSavedView } from "../util/LocalStorage";
-import { CALENDAR_VIEW_KEY, VALID_VIEWS } from "../Constants";
+import { getSavedView, readLS, writeLS } from "../util/LocalStorage";
+import {
+  CALENDAR_VIEW_KEY,
+  SHOW_USER_CREATED_EVENTS_KEY,
+  VALID_VIEWS,
+} from "../Constants";
 import { createUser } from "../models/User";
 import { getDefaultEventsQueryRange } from "../util/CalendarEventRange";
 
@@ -66,6 +70,9 @@ export function CalendarProvider({ children }) {
 
   // ── Islamic event definitions (loaded from API) ─────────────────────────
   const [islamicEventDefs, setIslamicEventDefs] = useState([]);
+  const [showUserCreatedEvents, setShowUserCreatedEvents] = useState(() =>
+    readLS(SHOW_USER_CREATED_EVENTS_KEY, true),
+  );
 
   // ── Persisted generated-year coverage range ─────────────────────────────
   const [generatedYearsRange, setGeneratedYearsRange] = useState({
@@ -228,6 +235,13 @@ export function CalendarProvider({ children }) {
 
   function consumeCalendarDateJump() {
     setPendingCalendarDateJump(null);
+  }
+
+  function toggleUserCreatedEvents(nextValue) {
+    const resolvedValue =
+      typeof nextValue === "boolean" ? nextValue : !showUserCreatedEvents;
+    setShowUserCreatedEvents(resolvedValue);
+    writeLS(SHOW_USER_CREATED_EVENTS_KEY, resolvedValue);
   }
 
   /**
@@ -545,6 +559,57 @@ export function CalendarProvider({ children }) {
   }
 
   /**
+   * Toggle all Islamic event definitions to visible/hidden in one operation.
+   * Uses a single backend request for authenticated users.
+   */
+  async function setAllIslamicEventVisibility(visible) {
+    const targetHidden = !visible;
+    const changedDefs = islamicEventDefs.filter(
+      (d) => !!d.isHidden !== targetHidden,
+    );
+
+    if (changedDefs.length === 0) return;
+
+    const previousDefs = islamicEventDefs;
+    const changedIdSet = new Set(changedDefs.map((d) => d.id));
+    const nextDefs = islamicEventDefs.map((d) =>
+      changedIdSet.has(d.id) ? { ...d, isHidden: targetHidden } : d,
+    );
+
+    setIslamicEventDefs(nextDefs);
+
+    const previousEvents = eventsRef.current;
+    const nextEvents = previousEvents.map((e) =>
+      e.islamicDefinitionId != null && changedIdSet.has(e.islamicDefinitionId)
+        ? { ...e, hide: targetHidden }
+        : e,
+    );
+    saveEvents(nextEvents);
+
+    const preferences = changedDefs.map((d) => ({
+      definitionId: d.id,
+      isHidden: targetHidden,
+      defaultColor: d.defaultColor ?? null,
+    }));
+
+    try {
+      try {
+        await APIClient.updateDefinitionPreferences(preferences);
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          await OfflineClient.updateDefinitionPreferences(preferences);
+        } else {
+          throw err;
+        }
+      }
+    } catch {
+      // Revert on failure.
+      setIslamicEventDefs(previousDefs);
+      saveEvents(previousEvents);
+    }
+  }
+
+  /**
    * Update a single Islamic definition's color and cascade to matching events.
    * Uses optimistic updates with API-first persistence and offline fallback.
    */
@@ -717,7 +782,15 @@ export function CalendarProvider({ children }) {
   }
 
   // ── Derived state ───────────────────────────────────────────────────────
-  const visibleEvents = useMemo(() => events.filter((e) => !e.hide), [events]);
+  const visibleEvents = useMemo(
+    () =>
+      events.filter(
+        (e) =>
+          !e.hide &&
+          (showUserCreatedEvents || e.islamicDefinitionId != null),
+      ),
+    [events, showUserCreatedEvents],
+  );
 
   // ── Context value ────────────────────────────────────────────────────────
 
@@ -744,7 +817,10 @@ export function CalendarProvider({ children }) {
         // Islamic event definitions (with isHidden flags)
         islamicEventDefs,
         toggleIslamicEvent,
+        setAllIslamicEventVisibility,
         updateIslamicDefinitionColor,
+        showUserCreatedEvents,
+        toggleUserCreatedEvents,
         ensureIslamicEventsForYears,
         generatedYearsRange,
         fetchExpandedEventsForRange,

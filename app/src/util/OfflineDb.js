@@ -9,6 +9,7 @@
  *
  * Schema version history:
  *   v1 — initial: events, definitionPreferences
+ *   v6 — add attributedDefinitionId to events
  */
 
 import Dexie from "dexie";
@@ -39,6 +40,14 @@ db.version(4).stores({
 
 db.version(5).stores({
   events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  definitionPreferences: "definitionId",
+  generationMeta: "key",
+  userLocations: "++id, name, timezone, isDefault",
+  userProfile: "key",
+});
+
+db.version(6).stores({
+  events: "++id, islamicDefinitionId, attributedDefinitionId, eventTypeId, startDate",
   definitionPreferences: "definitionId",
   generationMeta: "key",
   userLocations: "++id, name, timezone, isDefault",

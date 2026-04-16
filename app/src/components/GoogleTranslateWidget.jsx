@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, IconButton, Paper, Typography } from "@mui/material";
 import { Languages, X } from "lucide-react";
-import { useUser } from "../contexts/UserContext";
+import { useOptionalUser } from "../contexts/UserContext";
 
 const SCRIPT_ID = "google-translate-script";
 
@@ -39,7 +39,7 @@ const loadGoogleTranslate = (pageLanguage = "en") => {
 
 const GoogleTranslateWidget = () => {
   const [isClosed, setIsClosed] = useState(false);
-  const { user } = useUser();
+  const { user } = useOptionalUser();
   const userLanguage = user?.language ?? "en";
 
   useEffect(() => {

@@ -41,3 +41,5 @@ export const EventTypeId = Object.freeze({
 export const SubscriptionDefinitionId = Object.freeze({
   INCLUDE_USER_CREATED_EVENTS: "include_user_created_events",
 });
+
+export const SHOW_USER_CREATED_EVENTS_KEY = "showUserCreatedEvents";
