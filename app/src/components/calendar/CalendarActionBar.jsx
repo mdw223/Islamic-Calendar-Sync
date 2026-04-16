@@ -1,28 +1,21 @@
 import {
   Plus as AddIcon,
-  RefreshCw as RefreshIcon,
   Upload as SyncIcon,
-  X as XIcon,
   RotateCcw as ResetIcon,
-  Check as CheckIcon,
   CalendarDays,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   Alert,
   Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Menu,
+  MenuItem,
   Paper,
-  Box,
-  Typography,
   Tooltip,
 } from "@mui/material";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -42,8 +35,6 @@ import GenerateYearsModal from "./GenerateYearsModal";
 export default function CalendarActionBar({
   onAddEvent,
   user,
-  isRefreshing,
-  refreshFeedback,
 }) {
   const {
     resetCalendar,
@@ -63,6 +54,7 @@ export default function CalendarActionBar({
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [moreMenuAnchorEl, setMoreMenuAnchorEl] = useState(null);
   const browserTimezone =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
 
@@ -163,26 +155,52 @@ export default function CalendarActionBar({
     }
   }, [resetCalendar, resetWorking, showResetSuccess]);
 
+  const handleOpenMoreMenu = useCallback((event) => {
+    setMoreMenuAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleCloseMoreMenu = useCallback(() => {
+    setMoreMenuAnchorEl(null);
+  }, []);
+
+  const handleAddEventFromMenu = useCallback(() => {
+    handleCloseMoreMenu();
+    onAddEvent();
+  }, [handleCloseMoreMenu, onAddEvent]);
+
+  const handleResetFromMenu = useCallback(() => {
+    handleCloseMoreMenu();
+    openResetDialog();
+  }, [handleCloseMoreMenu, openResetDialog]);
+
   return (
     <Paper
       elevation={0}
       sx={{
-        mt: { xs: 3, sm: 0 },
-        mb: { xs: 3, sm: 0 },
+        position: "fixed",
+        left: "50%",
+        bottom: { xs: 16, sm: 20 },
+        transform: "translateX(-50%)",
+        width: "fit-content",
+        maxWidth: { xs: "calc(100vw - 24px)", sm: "calc(100vw - 40px)" },
+        zIndex: (theme) => theme.zIndex.appBar + 10,
+        borderRadius: 999,
+        boxShadow: (theme) => theme.shadows[4],
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        flexWrap: "wrap",
+        flexWrap: "nowrap",
         gap: { xs: 0.5, sm: 1 },
-        px: 2,
-        py: 1.5,
+        px: { xs: 1, sm: 1.75 },
+        py: { xs: 0.875, sm: 1.25 },
+        border: 1,
         borderColor: "divider",
-        bgcolor: { xs: "transparent", sm: "background.paper" },
-        position: { sm: "fixed" },
-        bottom: { sm: 0 },
-        left: { sm: 0 },
-        right: { sm: 0 },
-        zIndex: { sm: 20 },
+        bgcolor: "background.paper",
+        backgroundImage: "none",
+        backdropFilter: "none",
+        isolation: "isolate",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       {/* Generate Button */}
@@ -192,63 +210,57 @@ export default function CalendarActionBar({
         startIcon={<CalendarDays size={16} />}
         disabled={isGenerating}
         onClick={handleOpenGeneratePopup}
-        sx={{ whiteSpace: "nowrap" }}
+        sx={{ whiteSpace: "nowrap", minHeight: 36 }}
       >
         {isGenerating ? "Generating..." : "Generate Events"}
       </Button>
 
       {/* ── Reset button ──────────────────────────────────────────────── */}
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={
-          resetFeedback === "success" ? (
-            <CheckIcon
-              size={14}
-              style={{
-                color: "#10b981",
-                animation: "popIn 0.3s ease-out",
-              }}
-            />
-          ) : (
-            <ResetIcon size={14} />
-          )
-        }
-        disabled={resetFeedback != null}
-        onClick={openResetDialog}
-        sx={{
-          ...(resetFeedback === "success" && {
-            borderColor: "#10b981",
-            color: "#10b981",
-          }),
-          "@keyframes popIn": {
-            "0%": { transform: "scale(0)" },
-            "60%": { transform: "scale(1.3)" },
-            "100%": { transform: "scale(1)" },
-          },
-        }}
-      >
-        {resetFeedback === "success" ? "Reset!" : "Reset Calendar"}
-      </Button>
-
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={<AddIcon />}
-        onClick={onAddEvent}
-      >
-        Add Event
-      </Button>
-
       {/* ── Sync button (opens modal) ─────────────────────────────────── */}
       <Button
-        variant="contained"
+        variant="outlined"
         size="small"
         startIcon={<SyncIcon size={14} />}
         onClick={() => setSyncModalOpen(true)}
+        sx={{ whiteSpace: "nowrap", minHeight: 36 }}
       >
         Sync
       </Button>
+
+      <Tooltip title="More actions">
+        <Button
+          variant="text"
+          size="small"
+          onClick={handleOpenMoreMenu}
+          sx={{
+            minWidth: "auto",
+            px: 0.75,
+            py: 0.5,
+            minHeight: 36,
+          }}
+          aria-label="More actions"
+        >
+          <MoreHorizontal size={22} />
+        </Button>
+      </Tooltip>
+
+      <Menu
+        anchorEl={moreMenuAnchorEl}
+        open={Boolean(moreMenuAnchorEl)}
+        onClose={handleCloseMoreMenu}
+        disableScrollLock
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <MenuItem onClick={handleAddEventFromMenu}>
+          <AddIcon size={16} style={{ marginRight: 8 }} />
+          Add Event
+        </MenuItem>
+        <MenuItem onClick={handleResetFromMenu}>
+          <ResetIcon size={16} style={{ marginRight: 8 }} />
+          Reset Calendar
+        </MenuItem>
+      </Menu>
 
       <GenerateYearsModal
         open={generateModalOpen}

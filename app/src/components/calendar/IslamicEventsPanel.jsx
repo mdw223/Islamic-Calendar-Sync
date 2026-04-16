@@ -15,8 +15,8 @@
  *
  * A "Select All" checkbox at the top toggles every definition at once.
  *
- * Collapse state is local (not persisted) — refreshing the page re-opens
- * the panel.
+ * Collapse state is controlled by the calendar page so mobile can hide the
+ * calendar when the panel is expanded.
  */
 
 import {
@@ -45,7 +45,11 @@ import { useCalendar } from "../../contexts/CalendarContext";
 import EventDefinitionRow from "./EventDefinitionRow";
 import SearchField from "../SearchField";
 
-export default function IslamicEventsPanel() {
+export default function IslamicEventsPanel({
+  open,
+  onToggleOpen,
+  isMobile = false,
+}) {
   const { islamicEventDefs, toggleIslamicEvent, updateIslamicDefinitionColor } =
     useCalendar();
 
@@ -76,9 +80,6 @@ export default function IslamicEventsPanel() {
     () => filteredDefs.filter((d) => d.category === "monthStart"),
     [filteredDefs],
   );
-
-  // Local collapse state — open by default.
-  const [open, setOpen] = useState(true);
 
   const [collapseAll, setCollapseAll] = useState(false);
 
@@ -132,7 +133,8 @@ export default function IslamicEventsPanel() {
       sx={{
         position: "fixed",
         top: "50%",
-        left: open ? 288 : 0,
+        left: open ? (isMobile ? "auto" : 288) : 0,
+        right: open && isMobile ? 0 : "auto",
         transform: "translateY(-50%)",
         zIndex: 10,
       }}
@@ -144,7 +146,7 @@ export default function IslamicEventsPanel() {
       >
         <IconButton
           size="small"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={onToggleOpen}
           sx={{
             bgcolor:
               "rgba(var(--mui-palette-background-defaultChannel) / 0.75)",
@@ -174,7 +176,7 @@ export default function IslamicEventsPanel() {
       <Paper
         elevation={0}
         sx={{
-          width: 288, // panel width
+          width: { xs: "100%", sm: 288 }, // panel width
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",

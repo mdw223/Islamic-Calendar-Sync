@@ -104,7 +104,7 @@ export default function EventDefinitionRow({
         sx={{ m: 0, alignItems: "flex-start" }}
       />
 
-      <Box sx={{ marginLeft: "auto", pt: 0.5 }}>
+      <Box sx={{ ml: "auto", mr: { xs: 2, sm: 0 }, pt: 0.5 }}>
         <Tooltip title="Change definition color">
           <IconButton
             size="small"

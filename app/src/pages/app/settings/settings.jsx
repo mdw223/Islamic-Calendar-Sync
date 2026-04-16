@@ -327,24 +327,39 @@ export default function Settings() {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, mx: "auto", display: "grid", gap: 2 }}>
-      <Typography variant="h4">Settings</Typography>
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: 900,
+        mx: "auto",
+        px: { xs: 1.5, sm: 3 },
+        py: { xs: 1.5, sm: 3 },
+        display: "grid",
+        gap: { xs: 1.5, sm: 2 },
+        minWidth: 0,
+      }}
+    >
+      <Typography variant="h4" sx={{ fontSize: { xs: "1.9rem", sm: "2.125rem" } }}>
+        Settings
+      </Typography>
 
       <Paper
         variant="outlined"
         sx={{
-          p: 1.5,
+          p: { xs: 1, sm: 1.5 },
           position: "sticky",
-          top: 72,
+          top: { xs: 64, sm: 72 },
           zIndex: (theme) => theme.zIndex.appBar - 1,
           bgcolor: "background.paper",
+          minWidth: 0,
         }}
       >
         <Box component="nav" aria-label="Settings sections">
           <Stack
             direction="row"
             spacing={1}
-            sx={{ overflowX: "auto", pb: 0.25 }}
+            useFlexGap
+            sx={{ overflowX: "auto", pb: 0.25, flexWrap: { xs: "wrap", sm: "nowrap" } }}
           >
             {sectionNavItems.map((section) => {
               const isActive = currentHash === section.id;
@@ -373,7 +388,7 @@ export default function Settings() {
         tabIndex={-1}
         aria-labelledby="settings-profile-title"
         variant="outlined"
-        sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
+        sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
       >
         <Typography
           id="settings-profile-title"
@@ -450,7 +465,7 @@ export default function Settings() {
               InputProps={{ readOnly: true }}
             />
           )}
-          <Button variant="contained" onClick={handleSaveProfile}>
+          <Button variant="contained" onClick={handleSaveProfile} sx={{ width: { xs: "100%", sm: "auto" } }}>
             {saved ? "Saved" : "Save Profile"}
           </Button>
         </Stack>
@@ -464,7 +479,7 @@ export default function Settings() {
           tabIndex={-1}
           aria-labelledby="settings-calendar-subscription-title"
           variant="outlined"
-          sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
+          sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
         >
           <Typography
             id="settings-calendar-subscription-title"
@@ -481,7 +496,7 @@ export default function Settings() {
           <Button
             variant="contained"
             size="small"
-            sx={{ mb: 1.5 }}
+            sx={{ mb: 1.5, width: { xs: "100%", sm: "auto" } }}
             onClick={() => navigate("/subscriptions")}
           >
             Open Manage Subscriptions
@@ -504,7 +519,7 @@ export default function Settings() {
               <Paper
                 key={subscription.subscriptionTokenId}
                 variant="outlined"
-                sx={{ p: 1.5, display: "grid", gap: 1 }}
+                sx={{ p: 1.5, display: "grid", gap: 1, minWidth: 0 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                   {subscription.name || "Untitled subscription"}
@@ -519,11 +534,12 @@ export default function Settings() {
                   value={subscription.subscriptionUrl}
                   InputProps={{ readOnly: true }}
                 />
-                <Stack direction="row" spacing={1}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Button
                     size="small"
                     variant="text"
                     onClick={() => copySubscriptionUrl(subscription.subscriptionUrl)}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Copy URL
                   </Button>
@@ -534,6 +550,7 @@ export default function Settings() {
                     onClick={() =>
                       handleRevokeSubscription(subscription.subscriptionTokenId)
                     }
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Remove
                   </Button>
@@ -551,7 +568,7 @@ export default function Settings() {
         tabIndex={-1}
         aria-labelledby="settings-saved-locations-title"
         variant="outlined"
-        sx={{ p: 2, scrollMarginTop: SECTION_SCROLL_MARGIN }}
+        sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
       >
         <Typography
           id="settings-saved-locations-title"
@@ -576,6 +593,7 @@ export default function Settings() {
             variant="text"
             onClick={handleLookupCity}
             disabled={userLocations.length >= 3 || isLookingUpCity}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {isLookingUpCity ? "Looking up city..." : "Auto-fill from city"}
           </Button>
@@ -616,6 +634,7 @@ export default function Settings() {
             variant="outlined"
             onClick={handleAddLocation}
             disabled={userLocations.length >= 3}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Add Location
           </Button>
@@ -623,7 +642,7 @@ export default function Settings() {
           {userLocations.map((location) => {
             const id = location.userlocationid ?? location.userLocationId;
             return (
-              <Paper key={id} variant="outlined" sx={{ p: 1.5 }}>
+              <Paper key={id} variant="outlined" sx={{ p: 1.5, minWidth: 0 }}>
                 <Typography variant="subtitle2">{location.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {location.timezone}
@@ -632,6 +651,7 @@ export default function Settings() {
                   size="small"
                   color="error"
                   onClick={() => removeUserLocation(id)}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Remove
                 </Button>
@@ -655,7 +675,12 @@ export default function Settings() {
           tabIndex={-1}
           aria-labelledby="settings-danger-zone-title"
           variant="outlined"
-          sx={{ p: 2, borderColor: "error.main", scrollMarginTop: SECTION_SCROLL_MARGIN }}
+          sx={{
+            p: { xs: 1.5, sm: 2 },
+            borderColor: "error.main",
+            scrollMarginTop: SECTION_SCROLL_MARGIN,
+            minWidth: 0,
+          }}
         >
           <Typography
             id="settings-danger-zone-title"
@@ -675,6 +700,7 @@ export default function Settings() {
               component={RouterLink}
               to="/data-policy"
               variant="outlined"
+              sx={{ width: { xs: "100%", sm: "auto" } }}
             >
               Data Policy
             </Button>
@@ -682,6 +708,7 @@ export default function Settings() {
               color="error"
               variant="contained"
               onClick={() => setDeleteDialogOpen(true)}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
             >
               Delete Account
             </Button>
