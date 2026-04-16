@@ -20,7 +20,7 @@ import {
   Typography,
   Checkbox,
 } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import DOMPurify from "dompurify";
 import dayjs from "dayjs";
@@ -33,18 +33,9 @@ import {
 } from "@mui/x-date-pickers";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
-import { EventTypeId } from "../../Constants";
 import RichTextEditor from "../RichTextEditor";
 import { buildRecurrenceRRule } from "../../util/recurrenceBuilder";
 import { parseUserRRuleToRecurrenceForm } from "../../util/parseUserRRule";
-
-function getDefinitionLabel(definition, showArabicEventText) {
-  if (!definition) return "";
-  const english = definition.titleEn ?? definition.id ?? "Unknown definition";
-  const arabic =
-    showArabicEventText && definition.titleAr ? ` (${definition.titleAr})` : "";
-  return `${english}${arabic}`;
-}
 
 const SWATCH_COLORS = [
   "#2E7D32",
@@ -66,9 +57,6 @@ const DEFAULT_FORM = {
   startDate: "",
   endDate: "",
   isAllDay: false,
-  islamicDefinitionId: "",
-  attributedDefinitionId: "",
-  eventTypeId: EventTypeId.CUSTOM,
   description: "",
   useLocalTimezone: true,
   eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
@@ -102,10 +90,8 @@ function formatFormDateTime(value) {
 }
 
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent, refreshEventData, islamicEventDefs = [] } =
-    useCalendar();
+  const { addEvent, updateEvent, removeEvent, refreshEventData } = useCalendar();
   const { userLocations, user } = useUser();
-  const showArabicEventText = user?.showArabicEventText !== false;
   const navigate = useNavigate();
   const isEdit = Boolean(event);
   const localTimezone =
@@ -126,35 +112,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
   const locationRef = useRef("");
   const descriptionRef = useRef("");
 
-  const definitionOptions = useMemo(() => {
-    const defs = [...(islamicEventDefs ?? [])].sort((left, right) => {
-      const leftCategory = left?.category ?? "";
-      const rightCategory = right?.category ?? "";
-      const categoryCompare = leftCategory.localeCompare(rightCategory);
-      if (categoryCompare !== 0) return categoryCompare;
-      return (left?.titleEn ?? left?.id ?? "").localeCompare(
-        right?.titleEn ?? right?.id ?? "",
-      );
-    });
-
-    return defs.map((definition) => ({
-      ...definition,
-      label: getDefinitionLabel(definition, showArabicEventText),
-    }));
-  }, [islamicEventDefs, showArabicEventText]);
-
-  const selectedDefinition = useMemo(
-    () =>
-      definitionOptions.find(
-        (definition) =>
-          definition.id === (form.islamicDefinitionId || form.attributedDefinitionId),
-      ) ?? null,
-    [definitionOptions, form.attributedDefinitionId, form.islamicDefinitionId],
-  );
-
-  const isIslamicEdit = isEdit && Boolean(event?.islamicDefinitionId);
-  const customEventTypeId = event?.eventTypeId ?? EventTypeId.CUSTOM;
-
   const effectiveColor =
     form.color && HEX_COLOR_RE.test(form.color)
       ? form.color.toUpperCase()
@@ -171,9 +128,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           startDate: toDatetimeLocal(event?.startDate),
           endDate: toDatetimeLocal(event?.endDate),
           isAllDay: event?.isAllDay ?? false,
-          islamicDefinitionId: event?.islamicDefinitionId ?? "",
-          attributedDefinitionId: event?.attributedDefinitionId ?? "",
-          eventTypeId: event?.eventTypeId ?? EventTypeId.CUSTOM,
           description: event?.description ?? "",
           useLocalTimezone:
             !event?.eventTimezone || event.eventTimezone === localTimezone,
@@ -186,7 +140,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           recurrenceWeekdays: [],
           color: event?.color ?? "",
         };
-        if (!event?.islamicDefinitionId && event?.rrule) {
+        if (event?.rrule) {
           const parsed = parseUserRRuleToRecurrenceForm(event.rrule);
           if (parsed) {
             base.recurrenceFreq = parsed.recurrenceFreq;
@@ -227,8 +181,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           : new Date();
         setForm({
           ...DEFAULT_FORM,
-          islamicDefinitionId: "",
-          attributedDefinitionId: "",
           startDate: base,
           endDate: end,
           useLocalTimezone: true,
@@ -244,18 +196,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleDefinitionChange(definitionId) {
-    if (isIslamicEdit) return;
-    const nextDefinition =
-      definitionOptions.find((definition) => definition.id === definitionId) ??
-      null;
-    setForm((prev) => ({
-      ...prev,
-      attributedDefinitionId: definitionId,
-      eventTypeId: nextDefinition?.eventTypeId ?? customEventTypeId,
-    }));
   }
 
   function openColorPicker(event) {
@@ -298,9 +238,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         name: nameRef.current,
         location: locationRef.current,
         isAllDay: form.isAllDay,
-        eventTypeId: selectedDefinition?.eventTypeId ?? form.eventTypeId,
-        islamicDefinitionId: isIslamicEdit ? form.islamicDefinitionId || null : null,
-        attributedDefinitionId: isIslamicEdit ? null : form.attributedDefinitionId || null,
         description: descriptionRef.current
           ? DOMPurify.sanitize(descriptionRef.current)
           : "",
@@ -314,11 +251,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         color: form.color?.trim() ? form.color.trim().toUpperCase() : null,
       };
 
-      if (isIslamicEdit) {
-        delete payload.color;
-      }
-
-      if (!isIslamicEdit && form.startDate) {
+      if (form.startDate) {
         const dt = new Date(form.startDate);
         const rrule = buildRecurrenceRRule(
           {
@@ -332,12 +265,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           dt,
         );
         payload.rrule = rrule;
-      }
-
-      if (isIslamicEdit) {
-        delete payload.startDate;
-        delete payload.endDate;
-        delete payload.color;
       }
 
       if (isEdit) {
@@ -423,49 +350,37 @@ export default function EventModal({ open, onClose, initialDate, event }) {
 
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
             <FormControlLabel
-            control={
-              <Switch
-                checked={form.isAllDay}
-                onChange={(e) => handleChange("isAllDay", e.target.checked)}
-              />
-            }
-            label="All Day"
-          />
-            {!isIslamicEdit ? (
-              <Box>
-                <Tooltip title="Change event color">
-                  <IconButton
-                    size="small"
-                    onClick={openColorPicker}
-                    aria-label="Change event color"
-                  >
-                    <Box
-                      sx={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: "50%",
-                        bgcolor: effectiveColor,
-                        border: 1,
-                        borderColor: "divider",
-                      }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            ) : (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ ml: "auto", pt: 0.5 }}
-              >
-                This event inherits its color from the selected definition in
-                the Islamic Events panel.
-              </Typography>
-            )}
+              control={
+                <Switch
+                  checked={form.isAllDay}
+                  onChange={(e) => handleChange("isAllDay", e.target.checked)}
+                />
+              }
+              label="All Day"
+            />
+            <Box>
+              <Tooltip title="Change event color">
+                <IconButton
+                  size="small"
+                  onClick={openColorPicker}
+                  aria-label="Change event color"
+                >
+                  <Box
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: "50%",
+                      bgcolor: effectiveColor,
+                      border: 1,
+                      borderColor: "divider",
+                    }}
+                  />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
 
-          {!isIslamicEdit && (
-            <Popover
+          <Popover
               open={pickerOpen}
               anchorEl={anchorEl}
               onClose={closeColorPicker}
@@ -543,9 +458,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                 </Stack>
               </Box>
             </Popover>
-          )}
 
-          <FormControlLabel
+            <FormControlLabel
             control={
               <Checkbox
                 checked={form.useLocalTimezone}
@@ -703,12 +617,10 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             )}
           </LocalizationProvider>
 
-          {!isIslamicEdit && (
-            <>
-              <Typography variant="subtitle2" color="text.secondary">
-                Recurrence
-              </Typography>
-              <FormControl fullWidth>
+          <Typography variant="subtitle2" color="text.secondary">
+            Recurrence
+          </Typography>
+          <FormControl fullWidth>
                 <InputLabel id="recurrence-freq-label">Repeat</InputLabel>
                 <Select
                   labelId="recurrence-freq-label"
@@ -818,41 +730,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   )}
                 </>
               )}
-            </>
-          )}
-
-          {isIslamicEdit && (
-            <Typography variant="caption" color="text.secondary">
-              Dates and Hijri recurrence for this event are managed when you
-              generate Islamic calendar years. You can still edit name,
-              location, description, and definition.
-            </Typography>
-          )}
-
-          <FormControl fullWidth>
-            <InputLabel id="event-type-label" shrink>
-              Definition
-            </InputLabel>
-            <Select
-              labelId="event-type-label"
-              label="Definition"
-              value={form.islamicDefinitionId || form.attributedDefinitionId}
-              disabled={isIslamicEdit}
-              displayEmpty
-              renderValue={(value) => {
-                if (!value) return "Custom / no definition";
-                return selectedDefinition?.label ?? value;
-              }}
-              onChange={(e) => handleDefinitionChange(e.target.value)}
-            >
-              <MenuItem value="">Custom / no definition</MenuItem>
-              {definitionOptions.map((definition) => (
-                <MenuItem key={definition.id} value={definition.id}>
-                  {definition.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           <Box>
             <Typography
@@ -872,7 +749,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               minHeight={120}
             />
           </Box>
-
 
         </DialogContent>
 

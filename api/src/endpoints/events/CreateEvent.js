@@ -12,14 +12,10 @@ export default async function CreateEvent(req, res) {
     try {
         const eventData = Event.fromRequest(req.body);
 
-        eventData.attributedDefinitionId =
-            eventData.attributedDefinitionId ?? eventData.islamicDefinitionId ?? null;
-        eventData.islamicDefinitionId = null;
-
-        if (!eventData.name || !eventData.startDate || !eventData.endDate || !eventData.eventTypeId) {
+        if (!eventData.name || !eventData.startDate || !eventData.endDate) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields: name, startDate, endDate, eventTypeId',
+                message: 'Missing required fields: name, startDate, endDate',
             });
         }
 

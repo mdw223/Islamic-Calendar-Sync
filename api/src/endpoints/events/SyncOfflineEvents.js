@@ -9,8 +9,7 @@
  *
  * Request body:
  *   { events: Array<{ name, startDate, endDate, isAllDay, description,
- *       hide, eventTypeId, isTask, islamicDefinitionId?
- *       islamicDefinitionId? }> }
+ *       hide, isTask, islamicDefinitionId? }> }
  *
  * Success response (201):
  *   { success: true, syncedCount: number }
@@ -44,11 +43,11 @@ export default async function SyncOfflineEvents(req, res) {
 
     // Validate each event minimally.
     for (const e of events) {
-      if (!e.name || !e.startDate || !e.endDate || !e.eventTypeId) {
+      if (!e.name || !e.startDate || !e.endDate) {
         return res.status(400).json({
           success: false,
           message:
-            "Every event must have name, startDate, endDate, and eventTypeId.",
+            "Every event must have name, startDate, and endDate.",
         });
       }
     }

@@ -31,7 +31,7 @@ describe("CreateEvent", () => {
   }
 
   test("returns 400 when required fields are missing", async () => {
-    fromRequest.mockReturnValue({ name: null, startDate: null, endDate: null, eventTypeId: null });
+    fromRequest.mockReturnValue({ name: null, startDate: null, endDate: null });
     const req = { body: {}, user: { userId: 8 } };
     const res = makeRes();
 
@@ -45,7 +45,6 @@ describe("CreateEvent", () => {
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
       rrule: "bad",
     });
     validateStoredUserRRule.mockReturnValue({ ok: false, message: "Invalid RRule string." });
@@ -63,7 +62,6 @@ describe("CreateEvent", () => {
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
       rrule: "RRULE:FREQ=DAILY;COUNT=2",
       description: "d",
       location: "l",
@@ -75,7 +73,9 @@ describe("CreateEvent", () => {
     const res = makeRes();
     await CreateEvent(req, res);
 
-    expect(createEvent).toHaveBeenCalledWith(expect.objectContaining({ userId: 8, rrule: "FREQ=DAILY;COUNT=2" }));
+    expect(createEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 8, rrule: "FREQ=DAILY;COUNT=2" }),
+    );
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ success: true, event: { eventId: 11 } });
   });
@@ -85,7 +85,6 @@ describe("CreateEvent", () => {
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
       color: "red",
     });
     const req = { body: {}, user: { userId: 8 } };
@@ -96,13 +95,11 @@ describe("CreateEvent", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("maps legacy definition field to attribution and allows color", async () => {
+  test("defaults missing event type to custom and allows color", async () => {
     fromRequest.mockReturnValue({
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
-      islamicDefinitionId: "ashura",
       color: "#112233",
     });
     createEvent.mockResolvedValue({ eventId: 12 });
@@ -114,8 +111,6 @@ describe("CreateEvent", () => {
     expect(createEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 8,
-        islamicDefinitionId: null,
-        attributedDefinitionId: "ashura",
         color: "#112233",
       }),
     );

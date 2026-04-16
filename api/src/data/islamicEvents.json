@@ -9,10 +9,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "ashura",
@@ -23,10 +23,10 @@
       "hijriDay": 10,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "eid_mawlid",
@@ -37,10 +37,10 @@
       "hijriDay": 12,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 2,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#0288D1"
     },
     {
       "id": "isra_miraj",
@@ -51,10 +51,10 @@
       "hijriDay": 27,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "shab_e_barat",
@@ -65,10 +65,10 @@
       "hijriDay": 15,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "last_10_nights",
@@ -79,10 +79,10 @@
       "hijriDay": 21,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 1,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#2E7D32"
     },
     {
       "id": "laylatul_qadr",
@@ -93,10 +93,10 @@
       "hijriDay": 27,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 1,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#2E7D32"
     },
     {
       "id": "eid_ul_fitr",
@@ -107,10 +107,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 2,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#0288D1"
     },
     {
       "id": "dhul_hijjah_begins",
@@ -121,10 +121,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "first_10_dhul_hijjah",
@@ -135,10 +135,10 @@
       "hijriDay": 1,
       "durationDays": 10,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "hajj",
@@ -149,10 +149,10 @@
       "hijriDay": 8,
       "durationDays": 6,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "arafah",
@@ -163,10 +163,10 @@
       "hijriDay": 9,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "eid_al_adha",
@@ -177,10 +177,10 @@
       "hijriDay": 10,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 2,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#0288D1"
     },
     {
       "id": "days_of_tashreeq",
@@ -191,10 +191,10 @@
       "hijriDay": 11,
       "durationDays": 3,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "annual",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "white_days",
@@ -205,10 +205,10 @@
       "hijriDay": 13,
       "durationDays": 3,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": true,
       "category": "monthly",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_muharram",
@@ -219,10 +219,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_safar",
@@ -233,10 +233,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_rabi_awwal",
@@ -247,10 +247,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_rabi_thani",
@@ -261,10 +261,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_jumada_awwal",
@@ -275,10 +275,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_jumada_thani",
@@ -289,10 +289,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_rajab",
@@ -303,10 +303,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_shaban",
@@ -317,10 +317,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_ramadan",
@@ -331,10 +331,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 1,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#2E7D32"
     },
     {
       "id": "month_start_shawwal",
@@ -345,10 +345,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_dhul_qadah",
@@ -359,10 +359,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     },
     {
       "id": "month_start_dhul_hijjah",
@@ -373,10 +373,10 @@
       "hijriDay": 1,
       "durationDays": 1,
       "isAllDay": true,
-      "eventTypeId": 4,
       "repeatsEachMonth": false,
       "category": "monthStart",
-      "isHidden": false
+      "isHidden": false,
+      "defaultColor": "#7C3AED"
     }
   ]
 }

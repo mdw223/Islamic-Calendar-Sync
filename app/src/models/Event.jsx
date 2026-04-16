@@ -1,8 +1,3 @@
-import { EventTypeId } from "../Constants";
-
-// ── Allowed eventTypeId values ──────────────────────────────────────────────
-const VALID_EVENT_TYPE_IDS = new Set(Object.values(EventTypeId));
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Returns true when `v` is a non-empty string (after trimming). */
@@ -29,9 +24,7 @@ export const defaultEvent = Object.freeze({
   isAllDay: true,
   description: null,
   hide: false,
-  eventTypeId: EventTypeId.CUSTOM,
   islamicDefinitionId: null,
-  attributedDefinitionId: null,
   hijriMonth: null,
   hijriDay: null,
   durationDays: null,
@@ -52,9 +45,7 @@ export function fromApiRow(row) {
     isAllDay: row.isallday ?? true,
     description: row.description ?? null,
     hide: row.hide ?? false,
-    eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
-    attributedDefinitionId: row.attributeddefinitionid ?? null,
     hijriMonth: row.hijrimonth ?? null,
     hijriDay: row.hijriday ?? null,
     durationDays: row.durationdays ?? null,
@@ -84,13 +75,11 @@ export class Event {
     this.isAllDay = normalized.isAllDay ?? true;
     this.description = normalized.description ?? null;
     this.hide = normalized.hide ?? false;
-    this.eventTypeId = normalized.eventTypeId ?? EventTypeId.CUSTOM;
     this.hijriMonth = normalized.hijriMonth ?? null;
     this.hijriDay = normalized.hijriDay ?? null;
     this.durationDays = normalized.durationDays ?? null;
     this.rrule = normalized.rrule ?? null;
     this.islamicDefinitionId = normalized.islamicDefinitionId ?? null;
-    this.attributedDefinitionId = normalized.attributedDefinitionId ?? null;
     this.eventTimezone = normalized.eventTimezone ?? null;
   }
 
@@ -122,13 +111,6 @@ export class Event {
       errors.push("endDate is required and must be a valid date/ISO string.");
     } else if (start && end < start) {
       errors.push("endDate must not be earlier than startDate.");
-    }
-
-    // eventTypeId — must be one of the known EventTypeId values.
-    if (!VALID_EVENT_TYPE_IDS.has(this.eventTypeId)) {
-      errors.push(
-        `eventTypeId must be one of [${[...VALID_EVENT_TYPE_IDS].join(", ")}], got ${this.eventTypeId}.`,
-      );
     }
 
     // Boolean coercion sanity — catch accidental string / number values.
@@ -175,9 +157,7 @@ export class Event {
       isAllDay: this.isAllDay,
       description: this.description,
       hide: this.hide,
-      eventTypeId: this.eventTypeId,
       islamicDefinitionId: this.islamicDefinitionId,
-      attributedDefinitionId: this.attributedDefinitionId,
       hijriMonth: this.hijriMonth,
       hijriDay: this.hijriDay,
       durationDays: this.durationDays,

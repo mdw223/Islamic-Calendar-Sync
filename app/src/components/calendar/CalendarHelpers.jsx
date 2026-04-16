@@ -285,21 +285,13 @@ export function eventIsAllDayMultiDay(event) {
 }
 
 /**
- * Maps an event's `eventTypeId` to a colour from the theme palette so that
- * different Islamic event types are visually distinct on the calendar.
+ * Resolve event colour with a stable fallback when no explicit colour exists.
  */
 export function eventColor(event, theme) {
   if (typeof event?.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(event.color)) {
     return event.color;
   }
-  const palette = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-  ];
-  return palette[(event.eventTypeId ?? 1) % palette.length];
+  return theme.palette.primary.main;
 }
 
 /**

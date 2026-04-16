@@ -11,22 +11,12 @@
  */
 
 import islamicEventsData from "../data/islamicEvents.json";
-import { EventTypeId } from "../Constants";
 import db from "../util/OfflineDb";
 
-const EVENT_TYPE_DEFAULT_COLORS = Object.freeze({
-  1: "#2E7D32",
-  2: "#0288D1",
-  3: "#F59E0B",
-  4: "#7C3AED",
-});
+const DEFAULT_DEFINITION_COLOR = "#7C3AED";
 
 function resolveDefinitionDefaultColor(definition) {
-  return (
-    definition?.defaultColor ??
-    EVENT_TYPE_DEFAULT_COLORS[definition?.eventTypeId] ??
-    EVENT_TYPE_DEFAULT_COLORS[EventTypeId.CUSTOM]
-  );
+  return definition?.defaultColor ?? DEFAULT_DEFINITION_COLOR;
 }
 
 // ── Hijri formatter ─────────────────────────────────────────────────────────
@@ -200,7 +190,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         endDate: allDayRange.endDate,
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
-        eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
         hide: false,
         eventTimezone: timezone,
         rrule: recurrence.rrule,

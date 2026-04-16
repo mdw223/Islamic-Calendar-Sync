@@ -48,10 +48,7 @@ export default async function UpdateEvent(req, res) {
 
         if (userEvent.islamicDefinitionId) {
             req.body.islamicDefinitionId = userEvent.islamicDefinitionId;
-            req.body.attributedDefinitionId = null;
         } else {
-            req.body.attributedDefinitionId =
-                req.body.attributedDefinitionId ?? req.body.islamicDefinitionId ?? null;
             req.body.islamicDefinitionId = null;
         }
 

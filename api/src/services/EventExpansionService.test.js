@@ -18,7 +18,6 @@ function makeEvent(overrides = {}) {
     isAllDay: false,
     description: "desc",
     hide: false,
-    eventTypeId: 1,
     isTask: false,
     islamicDefinitionId: null,
     hijriMonth: null,

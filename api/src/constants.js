@@ -28,17 +28,6 @@ export const CalendarProviderTypeId = Object.freeze({
   CALCOM: 4,
 });
 
-/**
- * Enum-like mapping for EventType identifiers.
- * Backed by the EventType table (EventTypeId, Name).
- */
-export const EventTypeId = Object.freeze({
-  RAMADAN: 1,
-  EID: 2,
-  JUMAH: 3,
-  CUSTOM: 4,
-});
-
 export const SubscriptionDefinitionId = Object.freeze({
   INCLUDE_USER_CREATED_EVENTS: "include_user_created_events",
 });

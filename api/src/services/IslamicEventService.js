@@ -19,19 +19,10 @@ import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPre
 import EventDOA from "../model/db/doa/EventDOA.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
 
-const EVENT_TYPE_DEFAULT_COLORS = Object.freeze({
-  1: "#2E7D32",
-  2: "#0288D1",
-  3: "#F59E0B",
-  4: "#7C3AED",
-});
+const DEFAULT_DEFINITION_COLOR = "#7C3AED";
 
 export function resolveDefinitionDefaultColor(definition) {
-  return (
-    definition?.defaultColor ??
-    EVENT_TYPE_DEFAULT_COLORS[definition?.eventTypeId] ??
-    EVENT_TYPE_DEFAULT_COLORS[4]
-  );
+  return definition?.defaultColor ?? DEFAULT_DEFINITION_COLOR;
 }
 
 /**

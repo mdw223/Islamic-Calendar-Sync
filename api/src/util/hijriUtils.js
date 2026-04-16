@@ -10,8 +10,6 @@
  * persistence and validation).
  */
 
-import { EventTypeId } from "../Constants.js";
-
 // Hijri numeric formatter — instantiated once for performance.
 const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
   "en-u-ca-islamic-umalqura",
@@ -183,7 +181,6 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         endDate: allDayRange.endDate,
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
-        eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
         isTask: false,
         hide: false,
         eventTimezone: timezone,
