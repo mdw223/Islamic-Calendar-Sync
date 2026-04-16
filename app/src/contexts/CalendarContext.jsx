@@ -51,6 +51,9 @@ export function CalendarProvider({ children }) {
   // ── View preference ─────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState(getSavedView);
 
+  // ── One-time calendar date jump target (e.g., Global Search click) ─────
+  const [pendingCalendarDateJump, setPendingCalendarDateJump] = useState(null);
+
   // ── Calendar Providers (loaded in background) ───────────────────────────
   const [calendarProviders, setCalendarProviders] = useState([]);
 
@@ -216,6 +219,15 @@ export function CalendarProvider({ children }) {
     if (!VALID_VIEWS.includes(view)) return;
     setCurrentView(view);
     localStorage.setItem(CALENDAR_VIEW_KEY, view);
+  }
+
+  function requestCalendarDateJump(dateKey) {
+    if (typeof dateKey !== "string" || !dateKey) return;
+    setPendingCalendarDateJump(dateKey);
+  }
+
+  function consumeCalendarDateJump() {
+    setPendingCalendarDateJump(null);
   }
 
   /**
@@ -502,12 +514,17 @@ export function CalendarProvider({ children }) {
 
     try {
       try {
-        await APIClient.updateDefinitionPreference(definitionId, newHidden);
+        await APIClient.updateDefinitionPreference(
+          definitionId,
+          newHidden,
+          target.defaultColor ?? null,
+        );
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
           await OfflineClient.updateDefinitionPreference(
             definitionId,
             newHidden,
+            target.defaultColor ?? null,
           );
         } else {
           throw err;
@@ -522,6 +539,58 @@ export function CalendarProvider({ children }) {
       );
       const reverted = eventsRef.current.map((e) =>
         e.islamicDefinitionId === definitionId ? { ...e, hide: wasHidden } : e,
+      );
+      saveEvents(reverted);
+    }
+  }
+
+  /**
+   * Update a single Islamic definition's color and cascade to matching events.
+   * Uses optimistic updates with API-first persistence and offline fallback.
+   */
+  async function updateIslamicDefinitionColor(definitionId, defaultColor) {
+    const target = islamicEventDefs.find((d) => d.id === definitionId);
+    if (!target) return;
+
+    const previousColor = target.defaultColor ?? null;
+
+    setIslamicEventDefs((prev) =>
+      prev.map((d) =>
+        d.id === definitionId ? { ...d, defaultColor } : d,
+      ),
+    );
+
+    const colorUpdated = eventsRef.current.map((e) =>
+      e.islamicDefinitionId === definitionId ? { ...e, color: defaultColor } : e,
+    );
+    saveEvents(colorUpdated);
+
+    try {
+      try {
+        await APIClient.updateDefinitionPreference(
+          definitionId,
+          target.isHidden ?? false,
+          defaultColor,
+        );
+      } catch (err) {
+        if (shouldFallbackToOffline(err)) {
+          await OfflineClient.updateDefinitionPreference(
+            definitionId,
+            target.isHidden ?? false,
+            defaultColor,
+          );
+        } else {
+          throw err;
+        }
+      }
+    } catch {
+      setIslamicEventDefs((prev) =>
+        prev.map((d) =>
+          d.id === definitionId ? { ...d, defaultColor: previousColor } : d,
+        ),
+      );
+      const reverted = eventsRef.current.map((e) =>
+        e.islamicDefinitionId === definitionId ? { ...e, color: previousColor } : e,
       );
       saveEvents(reverted);
     }
@@ -660,6 +729,9 @@ export function CalendarProvider({ children }) {
         calendarProviders,
         currentView,
         changeView,
+        pendingCalendarDateJump,
+        requestCalendarDateJump,
+        consumeCalendarDateJump,
         loading,
         error,
 
@@ -672,6 +744,7 @@ export function CalendarProvider({ children }) {
         // Islamic event definitions (with isHidden flags)
         islamicEventDefs,
         toggleIslamicEvent,
+        updateIslamicDefinitionColor,
         ensureIslamicEventsForYears,
         generatedYearsRange,
         fetchExpandedEventsForRange,

@@ -11,6 +11,41 @@ export function toDateKey(date) {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * Parse a YYYY-MM-DD key into a local Date object at midday to avoid DST/
+ * timezone edge cases around midnight.
+ */
+export function dateKeyToLocalDate(dateKey) {
+  if (!dateKey || typeof dateKey !== "string") return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return null;
+  }
+
+  const d = new Date(year, month - 1, day, 12, 0, 0, 0);
+  if (Number.isNaN(d.getTime())) return null;
+
+  // Guard against overflow dates like 2026-02-31.
+  if (
+    d.getFullYear() !== year ||
+    d.getMonth() !== month - 1 ||
+    d.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return d;
+}
+
 function toLocalDateKeyFromIso(isoString) {
   if (!isoString) return "";
   const d = new Date(isoString);
@@ -162,6 +197,9 @@ export function eventIsAllDayMultiDay(event) {
  * different Islamic event types are visually distinct on the calendar.
  */
 export function eventColor(event, theme) {
+  if (typeof event?.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(event.color)) {
+    return event.color;
+  }
   const palette = [
     theme.palette.primary.main,
     theme.palette.secondary.main,

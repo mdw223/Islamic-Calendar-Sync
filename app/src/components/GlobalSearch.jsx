@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   Box,
   Chip,
@@ -31,7 +32,7 @@ import {
 import { Calendar, Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import { useCalendar } from "../contexts/CalendarContext";
 import { readLS, writeLS } from "../util/LocalStorage";
-import EventModal from "./calendar/EventModal";
+import { getEventStartEndDateKeys } from "./calendar/CalendarHelpers";
 
 // ── Data type registry ────────────────────────────────────────────────────
 // Each entry defines a searchable data type. Add more here in future.
@@ -62,16 +63,14 @@ function loadFilters() {
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function GlobalSearch() {
-  const { allEvents } = useCalendar();
+  const { allEvents, requestCalendarDateJump } = useCalendar();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState(loadFilters);
   const anchorRef = useRef(null);
   const inputRef = useRef(null);
-
-  // Event modal state (opened when clicking an event result).
-  const [modalEvent, setModalEvent] = useState(null);
 
   // Persist filter changes.
   useEffect(() => {
@@ -149,7 +148,11 @@ export default function GlobalSearch() {
 
   const handleResultClick = (item) => {
     if (item.type === DATA_TYPES.EVENTS) {
-      setModalEvent(item.data);
+      const { startKey } = getEventStartEndDateKeys(item.data);
+      if (startKey) {
+        requestCalendarDateJump(startKey);
+      }
+      navigate("/calendar");
     }
     handleClose();
   };
@@ -307,13 +310,6 @@ export default function GlobalSearch() {
           </Popper>
         </Box>
       </ClickAwayListener>
-
-      {/* Event modal — opened when clicking an event search result */}
-      <EventModal
-        open={Boolean(modalEvent)}
-        onClose={() => setModalEvent(null)}
-        event={modalEvent}
-      />
     </>
   );
 }

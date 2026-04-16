@@ -82,4 +82,30 @@ describe("UpdateEvent", () => {
     expect(updateEvent).toHaveBeenCalledWith(5, 4, expect.objectContaining({ description: "clean", rrule: "FREQ=DAILY" }));
     expect(res.json).toHaveBeenCalledWith({ success: true, event: { eventId: 5, description: "clean" } });
   });
+
+  test("returns 400 for invalid color", async () => {
+    findById.mockResolvedValue({ eventId: 5, islamicDefinitionId: null });
+    const req = { params: { eventId: "5" }, body: { color: "blue" }, user: { userId: 4 } };
+    const res = makeRes();
+
+    await UpdateEvent(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(updateEvent).not.toHaveBeenCalled();
+  });
+
+  test("returns 400 when definition-linked event tries per-event color", async () => {
+    findById.mockResolvedValue({ eventId: 5, islamicDefinitionId: "ashura" });
+    const req = {
+      params: { eventId: "5" },
+      body: { color: "#112233" },
+      user: { userId: 4 },
+    };
+    const res = makeRes();
+
+    await UpdateEvent(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(updateEvent).not.toHaveBeenCalled();
+  });
 });

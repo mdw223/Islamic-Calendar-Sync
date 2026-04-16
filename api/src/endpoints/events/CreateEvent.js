@@ -2,6 +2,8 @@ import EventDOA from '../../model/db/doa/EventDOA.js';
 import { Event } from '../../model/models/Event.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
 
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
 /**
  * POST /events
  * Create a new event for the current user.
@@ -49,6 +51,21 @@ export default async function CreateEvent(req, res) {
                 });
             }
             eventData.rrule = rr.value || null;
+        }
+
+        if (eventData.color != null) {
+            if (typeof eventData.color !== "string" || !HEX_COLOR_RE.test(eventData.color)) {
+                return res.status(400).json({
+                    success: false,
+                    message: '"color" must be a hex color string like #1A2B3C.',
+                });
+            }
+            if (eventData.islamicDefinitionId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Definition-linked Islamic events inherit definition color and cannot set per-event color.",
+                });
+            }
         }
 
         const event = await EventDOA.createEvent({ ...eventData, userId: req.user.userId });

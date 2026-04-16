@@ -10,9 +10,13 @@ import {
   FormControlLabel,
   InputLabel,
   MenuItem,
+  Popover,
+  IconButton,
   Select,
+  Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
   Checkbox,
 } from "@mui/material";
@@ -40,6 +44,20 @@ const EVENT_TYPE_OPTIONS = Object.entries(EventTypeId).map(([key, id]) => ({
   name: key.charAt(0) + key.slice(1).toLowerCase(),
 }));
 
+const SWATCH_COLORS = [
+  "#2E7D32",
+  "#0288D1",
+  "#F59E0B",
+  "#7C3AED",
+  "#C62828",
+  "#00897B",
+  "#6D4C41",
+  "#546E7A",
+];
+
+const DEFAULT_EVENT_COLOR = "#7C3AED";
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
 const DEFAULT_FORM = {
   name: "",
   location: "",
@@ -58,6 +76,7 @@ const DEFAULT_FORM = {
   recurrenceUntil: "",
   recurrenceCount: 10,
   recurrenceWeekdays: [],
+  color: "",
 };
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -94,9 +113,17 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     }))
     .filter((option) => !!option.value);
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [draftColor, setDraftColor] = useState(DEFAULT_EVENT_COLOR);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
+
+  const effectiveColor =
+    form.color && HEX_COLOR_RE.test(form.color)
+      ? form.color.toUpperCase()
+      : DEFAULT_EVENT_COLOR;
+  const pickerOpen = Boolean(anchorEl);
 
   useEffect(() => {
     if (open) {
@@ -121,6 +148,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           recurrenceUntil: "",
           recurrenceCount: 10,
           recurrenceWeekdays: [],
+          color: event?.color ?? "",
         };
         if (!event?.islamicDefinitionId && event?.rrule) {
           const parsed = parseUserRRuleToRecurrenceForm(event.rrule);
@@ -174,6 +202,21 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function openColorPicker(event) {
+    setDraftColor(effectiveColor);
+    setAnchorEl(event.currentTarget);
+  }
+
+  function closeColorPicker() {
+    setAnchorEl(null);
+  }
+
+  function applyColor() {
+    if (!HEX_COLOR_RE.test(draftColor)) return;
+    handleChange("color", draftColor.toUpperCase());
+    closeColorPicker();
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name.trim()) {
@@ -187,6 +230,10 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         setError("End date must be on or after start date for all-day events.");
         return;
       }
+    }
+    if (form.color && !HEX_COLOR_RE.test(form.color)) {
+      setError("Color must be in #RRGGBB format.");
+      return;
     }
     setError(null);
     setSaving(true);
@@ -208,6 +255,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         eventTimezone: form.useLocalTimezone
           ? localTimezone
           : form.eventTimezone,
+        color: form.color?.trim() ? form.color.trim().toUpperCase() : null,
       };
 
       if (!isIslamicEdit && form.startDate) {
@@ -229,6 +277,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       if (isIslamicEdit) {
         delete payload.startDate;
         delete payload.endDate;
+        delete payload.color;
       }
 
       if (isEdit) {
@@ -354,7 +403,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   onChange={(value) =>
                     handleChange(
                       "startDate",
-                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T00:00` : "",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T00:00`
+                        : "",
                     )
                   }
                   slotProps={{ textField: { fullWidth: true } }}
@@ -365,7 +416,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   onChange={(value) =>
                     handleChange(
                       "endDate",
-                      value?.isValid?.() ? `${value.format("YYYY-MM-DD")}T23:59` : "",
+                      value?.isValid?.()
+                        ? `${value.format("YYYY-MM-DD")}T23:59`
+                        : "",
                     )
                   }
                   slotProps={{ textField: { fullWidth: true } }}
@@ -378,7 +431,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   value={parseFormDateTime(form.startDate)}
                   onChange={(value) => {
                     const timePart =
-                      parseFormDateTime(form.startDate)?.format("HH:mm") ?? "00:00";
+                      parseFormDateTime(form.startDate)?.format("HH:mm") ??
+                      "00:00";
                     handleChange(
                       "startDate",
                       value?.isValid?.()
@@ -394,7 +448,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   value={parseFormDateTime(form.startDate)}
                   onChange={(value) => {
                     const datePart =
-                      parseFormDateTime(form.startDate)?.format("YYYY-MM-DD") ?? "";
+                      parseFormDateTime(form.startDate)?.format("YYYY-MM-DD") ??
+                      "";
                     handleChange(
                       "startDate",
                       value?.isValid?.() && datePart
@@ -409,7 +464,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   value={parseFormDateTime(form.endDate)}
                   onChange={(value) => {
                     const timePart =
-                      parseFormDateTime(form.endDate)?.format("HH:mm") ?? "00:00";
+                      parseFormDateTime(form.endDate)?.format("HH:mm") ??
+                      "00:00";
                     handleChange(
                       "endDate",
                       value?.isValid?.()
@@ -425,7 +481,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   value={parseFormDateTime(form.endDate)}
                   onChange={(value) => {
                     const datePart =
-                      parseFormDateTime(form.endDate)?.format("YYYY-MM-DD") ?? "";
+                      parseFormDateTime(form.endDate)?.format("YYYY-MM-DD") ??
+                      "";
                     handleChange(
                       "endDate",
                       value?.isValid?.() && datePart
@@ -600,7 +657,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             </Select>
           </FormControl>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -610,7 +667,120 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               }
               label="Task"
             />
+
+            {!isIslamicEdit ? (
+              <Box sx={{ pt: 0.75 }}>
+                <Tooltip title="Change event color">
+                  <IconButton
+                    size="small"
+                    onClick={openColorPicker}
+                    aria-label="Change event color"
+                  >
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        bgcolor: effectiveColor,
+                        border: 1,
+                        borderColor: "divider",
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ) : (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ ml: "auto", pt: 0.5 }}
+              >
+                This Islamic event inherits its color from its definition in the
+                Islamic Events panel.
+              </Typography>
+            )}
           </Box>
+
+          {!isIslamicEdit && (
+            <Popover
+              open={pickerOpen}
+              anchorEl={anchorEl}
+              onClose={closeColorPicker}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <Box sx={{ p: 1.5, width: 220 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  Event color
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}
+                >
+                  {SWATCH_COLORS.map((color) => (
+                    <IconButton
+                      key={color}
+                      size="small"
+                      onClick={() => setDraftColor(color)}
+                      aria-label={`Use color ${color}`}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: "50%",
+                          bgcolor: color,
+                          border: draftColor.toUpperCase() === color ? 2 : 1,
+                          borderColor:
+                            draftColor.toUpperCase() === color
+                              ? "text.primary"
+                              : "divider",
+                        }}
+                      />
+                    </IconButton>
+                  ))}
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <input
+                    type="color"
+                    value={
+                      HEX_COLOR_RE.test(draftColor)
+                        ? draftColor
+                        : DEFAULT_EVENT_COLOR
+                    }
+                    onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
+                    aria-label="Pick custom color"
+                  />
+                  <TextField
+                    size="small"
+                    value={draftColor}
+                    onChange={(e) => setDraftColor(e.target.value)}
+                    error={!HEX_COLOR_RE.test(draftColor)}
+                    helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
+                  />
+                </Stack>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="flex-end"
+                  sx={{ mt: 1 }}
+                >
+                  <Button size="small" onClick={closeColorPicker}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={applyColor}
+                    disabled={!HEX_COLOR_RE.test(draftColor)}
+                  >
+                    Apply
+                  </Button>
+                </Stack>
+              </Box>
+            </Popover>
+          )}
 
           <Box>
             <Typography
@@ -638,9 +808,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             }
             label="Hide from calendar"
           />
-        </DialogContent>
 
-        <Divider />
+        </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>
           {isEdit ? (

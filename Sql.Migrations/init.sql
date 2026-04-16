@@ -210,6 +210,7 @@ CREATE TABLE Event (
     DurationDays INTEGER,
     RRule VARCHAR(512) NULL,
     EventTimezone VARCHAR(100) NULL,
+    Color VARCHAR(7),
     IslamicDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -231,6 +232,7 @@ CREATE TABLE UserIslamicDefinitionPreference (
     UserId INTEGER NOT NULL,
     DefinitionId VARCHAR(256) NOT NULL,
     IsHidden BOOLEAN NOT NULL DEFAULT FALSE,
+    DefaultColor VARCHAR(7),
     PRIMARY KEY (UserId, DefinitionId),
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );

@@ -8,7 +8,12 @@ import EventModal from "./EventModal";
 import MonthView from "./MonthView";
 import WeekView from "./WeekView";
 import DayView from "./DayView";
-import { toDateKey, startOfWeek, useToolbarLabel } from "./CalendarHelpers.jsx";
+import {
+  toDateKey,
+  startOfWeek,
+  useToolbarLabel,
+  dateKeyToLocalDate,
+} from "./CalendarHelpers.jsx";
 
 /**
  * Top-level calendar component. Manages the cursor (which date the user is
@@ -26,6 +31,8 @@ export default function Calendar() {
     refreshFromBackend,
     isRefreshing,
     ensureIslamicEventsForYears,
+    pendingCalendarDateJump,
+    consumeCalendarDateJump,
   } = useCalendar();
 
   const { user } = useUser();
@@ -87,6 +94,15 @@ export default function Calendar() {
       return d;
     });
   }
+
+  useEffect(() => {
+    if (!pendingCalendarDateJump) return;
+    const targetDate = dateKeyToLocalDate(pendingCalendarDateJump);
+    if (targetDate) {
+      setCursor(targetDate);
+    }
+    consumeCalendarDateJump();
+  }, [pendingCalendarDateJump, consumeCalendarDateJump]);
 
   // ── Toolbar label ───────────────────────────────────────────────────────────
   const toolbarLabel = useToolbarLabel(cursor, currentView);

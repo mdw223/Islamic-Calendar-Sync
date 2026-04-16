@@ -46,7 +46,8 @@ import EventDefinitionRow from "./EventDefinitionRow";
 import SearchField from "../SearchField";
 
 export default function IslamicEventsPanel() {
-  const { islamicEventDefs, toggleIslamicEvent } = useCalendar();
+  const { islamicEventDefs, toggleIslamicEvent, updateIslamicDefinitionColor } =
+    useCalendar();
 
   // ── Search state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -318,6 +319,7 @@ export default function IslamicEventsPanel() {
                   definition={def}
                   checked={isChecked(def.id)}
                   onChange={handleToggle}
+                  onColorChange={updateIslamicDefinitionColor}
                 />
               ))}
             </Collapse>
@@ -356,6 +358,7 @@ export default function IslamicEventsPanel() {
                   definition={def}
                   checked={isChecked(def.id)}
                   onChange={handleToggle}
+                  onColorChange={updateIslamicDefinitionColor}
                 />
               ))}
             </Collapse>
@@ -394,6 +397,7 @@ export default function IslamicEventsPanel() {
                   definition={def}
                   checked={isChecked(def.id)}
                   onChange={handleToggle}
+                  onColorChange={updateIslamicDefinitionColor}
                 />
               ))}
             </Collapse>

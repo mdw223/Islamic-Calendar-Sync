@@ -14,6 +14,21 @@ import islamicEventsData from "../data/islamicEvents.json";
 import { EventTypeId } from "../Constants";
 import db from "../util/OfflineDb";
 
+const EVENT_TYPE_DEFAULT_COLORS = Object.freeze({
+  1: "#2E7D32",
+  2: "#0288D1",
+  3: "#F59E0B",
+  4: "#7C3AED",
+});
+
+function resolveDefinitionDefaultColor(definition) {
+  return (
+    definition?.defaultColor ??
+    EVENT_TYPE_DEFAULT_COLORS[definition?.eventTypeId] ??
+    EVENT_TYPE_DEFAULT_COLORS[EventTypeId.CUSTOM]
+  );
+}
+
 // ── Hijri formatter ─────────────────────────────────────────────────────────
 const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
   "en-u-ca-islamic-umalqura",
@@ -23,7 +38,10 @@ const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
 // ── Base definitions ────────────────────────────────────────────────────────
 
 export function getBaseDefinitions() {
-  return islamicEventsData.events;
+  return islamicEventsData.events.map((def) => ({
+    ...def,
+    defaultColor: resolveDefinitionDefaultColor(def),
+  }));
 }
 
 // ── Merged definitions (base + Dexie preferences) ───────────────────────────
@@ -31,11 +49,14 @@ export function getBaseDefinitions() {
 export async function getMergedDefinitions() {
   const baseDefs = getBaseDefinitions();
   const prefs = await db.definitionPreferences.toArray();
-  const prefMap = new Map(prefs.map((p) => [p.definitionId, p.isHidden]));
+  const prefMap = new Map(prefs.map((p) => [p.definitionId, p]));
 
   return baseDefs.map((def) => ({
     ...def,
-    isHidden: prefMap.has(def.id) ? prefMap.get(def.id) : def.isHidden ?? false,
+    isHidden: prefMap.has(def.id)
+      ? prefMap.get(def.id).isHidden
+      : def.isHidden ?? false,
+    defaultColor: prefMap.get(def.id)?.defaultColor ?? resolveDefinitionDefaultColor(def),
   }));
 }
 
@@ -187,6 +208,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         hijriMonth: recurrence.hijriMonth,
         hijriDay: recurrence.hijriDay,
         durationDays: recurrence.durationDays,
+        color: def.defaultColor ?? null,
       });
     }
   }

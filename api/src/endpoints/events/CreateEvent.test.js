@@ -79,4 +79,38 @@ describe("CreateEvent", () => {
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ success: true, event: { eventId: 11 } });
   });
+
+  test("returns 400 when color format is invalid", async () => {
+    fromRequest.mockReturnValue({
+      name: "Test",
+      startDate: "2026-01-01",
+      endDate: "2026-01-02",
+      eventTypeId: 1,
+      color: "red",
+    });
+    const req = { body: {}, user: { userId: 8 } };
+    const res = makeRes();
+
+    await CreateEvent(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test("returns 400 when definition-linked event tries per-event color", async () => {
+    fromRequest.mockReturnValue({
+      name: "Test",
+      startDate: "2026-01-01",
+      endDate: "2026-01-02",
+      eventTypeId: 1,
+      islamicDefinitionId: "ashura",
+      color: "#112233",
+    });
+    const req = { body: {}, user: { userId: 8 } };
+    const res = makeRes();
+
+    await CreateEvent(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(createEvent).not.toHaveBeenCalled();
+  });
 });

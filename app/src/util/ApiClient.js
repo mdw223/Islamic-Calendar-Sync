@@ -237,10 +237,13 @@ export default class APIClient {
    *
    * @param {string} definitionId
    * @param {boolean} isHidden
+   * @param {string | null} defaultColor
    * @returns {Promise<{ success: boolean, definitionId: string, isHidden: boolean, eventsUpdated: number }>}
    */
-  static async updateDefinitionPreference(definitionId, isHidden) {
-    return HTTPClient.put(`/definitions/${definitionId}`, { isHidden });
+  static async updateDefinitionPreference(definitionId, isHidden, defaultColor = null) {
+    const payload = { isHidden };
+    if (defaultColor != null) payload.defaultColor = defaultColor;
+    return HTTPClient.put(`/definitions/${definitionId}`, payload);
   }
 
   // ── Offline → Server sync ─────────────────────────────────────────────────

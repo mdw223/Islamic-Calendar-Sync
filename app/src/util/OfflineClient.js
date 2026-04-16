@@ -187,9 +187,14 @@ export default class OfflineClient {
     return { success: true, definitions };
   }
 
-  static async updateDefinitionPreference(definitionId, isHidden) {
-    // Upsert preference.
-    await db.definitionPreferences.put({ definitionId, isHidden });
+  static async updateDefinitionPreference(definitionId, isHidden, defaultColor = null) {
+    // Merge with existing preference to avoid dropping color/isHidden when updating one field.
+    const existingPreference = await db.definitionPreferences.get(definitionId);
+    await db.definitionPreferences.put({
+      definitionId,
+      isHidden,
+      defaultColor: defaultColor ?? existingPreference?.defaultColor ?? null,
+    });
 
     // Update hide flag on all matching events in IndexedDB.
     const matching = await db.events
@@ -199,7 +204,11 @@ export default class OfflineClient {
 
     if (matching.length > 0) {
       await db.events.bulkPut(
-        matching.map((e) => ({ ...e, hide: isHidden })),
+        matching.map((e) => ({
+          ...e,
+          hide: isHidden,
+          color: defaultColor ?? e.color ?? null,
+        })),
       );
     }
 
@@ -207,6 +216,7 @@ export default class OfflineClient {
       success: true,
       definitionId,
       isHidden,
+      defaultColor: defaultColor ?? existingPreference?.defaultColor ?? null,
       eventsUpdated: matching.length,
     };
   }

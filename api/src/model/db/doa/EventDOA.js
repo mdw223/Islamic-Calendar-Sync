@@ -118,6 +118,8 @@ export default class EventDOA {
 
     eventTimezone = null,
 
+    color = null,
+
   }) {
 
     const result = await query(
@@ -130,13 +132,13 @@ export default class EventDOA {
 
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
 
-         eventtimezone, createdat, updatedat
+         eventtimezone, color, createdat, updatedat
 
        )
 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
 
-               $11, $12, $13, $14, $15, $16, NOW(), NOW())
+               $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
 
        RETURNING *`,
 
@@ -144,7 +146,7 @@ export default class EventDOA {
 
        eventTypeId, isTask, islamicDefinitionId, hijriMonth,
 
-       hijriDay, durationDays, rrule, eventTimezone],
+      hijriDay, durationDays, rrule, eventTimezone, color],
 
     );
 
@@ -203,6 +205,8 @@ export default class EventDOA {
       rrule: "rrule",
 
       eventTimezone: "eventtimezone",
+
+      color: "color",
 
     };
 
@@ -377,6 +381,24 @@ export default class EventDOA {
 
   }
 
+  /**
+   * Update color on all events tied to an Islamic definition for a user.
+   * @param {number} userId
+   * @param {string} islamicDefinitionId
+   * @param {string | null} color
+   * @returns {Promise<number>} Number of rows updated.
+   */
+  static async updateColorByDefinitionId(userId, islamicDefinitionId, color) {
+    const result = await query(
+      `UPDATE event
+       SET color = $3, updatedat = NOW()
+       WHERE userid = $1 AND islamicdefinitionid = $2`,
+      [userId, islamicDefinitionId, color],
+    );
+
+    return result.rowCount;
+  }
+
 
 
   /**
@@ -417,15 +439,16 @@ export default class EventDOA {
           durationDays = null,
           rrule = null,
           eventTimezone = null,
+          color = null,
         } = data;
 
         const result = await client.query(
           `INSERT INTO event (
              userid, name, startdate, enddate, isallday,
              description, location, hide, eventtypeid, istask,
-             islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, createdat, updatedat
+             islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
            RETURNING *`,
           [
             userId,
@@ -444,6 +467,7 @@ export default class EventDOA {
             durationDays,
             rrule,
             eventTimezone,
+            color,
           ],
         );
 
@@ -479,15 +503,16 @@ export default class EventDOA {
       durationDays = null,
       rrule = null,
       eventTimezone = null,
+      color = null,
     } = data;
 
     const result = await client.query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
          description, location, hide, eventtypeid, istask,
-         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, createdat, updatedat
+         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
        ON CONFLICT (userid, islamicdefinitionid) WHERE islamicdefinitionid IS NOT NULL
        DO UPDATE SET
          name = EXCLUDED.name,
@@ -504,6 +529,7 @@ export default class EventDOA {
          durationdays = EXCLUDED.durationdays,
          rrule = EXCLUDED.rrule,
          eventtimezone = EXCLUDED.eventtimezone,
+         color = EXCLUDED.color,
          updatedat = NOW()
        RETURNING *`,
       [
@@ -523,6 +549,7 @@ export default class EventDOA {
         durationDays,
         rrule,
         eventTimezone,
+        color,
       ],
     );
 

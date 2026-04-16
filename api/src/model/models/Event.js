@@ -21,6 +21,7 @@ export class Event {
     this.durationDays = null;
     this.rrule = null;
     this.eventTimezone = null;
+    this.color = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -48,6 +49,7 @@ export class Event {
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
     event.eventTimezone = body.eventTimezone ?? null;
+    event.color = body.color ?? null;
     event.hide = body.hide ?? false
     return event;
   }
@@ -75,6 +77,7 @@ export class Event {
     event.durationDays = row.durationdays ?? null;
     event.rrule = row.rrule ?? null;
     event.eventTimezone = row.eventtimezone ?? null;
+    event.color = row.color ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -99,6 +102,7 @@ export class Event {
       durationDays: this.durationDays,
       rrule: this.rrule,
       eventTimezone: this.eventTimezone,
+      color: this.color,
       userId: this.userId,
     }
   }

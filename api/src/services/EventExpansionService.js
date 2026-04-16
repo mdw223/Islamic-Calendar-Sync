@@ -149,6 +149,7 @@ function expandIslamicMaster(master, rangeStart, rangeEnd) {
     hijriDay: inst.hijriDay ?? master.hijriDay,
     durationDays: inst.durationDays ?? master.durationDays,
     hide: master.hide,
+    color: master.color ?? validDefinition.defaultColor ?? null,
   }));
 }
 

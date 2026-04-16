@@ -20,6 +20,8 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
+
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 export default async function SyncOfflinePreferences(req, res) {
   try {
     const { preferences } = req.body;
@@ -49,20 +51,38 @@ export default async function SyncOfflinePreferences(req, res) {
             "Every preference must have definitionId (string) and isHidden (boolean).",
         });
       }
+      if (
+        p.defaultColor != null &&
+        (typeof p.defaultColor !== "string" || !HEX_COLOR_RE.test(p.defaultColor))
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Optional "defaultColor" must be a hex color string like #1A2B3C.',
+        });
+      }
     }
 
     let synced = 0;
-    for (const { definitionId, isHidden } of preferences) {
+    for (const { definitionId, isHidden, defaultColor } of preferences) {
       await IslamicDefinitionPreferenceDOA.upsertPreference(
         req.user.userId,
         definitionId,
         isHidden,
+        defaultColor ?? null,
       );
       await EventDOA.updateHideByDefinitionId(
         req.user.userId,
         definitionId,
         isHidden,
       );
+      if (defaultColor != null) {
+        await EventDOA.updateColorByDefinitionId(
+          req.user.userId,
+          definitionId,
+          defaultColor,
+        );
+      }
       synced++;
     }
 

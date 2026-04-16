@@ -191,6 +191,7 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         hijriMonth: recurrence.hijriMonth,
         hijriDay: recurrence.hijriDay,
         durationDays: recurrence.durationDays,
+        color: def.defaultColor ?? null,
       });
     }
   }
