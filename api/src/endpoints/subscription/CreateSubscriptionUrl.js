@@ -3,7 +3,7 @@ import { subscriptionConfig } from "../../Config.js";
 import crypto from "crypto";
 import SubscriptionTokenDOA from "../../model/db/doa/SubscriptionTokenDOA.js";
 import SubscriptionDefinitionSelectionDOA from "../../model/db/doa/SubscriptionDefinitionSelectionDOA.js";
-import { GenerateToken } from "../../middleware/AuthMiddleware.js";
+import { GenerateToken, HashToken } from "../../middleware/AuthMiddleware.js";
 import { getBaseDefinitions } from "../../services/IslamicEventService.js";
 import { SubscriptionDefinitionId } from "../../Constants.js";
 
@@ -82,10 +82,7 @@ export default async function CreateSubscriptionUrl(req, res) {
     const salt = crypto.randomBytes(8).toString("hex");
     const token = GenerateToken(req.user, salt);
     const createdAt = Date.now();
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(token, "utf8")
-      .digest("hex");
+    const tokenHash = await HashToken(token, salt);
 
     const created = await SubscriptionTokenDOA.createToken({
       userId,

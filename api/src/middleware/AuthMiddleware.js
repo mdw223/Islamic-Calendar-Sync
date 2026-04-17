@@ -102,14 +102,24 @@ export async function RequireSubscriptionToken(req, res, next) {
       return res.status(403).json({ success: false, message: "Invalid or revoked token" });
     }
 
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(token, "utf8")
-      .digest("hex");
-    const subscription = await SubscriptionTokenDOA.findActiveByUserIdAndHash(
-      userId,
-      tokenHash,
-    );
+    // Each URL has its own salt; PBKDF2(token, salt) only matches the row for that URL.
+    // Try each active subscription for this user until the derived hash matches the stored hash.
+    const candidates = await SubscriptionTokenDOA.findActiveByUserId(userId);
+    let subscription = null;
+    for (const row of candidates) {
+      if (!row?.tokenHash || !row?.salt) continue;
+      const tokenHash = await HashToken(token, row.salt);
+      const stored = Buffer.isBuffer(row.tokenHash)
+        ? row.tokenHash
+        : Buffer.from(row.tokenHash);
+      if (
+        tokenHash.length === stored.length &&
+        crypto.timingSafeEqual(tokenHash, stored)
+      ) {
+        subscription = row;
+        break;
+      }
+    }
     if (!subscription) {
       return res.status(403).json({ success: false, message: "Invalid or revoked token" });
     }
@@ -136,6 +146,18 @@ export async function RequireSubscriptionToken(req, res, next) {
 export function GenerateToken(user, salt) {
   const tokenSecret = appConfig.API_SECRET + salt;
   return jwt.sign({ userId: user.userId }, tokenSecret);
+}
+
+export async function HashToken(token, salt) {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(token, salt, 10000, 32, "sha256", (err, derivedKey) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(derivedKey);
+      }
+    });
+  });
 }
 
 
