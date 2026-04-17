@@ -20,7 +20,6 @@ import GoogleIcon from "../../../assets/google.svg";
 import CalIcon from "../../../assets/cal-com.svg";
 import { useUser } from "../../../contexts/UserContext";
 import APIClient from "../../../util/ApiClient";
-import { setToken } from "../../../util/AuthToken";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -66,7 +65,6 @@ const LoginPage = () => {
 
     try {
       const data = await APIClient.verifyCode(email, code);
-      if (data?.token) setToken(data.token);
       if (data?.success && data?.user) login(data.user);
       navigate("/");
     } catch (err) {

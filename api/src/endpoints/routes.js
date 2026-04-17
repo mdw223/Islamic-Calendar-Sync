@@ -1,9 +1,11 @@
 import express from 'express';
+import session from "express-session";
 import healthRoutes from "./health/Health.js";
 import { SendVerificationCode, VerifyCode, Logout } from "./users/LoginUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
 import { googleLogin, googleRedirect } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
+import { appConfig, sessionConfig } from "../Config.js";
 import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
 import DeleteCurrentUser from './users/DeleteCurrentUser.js';
@@ -36,6 +38,15 @@ import UpdateSubscriptionUrl from './subscription/UpdateSubscriptionUrl.js';
 
 const router = express.Router();
 
+// Session middleware scoped only to Google OAuth routes — holds OIDC state across the redirect.
+// Not used for app auth (JWT cookie handles that).
+const googleSession = session({
+  secret: sessionConfig.SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: appConfig.NODE_ENV === "production", sameSite: "lax" },
+});
+
 // Health check routes
 router.use("/health", healthRoutes);
 
@@ -51,8 +62,8 @@ router.post("/users/verify-code", VerifyCode);
 router.post("/users/logout", Auth(AuthUser.VALID_USER), Logout);
 router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUserById);
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
-router.get("/auth/google/login", googleLogin);
-router.get("/auth/google/redirect", ...googleRedirect);
+router.get("/auth/google/login", googleSession, googleLogin);
+router.get("/auth/google/redirect", googleSession, ...googleRedirect);
 
 // Subscription management (Bearer JWT)
 router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);

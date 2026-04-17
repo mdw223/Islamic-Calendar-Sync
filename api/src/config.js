@@ -35,9 +35,22 @@ export const googleAuthConfig = {
   CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL
 };
 
-// Session (required by passport-openidconnect for Google OAuth state). Set SESSION_SECRET in production.
+// Session: used only on Google OAuth routes (/auth/google/login and /auth/google/redirect) to hold OIDC state.
+// Not used for app auth — JWT cookie handles that. Set SESSION_SECRET in production.
 export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-production",
+};
+
+// Shared cookie options for the auth JWT cookie (token).
+// Must be identical on res.cookie() (set) and res.clearCookie() (clear); any mismatch prevents clearing.
+export const authCookieConfig = {
+  NAME: "token",
+  OPTIONS: {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: (process.env.NODE_ENV || "development") === "production",
+  },
 };
 
 export const subscriptionConfig = {

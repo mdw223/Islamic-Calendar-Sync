@@ -1,5 +1,3 @@
-import { getToken } from "./AuthToken.js";
-
 function handleResponse(response) {
   if (!response.ok) {
     const err = new Error(`HTTP error! status: ${response.status}`);
@@ -9,25 +7,15 @@ function handleResponse(response) {
   return response.json();
 }
 
-function authHeaders(extra = {}) {
-  const token = getToken();
-  const headers = { ...extra };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-}
-
 export default class HTTPClient {
   static baseURL = '/api'; // OR so it works on page refresh
 
   // methods are static bec: no instance state/constructor
-  
-  // GET request (sends Authorization: Bearer when token is stored)
+
+  // GET request (auth cookie sent automatically by the browser via credentials: include)
   static async get(url) {
     return fetch(this.baseURL + url, {
       credentials: 'include',
-      headers: authHeaders(),
     }).then(handleResponse);
   }
 
@@ -36,9 +24,7 @@ export default class HTTPClient {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'POST',
       credentials: 'include',
-      headers: authHeaders({
-        'Content-Type': 'application/json',
-      }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -49,9 +35,7 @@ export default class HTTPClient {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'PUT',
       credentials: 'include',
-      headers: authHeaders({
-        'Content-Type': 'application/json',
-      }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -62,9 +46,7 @@ export default class HTTPClient {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'PATCH',
       credentials: 'include',
-      headers: authHeaders({
-        'Content-Type': 'application/json',
-      }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -75,7 +57,6 @@ export default class HTTPClient {
     const response = await fetch(HTTPClient.baseURL + url, {
       method: 'DELETE',
       credentials: 'include',
-      headers: authHeaders(),
     });
     if (!response.ok) {
       const err = new Error(`HTTP error! status: ${response.status}`);

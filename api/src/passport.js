@@ -3,7 +3,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, googleAuthConfig, jwtConfig } from "./Config.js";
+import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig } from "./Config.js";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
 import { AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
@@ -24,14 +24,21 @@ export function signToken(user) {
   );
 }
 
-/** Bearer only; `?token=` on subscription routes is an opaque secret, not a JWT. */
-const jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+/**
+ * Extract JWT from the httpOnly cookie first, then fall back to Authorization: Bearer.
+ * `?token=` on subscription routes is an opaque secret, not a JWT — handled separately.
+ */
+function jwtFromCookieOrBearerExtractor(req) {
+  const fromCookie = req?.cookies?.token ?? null;
+  if (fromCookie) return fromCookie;
+  return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+}
 
-// JWT strategy: extract token from Authorization: Bearer <token>, verify, load user, set req.user
+// JWT strategy: extract token from cookie or Authorization: Bearer, verify, load user, set req.user
 passport.use(
   new JwtStrategy(
     {
-      jwtFromRequest,
+      jwtFromRequest: jwtFromCookieOrBearerExtractor,
       secretOrKey: jwtConfig.SECRET,
       algorithms: [jwtConfig.ALGORITHM],
     },
@@ -48,11 +55,14 @@ passport.use(
 );
 
 /**
- * Optional JWT auth middleware: if Authorization Bearer token is present and valid,
+ * JWT auth middleware: if a valid JWT is present (httpOnly cookie or Authorization Bearer),
  * sets req.user; otherwise leaves req.user undefined. Never sends 401 (so public and
  * protected routes can share the same pipeline).
+ * 
+ * This method calls passport.authenticate("jwt"... which invokes the JWT strategy defined above,
+ * which extracts the JWT from the cookie or Authorization: Bearer header, verifies it, loads the user, and sets req.user...
  */
-export function optionalJwtAuth(req, res, next) {
+export function authenticateJwt(req, res, next) {
   passport.authenticate("jwt", { session: false }, (err, user) => {
     if (err) return next(err);
     req.user = user ?? undefined;
@@ -132,8 +142,8 @@ const googleRedirectHandler = async (req, res) => {
 
     const token = signToken(user);
     const frontendBase = appConfig.BASE_URL;
-    // Redirect with token in hash so frontend can read and store it (e.g. in memory or localStorage)
-    res.redirect(`${frontendBase}#token=${encodeURIComponent(token)}`);
+    res.cookie(authCookieConfig.NAME, token, authCookieConfig.OPTIONS);
+    res.redirect(`${frontendBase}`);
   } catch (error) {
     defaultLogger.error("Error in Google OAuth redirect handler", {
       requestId: req?.requestId,

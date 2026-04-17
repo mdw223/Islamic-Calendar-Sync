@@ -7,7 +7,7 @@ import {appConfig} from '../Config.js'
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
- * Ensure the request is authenticated (has valid JWT). req.user is set by optionalJwtAuth when a valid Bearer token is present.
+ * Ensure the request is authenticated (has valid JWT). req.user is set by authenticateJwt when a valid JWT is present (httpOnly cookie or Authorization Bearer).
  */
 export function AuthenticateUser(req, res, next) {
   if (!req.user) {

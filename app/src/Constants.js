@@ -22,9 +22,6 @@ export const HOURS = Array.from({ length: 24 }, (_, i) => i);
 export const CALENDAR_VIEW_KEY = "calendarView";
 export const VALID_VIEWS = ["month", "week", "day"];
 
-// Auth constants
-export const AUTH_TOKEN_KEY = "authToken";
-
 /**
  * Enum-like mapping for EventType identifiers.
  * Backed by the EventType table (EventTypeId, Name).
