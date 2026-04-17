@@ -10,7 +10,7 @@ import {
   Divider,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router";
-import { Github, Twitter, Mail } from "lucide-react";
+import { Github, Mail } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -45,27 +45,57 @@ const Footer = () => {
               Product
             </Typography>
             <Stack spacing={1}>
-              <Typography
-                variant="caption"
+              <Link
+                component={RouterLink}
+                to="/features"
+                underline="none"
                 color="text.secondary"
-                sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
               >
                 Features
-              </Typography>
-              <Typography
-                variant="caption"
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/guide"
+                underline="none"
                 color="text.secondary"
-                sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
               >
                 Guide
-              </Typography>
-              <Typography
-                variant="caption"
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/methods"
+                underline="none"
                 color="text.secondary"
-                sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
               >
                 Methods
-              </Typography>
+              </Link>
+              <Link
+                href="/#faq"
+                underline="none"
+                color="text.secondary"
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
+              >
+                FAQs
+              </Link>
             </Stack>
           </Grid>
           <Grid item xs={6} md={2}>
@@ -73,20 +103,32 @@ const Footer = () => {
               Legal
             </Typography>
             <Stack spacing={1}>
-              <Typography
-                variant="caption"
+              <Link
+                component={RouterLink}
+                to="/privacy"
+                underline="none"
                 color="text.secondary"
-                sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
               >
                 Privacy
-              </Typography>
-              <Typography
-                variant="caption"
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/terms"
+                underline="none"
                 color="text.secondary"
-                sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                sx={{
+                  typography: "caption",
+                  width: "fit-content",
+                  "&:hover": { color: "primary.main" },
+                }}
               >
                 Terms
-              </Typography>
+              </Link>
               <Link
                 component={RouterLink}
                 to="/data-policy"
@@ -107,19 +149,28 @@ const Footer = () => {
               Connect
             </Typography>
             <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-              <IconButton size="small">
+              <IconButton
+                size="small"
+                component="a"
+                href="https://github.com/mdw223/IslamicCalendarSync"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open GitHub repository"
+              >
                 <Github size={18} />
               </IconButton>
-              <IconButton size="small">
-                <Twitter size={18} />
-              </IconButton>
-              <IconButton size="small">
+              <IconButton size="small" component="a" href="mailto:malik.code@proton.me" aria-label="Email malik.code@proton.me">
                 <Mail size={18} />
               </IconButton>
             </Stack>
-            <Typography variant="caption" color="text.secondary">
-              support@islamicsync.app
-            </Typography>
+            <Link
+              href="mailto:malik.code@proton.me"
+              underline="hover"
+              color="text.secondary"
+              sx={{ typography: "caption" }}
+            >
+              malik.code@proton.me
+            </Link>
           </Grid>
         </Grid>
 

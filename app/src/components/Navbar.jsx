@@ -29,6 +29,7 @@ import {
   X,
   Star,
   Settings as SettingsIcon,
+  GraduationCap,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { ThemeContext } from "../contexts/ThemeContext";
@@ -51,6 +52,7 @@ const Navbar = () => {
   const toggleMobileDrawer = () => setMobileOpen(!mobileOpen);
 
   const navLinks = [
+    { name: "Learn", path: "/learn", icon: <GraduationCap size={18} /> },
     { name: "Calendar", path: "/calendar", icon: <Calendar size={18} /> },
     { name: "Export", path: "/export", icon: <Download size={18} /> },
     { name: "Subscriptions", path: "/subscriptions", icon: <Star size={18} /> },

@@ -1,73 +1,83 @@
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 import {
-  Container,
+  Alert,
+  Chip,
   Box,
+  Card,
+  CardContent,
+  Container,
   Typography,
   Button,
   Grid,
-  Card,
-  CardContent,
-  Avatar,
+  Paper,
   Stack,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Paper,
+  Divider,
   alpha,
   useTheme,
 } from "@mui/material";
 import {
+  BadgeCheck,
+  BookOpenText,
   ChevronDown,
   Calendar,
-  Bell,
-  CloudSync,
-  ShieldCheck,
+  Compass,
+  Eye,
+  Filter,
   Globe,
-  Star,
+  Lock,
+  Bell,
+  Link2,
+  Sparkles,
 } from "lucide-react";
 import { ThemeContext } from "../../../contexts/ThemeContext";
-import { Link as RouterLink, useNavigate } from "react-router";
+import { Link as RouterLink } from "react-router";
+import { useCalendar } from "../../../contexts/CalendarContext";
+import UpcomingIslamicDays from "../../../components/home/UpcomingIslamicDays";
 
 const Home = () => {
   const muiTheme = useTheme();
   const { themeMode } = useContext(ThemeContext);
+  const { events, generatedYearsRange } = useCalendar();
 
-  const features = [
+  const coreFeatures = [
     {
       icon: <Calendar color="#10b981" />,
-      title: "Advanced Sync",
+      title: "Year-Based Event Generation",
       description:
-        "Sync prayer times directly to Google, Outlook, Apple, and Cal.com calendars.",
+        "Generate Islamic events for one year or multiple years so your calendar remains future-ready.",
     },
     {
-      icon: <Globe color="#3b82f6" />,
-      title: "Global Coverage",
+      icon: <Link2 color="#3b82f6" />,
+      title: "Subscriptions and Export",
       description:
-        "Accurate timings based on your precise geographical location.",
+        "Use subscription links for continuous updates or export .ics files for one-time imports.",
     },
     {
-      icon: <Bell color="#f59e0b" />,
-      title: "Custom Alerts",
+      icon: <Filter color="#f59e0b" />,
+      title: "Definition-Level Control",
       description:
-        "Configure offsets and durations for each prayer to fit your routine.",
+        "Show, hide, and color specific Islamic definitions so only relevant events appear in your workflow.",
     },
     {
-      icon: <ShieldCheck color="#a855f7" />,
-      title: "Private & Secure",
+      icon: <Bell color="#7c3aed" />,
+      title: "Prayer-Aligned Scheduling",
       description:
-        "Your calendar data remains private. We only sync what you authorize.",
+        "Coordinate reminders, offsets, and timing choices with your local routine and calendar habits.",
     },
     {
-      icon: <CloudSync color="#6366f1" />,
-      title: "Real-time Updates",
+      icon: <Globe color="#0ea5e9" />,
+      title: "Location and Timezone Aware",
       description:
-        "As seasons change, your calendar stays up-to-date automatically.",
+        "Event generation and display adapt to your selected location context and timezone behavior.",
     },
     {
-      icon: <Star color="#f43f5e" />,
-      title: "Islamic Events",
+      icon: <Lock color="#ef4444" />,
+      title: "Privacy-Centered by Default",
       description:
-        "Never miss a sunnah fast, Eid, or special night with integrated sync.",
+        "Your account data is used for app functionality, with clear controls for subscriptions and account deletion.",
     },
   ];
 
@@ -77,41 +87,77 @@ const Home = () => {
       a: "Simply log in with your provider, select your location, and click the Sync button in the Calendar dashboard.",
     },
     {
-      q: "Is it free to use?",
-      a: "Yes, our core calendar synchronization service is completely free for the community.",
+      q: "How do upcoming Islamic days appear on Home?",
+      a: "Generate events for at least one year in Calendar. Once generated, Home automatically shows your next upcoming Islamic days.",
     },
     {
-      q: "Can I use it on mobile?",
-      a: "Absolutely! The web app is fully responsive and works great on all mobile browsers.",
+      q: "Can I choose which Islamic events are included?",
+      a: "Yes. Use the Islamic definitions panel to hide, show, or recolor definitions before syncing or exporting.",
     },
     {
-      q: "What calculation methods do you support?",
-      a: "We support all major methods including MWL, ISNA, Umm Al-Qura, and more.",
+      q: "Where can I learn what each event means?",
+      a: "Use the Learn page for concise draft summaries and significance notes for each tracked Islamic event.",
     },
   ];
 
+  const upcomingIslamicEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return events
+      .filter((event) => Boolean(event.islamicDefinitionId) && Boolean(event.startDate))
+      .map((event) => ({ ...event, parsedDate: new Date(event.startDate) }))
+      .filter((event) => !Number.isNaN(event.parsedDate.getTime()) && event.parsedDate >= today)
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime())
+      .slice(0, 5);
+  }, [events]);
+
+  const hasGeneratedIslamicYears =
+    generatedYearsRange?.start != null && generatedYearsRange?.end != null;
+  const shouldShowUpcomingIslamicDays =
+    hasGeneratedIslamicYears && upcomingIslamicEvents.length > 0;
+
   return (
-    <Box sx={{ overflowX: "hidden" }}>
+    <Box
+      sx={{
+        overflowX: "hidden",
+        background:
+          themeMode === "dark"
+            ? "linear-gradient(180deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,1) 30%, rgba(15,23,42,1) 100%)"
+            : "linear-gradient(180deg, rgba(16,185,129,0.05) 0%, rgba(248,250,252,1) 30%, rgba(248,250,252,1) 100%)",
+      }}
+    >
       {/* Hero Section */}
-      <Container maxWidth="lg" sx={{ pt: { xs: 8, md: 15 }, pb: 10 }}>
+      <Container maxWidth="lg" sx={{ pt: { xs: 8, md: 15 }, pb: 8 }}>
         <Stack spacing={4} alignItems="center" textAlign="center">
+          <Chip
+            icon={<BadgeCheck size={14} />}
+            label="Designed for practical daily consistency"
+            color="primary"
+            variant="outlined"
+          />
           <Typography
             variant="h1"
-            sx={{ fontSize: { xs: "2.5rem", md: "4.5rem" }, lineHeight: 1.1 }}
+            sx={{
+              fontSize: { xs: "2.35rem", md: "4.25rem" },
+              lineHeight: 1.08,
+              letterSpacing: "-0.02em",
+              maxWidth: 980,
+            }}
           >
-            Sync Your Deen with <br />
-            <Box component="span" sx={{ color: "primary.main" }}>
-              Your Daily Schedule
+            Build a Living Islamic Calendar for
+            <Box component="span" sx={{ color: "primary.main", display: "block" }}>
+              Your Real Daily Routine
             </Box>
           </Typography>
           <Typography
-            variant="h5"
+            variant="h6"
             color="text.secondary"
-            sx={{ maxWidth: 800, fontWeight: 400 }}
+            sx={{ maxWidth: 860, fontWeight: 400 }}
           >
-            Automatically synchronize accurate prayer times and Islamic events
-            with your Google, Outlook, or Apple calendar. Manage your deen with
-            precision and ease.
+            Generate upcoming Islamic events, control what appears, and keep
+            Google, Outlook, Apple, and subscription feeds aligned with your
+            worship rhythm.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <Button
@@ -127,68 +173,110 @@ const Home = () => {
               variant="outlined"
               size="large"
               component={RouterLink}
-              to="/auth/login"
+              to="/learn"
               sx={{ py: 2, px: 5, fontSize: "1.1rem" }}
             >
               Learn More
             </Button>
           </Stack>
 
-          <Paper
-            elevation={12}
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.25}
             sx={{
-              mt: 8,
-              width: "100%",
-              borderRadius: 4,
-              overflow: "hidden",
-              border: "1px solid",
-              borderColor: "divider",
+              pt: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              flexWrap: "wrap",
             }}
           >
-            <Box
-              component="img"
-              src="https://placehold.net/main.svg"
-              sx={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-                filter: themeMode === "dark" ? "brightness(0.7)" : "none",
-              }}
-            />
-          </Paper>
+            {[
+              "Google / Outlook / Apple support",
+              "Year-based event generation",
+              "Definition-level filtering",
+              "Learn-based event significance",
+            ].map((chipText) => (
+              <Chip
+                key={chipText}
+                label={chipText}
+                variant="outlined"
+                sx={{
+                  borderRadius: 999,
+                  bgcolor: alpha(muiTheme.palette.background.paper, 0.7),
+                }}
+              />
+            ))}
+          </Stack>
         </Stack>
       </Container>
 
+      {/* Problem/Solution Narrative */}
+      <Container maxWidth="lg" sx={{ pb: 10 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Paper variant="outlined" sx={{ p: 3, height: "100%", borderRadius: 3 }}>
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Eye size={18} color={muiTheme.palette.warning.main} />
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    The Common Friction
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Islamic dates and reminders often live in fragmented notes, static calendars, or inconsistent feeds.
+                  Important days can be missed when yearly updates are not generated or synced early.
+                </Typography>
+              </Stack>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                height: "100%",
+                borderRadius: 3,
+                borderColor: alpha(muiTheme.palette.primary.main, 0.5),
+              }}
+            >
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Compass size={18} color={muiTheme.palette.primary.main} />
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    The Islamic Calendar Sync Approach
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Generate event years in advance, control definitions from one panel, and push reliable updates to your
+                  preferred calendar ecosystem with export and subscription options.
+                </Typography>
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
       {/* Features Grid */}
-      <Box sx={{ py: 12, bgcolor: alpha(muiTheme.palette.primary.main, 0.03) }}>
+      <Box sx={{ py: 10, bgcolor: alpha(muiTheme.palette.primary.main, 0.05) }}>
         <Container maxWidth="lg">
           <Stack textAlign="center" spacing={2} sx={{ mb: 8 }}>
-            <Typography variant="h3">Comprehensive Features</Typography>
+            <Typography variant="h3">Core Capabilities, Clearly Explained</Typography>
             <Typography variant="body1" color="text.secondary">
-              Everything you need to keep your schedule aligned.
+              Purpose-built tools for managing Islamic dates, visibility, and synchronization.
             </Typography>
           </Stack>
-          <Grid
-            container
-            spacing={4}
-            alignItems="center"
-            justifyContent="center"
-          >
-            {features.map((f, i) => (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
-                key={i}
-                width="30vw"
-                height="15vw"
-              >
+          <Grid container spacing={3}>
+            {coreFeatures.map((feature) => (
+              <Grid item xs={12} sm={6} md={4} key={feature.title}>
                 <Card
                   sx={{
                     height: "100%",
-                    transition: "0.3s",
-                    "&:hover": { transform: "translateY(-8px)", boxShadow: 6 },
+                    borderRadius: 3,
+                    transition: "transform 0.24s ease, box-shadow 0.24s ease",
+                    "&:hover": {
+                      transform: "translateY(-6px)",
+                      boxShadow: 8,
+                    },
                   }}
                 >
                   <CardContent sx={{ p: 4 }}>
@@ -200,14 +288,14 @@ const Home = () => {
                           bgcolor: alpha(muiTheme.palette.primary.main, 0.1),
                         }}
                       >
-                        {React.cloneElement(f.icon, { size: 32 })}
+                        {React.cloneElement(feature.icon, { size: 30 })}
                       </Box>
                     </Box>
                     <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                      {f.title}
+                      {feature.title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {f.description}
+                      {feature.description}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -217,62 +305,56 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Testimonials */}
-      <Container maxWidth="lg" sx={{ py: 12 }}>
-        <Typography variant="h3" textAlign="center" sx={{ mb: 8 }}>
-          Trusted by the Community
-        </Typography>
-        <Grid
-          container
-          spacing={4}
-          justifyContent="center"
-          alignItems="center"
-          sx={{ flexWrap: "wrap" }}
-        >
-          {[
-            {
-              name: "Ahmed R.",
-              role: "Software Engineer",
-              text: "This has completely changed how I manage my work schedule around my prayers.",
-            },
-            {
-              name: "Fatima K.",
-              role: "Student",
-              text: "The event sync is amazing. I finally have all the Islamic holidays in one place!",
-            },
-          ].map((t, i) => (
-            <Grid item xs={12} md={6} key={i} maxWidth="25vw">
-              <Paper sx={{ p: 4, height: "100%" }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontStyle: "italic", mb: 4, fontWeight: 400 }}
-                >
-                  "{t.text}"
-                </Typography>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Avatar sx={{ bgcolor: "primary.light" }}>{t.name[0]}</Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      {t.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t.role}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+      {/* Upcoming Islamic Days */}
+      {shouldShowUpcomingIslamicDays ? (
+        <Container maxWidth="lg" sx={{ py: 10 }}>
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Calendar size={20} color={muiTheme.palette.primary.main} />
+              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                Upcoming Islamic Days
+              </Typography>
+            </Stack>
+            <Typography variant="body1" color="text.secondary">
+              These dates appear after event generation. Open Calendar to generate more years whenever you need longer planning coverage.
+            </Typography>
+          </Stack>
+          <UpcomingIslamicDays events={upcomingIslamicEvents} />
+        </Container>
+      ) : null}
+
+      {!hasGeneratedIslamicYears ? (
+        <Container maxWidth="md" sx={{ pb: 2 }}>
+          <Alert
+            severity="info"
+            icon={<BookOpenText size={18} />}
+            sx={{ borderRadius: 3 }}
+          >
+            Generate your first event year in Calendar to unlock upcoming Islamic days on Home.
+          </Alert>
+        </Container>
+      ) : null}
+
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+          <Stack spacing={2} alignItems="center" textAlign="center">
+            <Sparkles color={muiTheme.palette.primary.main} size={22} />
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              Explore Meanings on the Learn Page
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Read concise significance notes for every tracked Islamic event, then refine them over time with your preferred scholarship summaries.
+            </Typography>
+            <Button component={RouterLink} to="/learn" variant="contained">
+              Open Learn
+            </Button>
+          </Stack>
+        </Paper>
       </Container>
 
       {/* FAQ Accordion */}
-      <Container maxWidth="md" sx={{ py: 12 }}>
+      <Container id="faq" maxWidth="md" sx={{ py: 10 }}>
+        <Divider sx={{ mb: 6 }} />
         <Typography variant="h3" textAlign="center" sx={{ mb: 6 }}>
           Frequently Asked Questions
         </Typography>
