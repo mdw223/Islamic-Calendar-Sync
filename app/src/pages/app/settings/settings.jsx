@@ -242,6 +242,10 @@ export default function Settings() {
               fullWidth
             />
           )}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Uses Google Translate for language translation. Select your
+            preferred language.
+          </Typography>
           <FormControl fullWidth>
             <InputLabel id="language-label">Language</InputLabel>
             <Select
@@ -361,7 +365,8 @@ export default function Settings() {
                   {subscription.name || "Untitled subscription"}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Created {new Date(Number(subscription.createdAt)).toLocaleString()}
+                  Created{" "}
+                  {new Date(Number(subscription.createdAt)).toLocaleString()}
                 </Typography>
                 <TextField
                   size="small"
@@ -374,7 +379,9 @@ export default function Settings() {
                   <Button
                     size="small"
                     variant="text"
-                    onClick={() => copySubscriptionUrl(subscription.subscriptionUrl)}
+                    onClick={() =>
+                      copySubscriptionUrl(subscription.subscriptionUrl)
+                    }
                   >
                     Copy URL
                   </Button>
@@ -491,15 +498,11 @@ export default function Settings() {
             Danger Zone
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            Deleting your account is permanent. All your account data and associated
-            records will be removed.
+            Deleting your account is permanent. All your account data and
+            associated records will be removed.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-            <Button
-              component={RouterLink}
-              to="/data-policy"
-              variant="outlined"
-            >
+            <Button component={RouterLink} to="/data-policy" variant="outlined">
               Data Policy
             </Button>
             <Button
