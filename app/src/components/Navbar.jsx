@@ -98,13 +98,13 @@ const Navbar = () => {
               minWidth: 0,
             }}
           >
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{ fontWeight: 800, color: "primary.main", mr: 1 }}
-            >
-              🌙
-            </Typography>
+            <img
+              src="/ics-logo.png"
+              alt="ICS Logo"
+              width={32}
+              height={32}
+              style={{ marginRight: 8 }}
+            />
             <Typography
               variant="h6"
               noWrap

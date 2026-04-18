@@ -1,22 +1,21 @@
-import { useMemo } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { BookOpenText, Sparkles } from "lucide-react";
+import { useContext, useEffect, useMemo } from "react";
+import { ThemeContext } from "../../contexts/ThemeContext";
 import islamicEventsData from "../../data/islamicEvents.json";
+import "../landing.css";
 
 const categoryMeta = {
-  annual: { label: "Annual Days and Seasons" },
-  monthly: { label: "Monthly Rhythms" },
-  monthStart: { label: "Month Openings" },
+  annual: {
+    label: "Annual Days and Seasons",
+    sub: "Yearly Islamic occasions and sacred seasons that anchor the Hijri calendar.",
+  },
+  monthly: {
+    label: "Monthly Rhythms",
+    sub: "Recurring days throughout each month that build steady spiritual habits.",
+  },
+  monthStart: {
+    label: "Month Openings",
+    sub: "The first day of each Islamic month — sacred reset points across the year.",
+  },
 };
 
 const draftSummaries = {
@@ -89,76 +88,141 @@ function groupEventsByCategory(events) {
 }
 
 export default function Learn() {
+  const themeContext = useContext(ThemeContext);
+  const themeMode = themeContext?.themeMode ?? "light";
   const grouped = useMemo(
     () => groupEventsByCategory(islamicEventsData.events || []),
     [],
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const elements = document.querySelectorAll(
+      ".lp-root .animate-on-scroll",
+    );
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach((el) => el.classList.add("visible"));
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const delay = parseInt(el.getAttribute("data-delay") || "0", 10);
+            if (delay > 0) {
+              el.style.transitionDelay = `${delay}ms`;
+            }
+            requestAnimationFrame(() => {
+              el.classList.add("visible");
+            });
+            observer.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [grouped]);
+
   return (
-    <Box sx={{ py: { xs: 4, md: 6 } }}>
-      <Container maxWidth="lg">
-        <Stack spacing={3} sx={{ mb: 4 }}>
-          <Chip
-            icon={<BookOpenText size={14} />}
-            label="Learn"
-            sx={{ alignSelf: "flex-start" }}
-          />
-          <Typography variant="h3" sx={{ fontWeight: 800 }}>
-            Learn the Meaning Behind Islamic Events
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 900 }}>
-            This draft page introduces the significance of events already present in the app. Summaries are short placeholders
-            that will later be refined with your final wording.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 900 }}>
-            Source note: Draft framing is based on themes associated with the work commonly referred to as
-            "The Islamic Months" by al-Hafiz Ibn Rajab al-Hanbali, presented here as paraphrased summaries.
-          </Typography>
-        </Stack>
+    <div className="lp-root" data-lp-theme={themeMode}>
+      {/* ===================== HERO ===================== */}
+      <section className="lp-hero">
+        <div className="lp-container lp-hero-inner lp-hero-single">
+          <div className="lp-hero-content animate-on-scroll" data-delay="0">
+            <span className="lp-hero-badge">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Learn
+            </span>
+            <h1 className="lp-hero-headline">
+              Learn the Meaning Behind
+              <br />
+              <span className="lp-gradient-text">Islamic Events</span>
+            </h1>
+            <p className="lp-hero-sub">
+              This page introduces the significance of events already present in
+              the app. Summaries are short placeholders that will be refined
+              with final wording over time.
+            </p>
+            <p
+              className="lp-hero-sub"
+              style={{ fontSize: "0.9375rem", marginTop: "-18px" }}
+            >
+              Source note: Draft framing is based on themes associated with the
+              work commonly referred to as <em>The Islamic Months</em> by
+              al-Hafiz Ibn Rajab al-Hanbali, presented here as paraphrased
+              summaries.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <Divider sx={{ mb: 4 }} />
+      {/* ===================== CATEGORY SECTIONS ===================== */}
+      {Object.entries(categoryMeta).map(([category, meta], categoryIdx) => {
+        const events = grouped[category] || [];
+        if (events.length === 0) return null;
 
-        {Object.entries(categoryMeta).map(([category, meta]) => {
-          const events = grouped[category] || [];
-          if (events.length === 0) return null;
+        const sectionClass =
+          categoryIdx % 2 === 0
+            ? "lp-section lp-features-section"
+            : "lp-section lp-hiw-section";
 
-          return (
-            <Box key={category} sx={{ mb: 5 }}>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                <Sparkles size={16} />
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                  {meta.label}
-                </Typography>
-              </Stack>
-
-              <Grid container spacing={2.5}>
-                {events.map((event) => (
-                  <Grid item xs={12} md={6} key={event.id}>
-                    <Card variant="outlined" sx={{ height: "100%" }}>
-                      <CardContent>
-                        <Stack spacing={1.25}>
-                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                            {event.titleEn}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {event.titleAr}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {draftSummaries[event.id] || "Draft summary coming soon for this event."}
-                          </Typography>
-                          <Typography variant="caption" color="text.disabled">
-                            Draft status: summary placeholder
-                          </Typography>
-                        </Stack>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+        return (
+          <section key={category} className={sectionClass}>
+            <div className="lp-container">
+              <div className="lp-section-header animate-on-scroll" data-delay="0">
+                <h2 className="lp-section-title">{meta.label}</h2>
+                <p className="lp-section-sub">{meta.sub}</p>
+              </div>
+              <div className="lp-features-grid lp-features-grid-2">
+                {events.map((event, idx) => (
+                  <div
+                    key={event.id}
+                    className="lp-feature-card animate-on-scroll"
+                    data-delay={(idx % 4) * 60}
+                  >
+                    <div className="lp-feature-icon">
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                      >
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                      </svg>
+                    </div>
+                    <h3 className="lp-feature-title">{event.titleEn}</h3>
+                    <p className="lp-feature-subtitle">{event.titleAr}</p>
+                    <p className="lp-feature-desc">
+                      {draftSummaries[event.id] ||
+                        "Draft summary coming soon for this event."}
+                    </p>
+                    <span className="lp-feature-caption">
+                      Draft status: summary placeholder
+                    </span>
+                  </div>
                 ))}
-              </Grid>
-            </Box>
-          );
-        })}
-      </Container>
-    </Box>
+              </div>
+            </div>
+          </section>
+        );
+      })}
+    </div>
   );
 }
