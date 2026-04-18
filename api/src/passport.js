@@ -3,8 +3,8 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { Strategy as MicrosoftStrategy } from "passport-microsoft";
-import AppleStrategy from "passport-apple";
+// import { Strategy as MicrosoftStrategy } from "passport-microsoft";
+// import AppleStrategy from "passport-apple";
 import { appConfig, authProviderConfig, jwtConfig, smtpConfig } from "./Config.js";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
@@ -69,8 +69,8 @@ export function optionalJwtAuth(req, res, next) {
 // passport-openidconnect passes tokens only when the verify callback has 8+ parameters.
 // With 9 params (passReqToCallback): req, issuer, profile, context, idToken, accessToken, refreshToken, params, verified
 const googleAuthConfig = authProviderConfig[AuthProviderKey.GOOGLE];
-const microsoftAuthConfig = authProviderConfig[AuthProviderKey.MICROSOFT];
-const appleAuthConfig = authProviderConfig[AuthProviderKey.APPLE];
+// const microsoftAuthConfig = authProviderConfig[AuthProviderKey.MICROSOFT];
+// const appleAuthConfig = authProviderConfig[AuthProviderKey.APPLE];
 
 passport.use(
   new GoogleStrategy(
@@ -98,69 +98,69 @@ passport.use(
   ),
 );
 
-passport.use(
-  new MicrosoftStrategy(
-    {
-      clientID: microsoftAuthConfig.CLIENT_ID,
-      clientSecret: microsoftAuthConfig.CLIENT_SECRET,
-      callbackURL: microsoftAuthConfig.CALLBACK_URL,
-      tenant: microsoftAuthConfig.TENANT,
-      scope: scopeToArray(microsoftAuthConfig.SCOPE),
-      passReqToCallback: true,
-    },
-    async (req, accessToken, refreshToken, profile, done) => {
-      try {
-        const tokens = {
-          access_token: accessToken,
-          refresh_token: refreshToken || undefined,
-          scope: microsoftAuthConfig.SCOPE,
-        };
-        const user = await findOrCreateUserFromMicrosoftProfile(profile, tokens);
-        req.microsoftTokens = tokens;
-        done(null, user);
-      } catch (err) {
-        done(err);
-      }
-    },
-  ),
-);
+// passport.use(
+//   new MicrosoftStrategy(
+//     {
+//       clientID: microsoftAuthConfig.CLIENT_ID,
+//       clientSecret: microsoftAuthConfig.CLIENT_SECRET,
+//       callbackURL: microsoftAuthConfig.CALLBACK_URL,
+//       tenant: microsoftAuthConfig.TENANT,
+//       scope: scopeToArray(microsoftAuthConfig.SCOPE),
+//       passReqToCallback: true,
+//     },
+//     async (req, accessToken, refreshToken, profile, done) => {
+//       try {
+//         const tokens = {
+//           access_token: accessToken,
+//           refresh_token: refreshToken || undefined,
+//           scope: microsoftAuthConfig.SCOPE,
+//         };
+//         const user = await findOrCreateUserFromMicrosoftProfile(profile, tokens);
+//         req.microsoftTokens = tokens;
+//         done(null, user);
+//       } catch (err) {
+//         done(err);
+//       }
+//     },
+//   ),
+// );
 
-passport.use(
-  new AppleStrategy(
-    {
-      clientID: appleAuthConfig.CLIENT_ID,
-      teamID: appleAuthConfig.TEAM_ID,
-      callbackURL: appleAuthConfig.CALLBACK_URL,
-      keyID: appleAuthConfig.KEY_ID,
-      privateKeyLocation: appleAuthConfig.PRIVATE_KEY_LOCATION,
-      privateKeyString: appleAuthConfig.PRIVATE_KEY,
-      passReqToCallback: true,
-      scope: scopeToArray(appleAuthConfig.SCOPE),
-    },
-    async (req, accessToken, refreshToken, idToken, profile, done) => {
-      try {
-        const tokens = {
-          access_token: accessToken,
-          refresh_token: refreshToken || undefined,
-          id_token: idToken,
-          scope: appleAuthConfig.SCOPE,
-        };
-        const user = await findOrCreateUserFromAppleProfile(
-          {
-            profile,
-            appleUserPayload: parseAppleUser(req?.body?.user),
-            decodedIdToken: typeof idToken === "string" ? jwt.decode(idToken) : null,
-          },
-          tokens,
-        );
-        req.appleTokens = tokens;
-        done(null, user);
-      } catch (err) {
-        done(err);
-      }
-    },
-  ),
-);
+// passport.use(
+//   new AppleStrategy(
+//     {
+//       clientID: appleAuthConfig.CLIENT_ID,
+//       teamID: appleAuthConfig.TEAM_ID,
+//       callbackURL: appleAuthConfig.CALLBACK_URL,
+//       keyID: appleAuthConfig.KEY_ID,
+//       privateKeyLocation: appleAuthConfig.PRIVATE_KEY_LOCATION,
+//       privateKeyString: appleAuthConfig.PRIVATE_KEY,
+//       passReqToCallback: true,
+//       scope: scopeToArray(appleAuthConfig.SCOPE),
+//     },
+//     async (req, accessToken, refreshToken, idToken, profile, done) => {
+//       try {
+//         const tokens = {
+//           access_token: accessToken,
+//           refresh_token: refreshToken || undefined,
+//           id_token: idToken,
+//           scope: appleAuthConfig.SCOPE,
+//         };
+//         const user = await findOrCreateUserFromAppleProfile(
+//           {
+//             profile,
+//             appleUserPayload: parseAppleUser(req?.body?.user),
+//             decodedIdToken: typeof idToken === "string" ? jwt.decode(idToken) : null,
+//           },
+//           tokens,
+//         );
+//         req.appleTokens = tokens;
+//         done(null, user);
+//       } catch (err) {
+//         done(err);
+//       }
+//     },
+//   ),
+// );
 
 /**
  * GET /auth/google/login
@@ -232,70 +232,70 @@ export const googleRedirect = [
   googleRedirectHandler,
 ];
 
-export const microsoftLogin = passport.authenticate("microsoft", {
-  scope: scopeToArray(microsoftAuthConfig.SCOPE),
-  prompt: "select_account",
-});
+// export const microsoftLogin = passport.authenticate("microsoft", {
+//   scope: scopeToArray(microsoftAuthConfig.SCOPE),
+//   prompt: "select_account",
+// });
 
-const microsoftRedirectHandler = async (req, res) => {
-  try {
-    const token = signToken(req.user);
-    res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
-  } catch (error) {
-    defaultLogger.error("Error in Microsoft OAuth redirect handler", {
-      requestId: req?.requestId,
-      userId: extractUserId(req),
-      method: req?.method,
-      path: req?.originalUrl?.split("?")[0] ?? req?.url,
-      ip: req?.ip,
-      userAgent: req?.get?.("user-agent"),
-      error,
-    });
-    res
-      .status(500)
-      .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
-  }
-};
+// const microsoftRedirectHandler = async (req, res) => {
+//   try {
+//     const token = signToken(req.user);
+//     res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
+//   } catch (error) {
+//     defaultLogger.error("Error in Microsoft OAuth redirect handler", {
+//       requestId: req?.requestId,
+//       userId: extractUserId(req),
+//       method: req?.method,
+//       path: req?.originalUrl?.split("?")[0] ?? req?.url,
+//       ip: req?.ip,
+//       userAgent: req?.get?.("user-agent"),
+//       error,
+//     });
+//     res
+//       .status(500)
+//       .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
+//   }
+// };
 
-export const microsoftRedirect = [
-  passport.authenticate("microsoft", {
-    failureRedirect: "/login",
-    session: false,
-  }),
-  microsoftRedirectHandler,
-];
+// export const microsoftRedirect = [
+//   passport.authenticate("microsoft", {
+//     failureRedirect: "/login",
+//     session: false,
+//   }),
+//   microsoftRedirectHandler,
+// ];
 
-export const appleLogin = passport.authenticate("apple", {
-  scope: scopeToArray(appleAuthConfig.SCOPE),
-});
+// export const appleLogin = passport.authenticate("apple", {
+//   scope: scopeToArray(appleAuthConfig.SCOPE),
+// });
 
-const appleRedirectHandler = async (req, res) => {
-  try {
-    const token = signToken(req.user);
-    res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
-  } catch (error) {
-    defaultLogger.error("Error in Apple OAuth redirect handler", {
-      requestId: req?.requestId,
-      userId: extractUserId(req),
-      method: req?.method,
-      path: req?.originalUrl?.split("?")[0] ?? req?.url,
-      ip: req?.ip,
-      userAgent: req?.get?.("user-agent"),
-      error,
-    });
-    res
-      .status(500)
-      .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
-  }
-};
+// const appleRedirectHandler = async (req, res) => {
+//   try {
+//     const token = signToken(req.user);
+//     res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
+//   } catch (error) {
+//     defaultLogger.error("Error in Apple OAuth redirect handler", {
+//       requestId: req?.requestId,
+//       userId: extractUserId(req),
+//       method: req?.method,
+//       path: req?.originalUrl?.split("?")[0] ?? req?.url,
+//       ip: req?.ip,
+//       userAgent: req?.get?.("user-agent"),
+//       error,
+//     });
+//     res
+//       .status(500)
+//       .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
+//   }
+// };
 
-export const appleRedirect = [
-  passport.authenticate("apple", {
-    failureRedirect: "/login",
-    session: false,
-  }),
-  appleRedirectHandler,
-];
+// export const appleRedirect = [
+//   passport.authenticate("apple", {
+//     failureRedirect: "/login",
+//     session: false,
+//   }),
+//   appleRedirectHandler,
+// ];
 
 /**
  * Initialize Resend client for sending magic-link emails
@@ -572,124 +572,124 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
     return user;
 }
 
-  export async function findOrCreateUserFromMicrosoftProfile(profile, tokens = null) {
-    const email =
-      profile?.emails?.[0]?.value ||
-      profile?._json?.mail ||
-      profile?._json?.userPrincipalName ||
-      null;
-    const name = profile?.displayName || email;
+  // export async function findOrCreateUserFromMicrosoftProfile(profile, tokens = null) {
+  //   const email =
+  //     profile?.emails?.[0]?.value ||
+  //     profile?._json?.mail ||
+  //     profile?._json?.userPrincipalName ||
+  //     null;
+  //   const name = profile?.displayName || email;
 
-    if (!email) {
-      throw new Error("Microsoft profile did not include an email address");
-    }
+  //   if (!email) {
+  //     throw new Error("Microsoft profile did not include an email address");
+  //   }
 
-    let user = await UserDOA.getUserByEmail(email);
+  //   let user = await UserDOA.getUserByEmail(email);
 
-    if (!user) {
-      user = await UserDOA.createUser({
-        email,
-        name,
-        authProviderTypeId: AuthProviderTypeId.MICROSOFT,
-      });
-    }
+  //   if (!user) {
+  //     user = await UserDOA.createUser({
+  //       email,
+  //       name,
+  //       authProviderTypeId: AuthProviderTypeId.MICROSOFT,
+  //     });
+  //   }
 
-    if (tokens) {
-      await UserDOA.updateUser(user.userId, {
-        authprovidertypeid: AuthProviderTypeId.MICROSOFT,
-        accesstoken: tokens.access_token,
-        refreshtoken: tokens.refresh_token || user.refreshToken,
-        scopes: tokens.scope || user.scopes,
-        isexpired: false,
-      });
-    }
+  //   if (tokens) {
+  //     await UserDOA.updateUser(user.userId, {
+  //       authprovidertypeid: AuthProviderTypeId.MICROSOFT,
+  //       accesstoken: tokens.access_token,
+  //       refreshtoken: tokens.refresh_token || user.refreshToken,
+  //       scopes: tokens.scope || user.scopes,
+  //       isexpired: false,
+  //     });
+  //   }
 
-    let calendarProvider = await CalendarProviderDOA.findByUserAndType(
-      user.userId,
-      CalendarProviderTypeId.MICROSOFT_OUTLOOK,
-    );
+  //   let calendarProvider = await CalendarProviderDOA.findByUserAndType(
+  //     user.userId,
+  //     CalendarProviderTypeId.MICROSOFT_OUTLOOK,
+  //   );
 
-    if (!calendarProvider && tokens) {
-      await CalendarProviderDOA.createCalendarProvider({
-        userId: user.userId,
-        calendarProviderTypeId: CalendarProviderTypeId.MICROSOFT_OUTLOOK,
-        email,
-        accessToken: tokens.access_token || null,
-        refreshToken: tokens.refresh_token || null,
-        expiresAt: null,
-        scopes: tokens.scope || null,
-        salt: null,
-      });
-    } else if (calendarProvider && tokens) {
-      await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
-        expiresAt: null,
-        scopes: tokens.scope || calendarProvider.scopes,
-      });
-    }
+  //   if (!calendarProvider && tokens) {
+  //     await CalendarProviderDOA.createCalendarProvider({
+  //       userId: user.userId,
+  //       calendarProviderTypeId: CalendarProviderTypeId.MICROSOFT_OUTLOOK,
+  //       email,
+  //       accessToken: tokens.access_token || null,
+  //       refreshToken: tokens.refresh_token || null,
+  //       expiresAt: null,
+  //       scopes: tokens.scope || null,
+  //       salt: null,
+  //     });
+  //   } else if (calendarProvider && tokens) {
+  //     await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
+  //       accessToken: tokens.access_token,
+  //       refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
+  //       expiresAt: null,
+  //       scopes: tokens.scope || calendarProvider.scopes,
+  //     });
+  //   }
 
-    await UserDOA.updateLastLogin(user.userId);
-    return UserDOA.findById(user.userId);
-  }
+  //   await UserDOA.updateLastLogin(user.userId);
+  //   return UserDOA.findById(user.userId);
+  // }
 
-  export async function findOrCreateUserFromAppleProfile(identity, tokens = null) {
-    const email =
-      identity?.appleUserPayload?.email ||
-      identity?.profile?.emails?.[0]?.value ||
-      identity?.decodedIdToken?.email ||
-      null;
-    const fullName = identity?.appleUserPayload?.name
-      ? `${identity.appleUserPayload.name.firstName || ""} ${identity.appleUserPayload.name.lastName || ""}`.trim()
-      : "";
-    const name = fullName || identity?.profile?.displayName || email;
+  // export async function findOrCreateUserFromAppleProfile(identity, tokens = null) {
+  //   const email =
+  //     identity?.appleUserPayload?.email ||
+  //     identity?.profile?.emails?.[0]?.value ||
+  //     identity?.decodedIdToken?.email ||
+  //     null;
+  //   const fullName = identity?.appleUserPayload?.name
+  //     ? `${identity.appleUserPayload.name.firstName || ""} ${identity.appleUserPayload.name.lastName || ""}`.trim()
+  //     : "";
+  //   const name = fullName || identity?.profile?.displayName || email;
 
-    if (!email) {
-      throw new Error("Apple profile did not include an email address");
-    }
+  //   if (!email) {
+  //     throw new Error("Apple profile did not include an email address");
+  //   }
 
-    let user = await UserDOA.getUserByEmail(email);
+  //   let user = await UserDOA.getUserByEmail(email);
 
-    if (!user) {
-      user = await UserDOA.createUser({
-        email,
-        name,
-        authProviderTypeId: AuthProviderTypeId.APPLE,
-      });
-    }
+  //   if (!user) {
+  //     user = await UserDOA.createUser({
+  //       email,
+  //       name,
+  //       authProviderTypeId: AuthProviderTypeId.APPLE,
+  //     });
+  //   }
 
-    if (tokens) {
-      await UserDOA.updateUser(user.userId, {
-        authprovidertypeid: AuthProviderTypeId.APPLE,
-        accesstoken: tokens.access_token || user.accessToken,
-        refreshtoken: tokens.refresh_token || user.refreshToken,
-        scopes: tokens.scope || user.scopes,
-        isexpired: false,
-      });
-    }
+  //   if (tokens) {
+  //     await UserDOA.updateUser(user.userId, {
+  //       authprovidertypeid: AuthProviderTypeId.APPLE,
+  //       accesstoken: tokens.access_token || user.accessToken,
+  //       refreshtoken: tokens.refresh_token || user.refreshToken,
+  //       scopes: tokens.scope || user.scopes,
+  //       isexpired: false,
+  //     });
+  //   }
 
-    await UserDOA.updateLastLogin(user.userId);
-    return UserDOA.findById(user.userId);
-  }
+  //   await UserDOA.updateLastLogin(user.userId);
+  //   return UserDOA.findById(user.userId);
+  // }
 
-  function scopeToArray(scope) {
-    if (!scope) return [];
-    if (Array.isArray(scope)) return scope;
-    return String(scope)
-    .split(" ")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  }
+  // function scopeToArray(scope) {
+  //   if (!scope) return [];
+  //   if (Array.isArray(scope)) return scope;
+  //   return String(scope)
+  //     .split(" ")
+  //     .map((item) => item.trim())
+  //     .filter(Boolean);
+  // }
 
-  function parseAppleUser(value) {
-    if (!value) return null;
-    if (typeof value === "object") return value;
-    if (typeof value !== "string") return null;
-    try {
-    return JSON.parse(value);
-    } catch {
-    return null;
-    }
-  }
+  // function parseAppleUser(value) {
+  //   if (!value) return null;
+  //   if (typeof value === "object") return value;
+  //   if (typeof value !== "string") return null;
+  //   try {
+  //     return JSON.parse(value);
+  //   } catch {
+  //     return null;
+  //   }
+  // }
 
 export default passport;

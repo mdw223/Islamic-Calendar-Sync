@@ -5,10 +5,10 @@ import Auth from "../middleware/AuthMiddleware.js";
 import {
 	googleLogin,
 	googleRedirect,
-	microsoftLogin,
-	microsoftRedirect,
-	appleLogin,
-	appleRedirect,
+	// microsoftLogin,
+	// microsoftRedirect,
+	// appleLogin,
+	// appleRedirect,
 	magicLinkSend,
 	checkEmailPage,
 	magicLinkVerify,
@@ -61,11 +61,11 @@ router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUser
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleLogin);
 router.get("/auth/google/redirect", ...googleRedirect);
-router.get("/auth/microsoft/login", microsoftLogin);
-router.get("/auth/microsoft/redirect", ...microsoftRedirect);
-router.get("/auth/apple/login", appleLogin);
-router.get("/auth/apple/redirect", ...appleRedirect);
-router.post("/auth/apple/redirect", ...appleRedirect);
+// router.get("/auth/microsoft/login", microsoftLogin);
+// router.get("/auth/microsoft/redirect", ...microsoftRedirect);
+// router.get("/auth/apple/login", appleLogin);
+// router.get("/auth/apple/redirect", ...appleRedirect);
+// router.post("/auth/apple/redirect", ...appleRedirect);
 // Magic-link login
 router.post("/auth/magiclink/send", ...magicLinkSend);
 router.get("/login/check-email", checkEmailPage);
