@@ -37,8 +37,6 @@ services:
     container_name: ics_postgres_db_prod
     env_file:
       - .env.prod
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
       - ./Sql.Migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
