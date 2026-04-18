@@ -299,7 +299,7 @@ const Home = () => {
 
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [shouldShowUpcomingIslamicDays]);
 
   return (
     <div className="lp-root" data-lp-theme={themeMode}>
