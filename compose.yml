@@ -56,10 +56,6 @@ services:
       - postgres_dev_data:/var/lib/postgresql/data
       - ./Sql.Migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  redis:
-    image: redis:latest
-    container_name: ics_redis_dev
-
 volumes:
   postgres_dev_data:
     driver: local
