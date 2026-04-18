@@ -21,6 +21,7 @@
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
 import { defaultLogger } from "../../middleware/logger.js";
+import { sanitizeDescription } from "../../util/sanitizeHtml.js";
 export default async function SyncOfflineEvents(req, res) {
   try {
     const { events } = req.body;
@@ -43,7 +44,7 @@ export default async function SyncOfflineEvents(req, res) {
         .json({ success: false, message: "Too many events (max 2000)." });
     }
 
-    // Validate each event minimally.
+    // Validate each event minimally and sanitize HTML fields.
     for (const e of events) {
       if (!e.name || !e.startDate || !e.endDate || !e.eventTypeId) {
         return res.status(400).json({
@@ -52,6 +53,7 @@ export default async function SyncOfflineEvents(req, res) {
             "Every event must have name, startDate, endDate, and eventTypeId.",
         });
       }
+      e.description = sanitizeDescription(e.description);
     }
 
     const persisted = await EventDOA.bulkUpsert(events, req.user.userId);

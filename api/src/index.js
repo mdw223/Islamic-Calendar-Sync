@@ -5,6 +5,7 @@ import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
 import responseSanitizer from "./middleware/ResponseSanitizer.js";
+import requestSanitizer from "./middleware/RequestSanitizer.js";
 import passport from "passport";
 import { authenticateJwt } from "./Passport.js";
 import cookieParser from "cookie-parser";
@@ -23,9 +24,9 @@ app.use(authenticateJwt);
 app.use(rateLimiter);
 
 app.use(requestLogger);
-// todo add request sanitizer here
+app.use(requestSanitizer); // Strip __proto__, constructor, prototype keys from req.body/query/params
+app.use(responseSanitizer); // Wrap res.json() to strip redacted keys (salt, tokens, etc.) before sending
 app.use(routes);
-app.use(responseSanitizer); // Strip redacted keys (salt, tokens, etc.) from res.json() bodies
 app.use(NotFoundMiddleware);
 app.use(ErrorHandlerMiddleware);
 

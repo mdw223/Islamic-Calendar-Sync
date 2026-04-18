@@ -1,6 +1,7 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { Event } from '../../model/models/Event.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
+import { sanitizeDescription } from '../../util/sanitizeHtml.js';
 
 /**
  * POST /events
@@ -9,6 +10,7 @@ import { validateStoredUserRRule } from '../../services/EventExpansionService.js
 export default async function CreateEvent(req, res) {
     try {
         const eventData = Event.fromRequest(req.body);
+        eventData.description = sanitizeDescription(eventData.description);
 
         if (!eventData.name || !eventData.startDate || !eventData.endDate || !eventData.eventTypeId) {
             return res.status(400).json({
