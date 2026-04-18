@@ -18,26 +18,20 @@ import AppleIcon from "../../../assets/apple.svg";
 import MicrosoftIcon from "../../../assets/microsoft.svg";
 import GoogleIcon from "../../../assets/google.svg";
 import CalIcon from "../../../assets/cal-com.svg";
-import { useUser } from "../../../contexts/UserContext";
 import APIClient from "../../../util/ApiClient";
-import { setToken } from "../../../util/AuthToken";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [step, setStep] = useState("info");
-  const [code, setCode] = useState("");
+  const [step, setStep] = useState("request");
   const navigate = useNavigate();
   const muiTheme = useTheme();
-  const { login } = useUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSendCode = async () => {
-    // TODO: finish when I add email verification
-    if (!email || !name) {
-      setError("Please enter both email and name");
+  const handleSendMagicLink = async () => {
+    if (!email) {
+      setError("Please enter your email");
       return;
     }
 
@@ -45,32 +39,10 @@ const LoginPage = () => {
     setError("");
 
     try {
-      await APIClient.sendVerificationCode(email, name);
-      setStep("code");
+      await APIClient.requestMagicLink(email);
+      setStep("sent");
     } catch (err) {
-      setError(err.message || "Failed to send verification code");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    // TODO: finish when I add email verification
-    if (!code) {
-      setError("Please enter the verification code");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const data = await APIClient.verifyCode(email, code);
-      if (data?.token) setToken(data.token);
-      if (data?.success && data?.user) login(data.user);
-      navigate("/");
-    } catch (err) {
-      setError(err.message || "Invalid verification code");
+      setError(err.message || "Failed to send magic link");
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +83,7 @@ const LoginPage = () => {
         </Alert>
       )}
 
-      {step === "info" ? (
+      {step === "request" ? (
         <Stack spacing={3}>
           <Stack spacing={1.5}>
             <Button
@@ -183,13 +155,6 @@ const LoginPage = () => {
 
           <Stack spacing={2}>
             <TextField
-              label="Name"
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              size="small"
-            />
-            <TextField
               label="Email"
               fullWidth
               value={email}
@@ -200,14 +165,14 @@ const LoginPage = () => {
               variant="contained"
               fullWidth
               size="large"
-              onClick={handleSendCode}
+              onClick={handleSendMagicLink}
               disabled={isLoading}
               sx={{ py: 1.5 }}
             >
               {isLoading ? (
                 <CircularProgress size={24} />
               ) : (
-                "Send Verification Code"
+                "Send Magic Link"
               )}
             </Button>
           </Stack>
@@ -223,34 +188,19 @@ const LoginPage = () => {
           >
             <MailQuestion size={24} color={muiTheme.palette.primary.main} />
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Check your email <b>{email}</b> for a 6-digit code.
+              Check your email <b>{email}</b> for a sign-in link.
             </Typography>
           </Box>
-          <TextField
-            placeholder="000000"
-            fullWidth
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            inputProps={{
-              sx: {
-                textAlign: "center",
-                fontSize: "1.5rem",
-                letterSpacing: 8,
-                fontWeight: 700,
-              },
-            }}
-          />
           <Button
             variant="contained"
             fullWidth
             size="large"
-            onClick={handleVerify}
-            disabled={isLoading}
+            onClick={() => navigate("/")}
             sx={{ py: 1.5 }}
           >
-            {isLoading ? <CircularProgress size={24} /> : "Verify & Continue"}
+            Continue
           </Button>
-          <Button variant="text" size="small" onClick={() => setStep("info")}>
+          <Button variant="text" size="small" onClick={() => setStep("request")}>
             Change Email
           </Button>
         </Stack>
