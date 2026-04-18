@@ -8,6 +8,7 @@
  *   { success: true, definitions: Array<{ id, titleAr, titleEn, ..., isHidden }> }
  */
 import { getMergedDefinitions } from "../../services/IslamicEventService.js";
+import { defaultLogger } from "../../middleware/logger.js";
 export default async function GetDefinitions(req, res) {
   try {
     const definitions = await getMergedDefinitions(req.user.userId);
@@ -17,7 +18,7 @@ export default async function GetDefinitions(req, res) {
       definitions,
     });
   } catch (error) {
-    console.error("GetDefinitions error:", error);
+    defaultLogger.error("GetDefinitions error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res.status(500).json({
       success: false,
       message: "Failed to load definitions.",

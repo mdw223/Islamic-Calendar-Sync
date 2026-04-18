@@ -2,13 +2,14 @@ import { rateLimit, ipKeyGenerator } from 'express-rate-limit'
 import { RedisStore } from 'rate-limit-redis'
 import { createClient } from 'redis'
 import { appConfig, redisConfig } from '../config.js'
+import { defaultLogger } from './logger.js'
 
 // Create a Redis client of docker container
 const client = createClient({
 	url: `redis://${redisConfig.HOST}:${redisConfig.PORT}`,
 });
 // Handle Redis client errors
-client.on('error', (err) => console.error('Redis client error', err));
+client.on('error', (err) => defaultLogger.error('Redis client error', { error: err }));
 // Connect to the Redis server
 await client.connect();
 // Create and use the rate limiter

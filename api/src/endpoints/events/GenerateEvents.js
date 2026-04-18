@@ -17,6 +17,7 @@
  *   500 — server error
  */
 import { generateForUser } from "../../services/IslamicEventService.js";
+import { defaultLogger } from "../../middleware/logger.js";
 export default async function GenerateEvents(req, res) {
   try {
     const { years, timezone = null, includeAll = false } = req.body;
@@ -64,7 +65,7 @@ export default async function GenerateEvents(req, res) {
       generatedCount,
     });
   } catch (error) {
-    console.error("GenerateEvents error:", error);
+    defaultLogger.error("GenerateEvents error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res.status(500).json({
       success: false,
       message: "Failed to generate Islamic events.",

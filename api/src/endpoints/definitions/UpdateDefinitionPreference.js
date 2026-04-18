@@ -18,6 +18,7 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
+import { defaultLogger } from "../../middleware/logger.js";
 export default async function UpdateDefinitionPreference(req, res) {
   try {
     const { definitionId } = req.params;
@@ -51,7 +52,7 @@ export default async function UpdateDefinitionPreference(req, res) {
       eventsUpdated,
     });
   } catch (error) {
-    console.error("UpdateDefinitionPreference error:", error);
+    defaultLogger.error("UpdateDefinitionPreference error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res.status(500).json({
       success: false,
       message: "Failed to update definition preference.",

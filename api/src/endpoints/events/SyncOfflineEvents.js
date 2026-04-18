@@ -20,6 +20,7 @@
  *   500 — server error
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
+import { defaultLogger } from "../../middleware/logger.js";
 export default async function SyncOfflineEvents(req, res) {
   try {
     const { events } = req.body;
@@ -57,7 +58,7 @@ export default async function SyncOfflineEvents(req, res) {
 
     return res.status(201).json({ success: true, syncedCount: persisted.length });
   } catch (error) {
-    console.error("SyncOfflineEvents error:", error);
+    defaultLogger.error("SyncOfflineEvents error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res
       .status(500)
       .json({ success: false, message: "Failed to sync offline events." });
