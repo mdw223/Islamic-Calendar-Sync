@@ -57,12 +57,6 @@ export const appleAuthConfig = {
   SCOPE: process.env.APPLE_SCOPE,
 };
 
-export const authProviderConfig = Object.freeze({
-  [AuthProviderKey.GOOGLE]: googleAuthConfig,
-  [AuthProviderKey.MICROSOFT]: microsoftAuthConfig,
-  [AuthProviderKey.APPLE]: appleAuthConfig,
-});
-
 // Session (required by passport-openidconnect for Google OAuth state). Set SESSION_SECRET in production.
 export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET,

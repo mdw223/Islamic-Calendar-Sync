@@ -148,6 +148,8 @@ export function GenerateToken(user, salt) {
   return jwt.sign({ userId: user.userId }, tokenSecret);
 }
 
+// only need to hash strings that are for comparison like passwords, but not access tokens in the database because we will need to use it again
+// hashing does not allow you to reverse the process to get the original string
 export async function HashToken(token, salt) {
   return new Promise((resolve, reject) => {
     crypto.pbkdf2(token, salt, 10000, 32, "sha256", (err, derivedKey) => {
