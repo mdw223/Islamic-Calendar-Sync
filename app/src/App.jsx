@@ -12,8 +12,8 @@ import { CalendarProvider } from "./contexts/CalendarContext";
 import NotFoundPage from "./pages/NotFoundPage";
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
-import Home from "./pages/app/home/Home";
-import Login from "./pages/app/login/Login";
+import Home from "./pages/app/home/home";
+import Login from "./pages/app/login/login";
 import Register from "./pages/app/register/Register";
 import Settings from "./pages/app/settings/settings";
 import ManageSubscriptions from "./pages/app/subscriptions/ManageSubscriptions";
@@ -21,6 +21,12 @@ import ExportEvents from "./pages/app/export/ExportEvents";
 import SubscriptionsHelp from "./pages/app/help/SubscriptionsHelp";
 import CalendarPage from "./pages/app/calendar/Calendar";
 import DataPolicy from "./pages/app/data-policy/DataPolicy";
+import Features from "./pages/app/features/Features";
+import Guide from "./pages/app/guide/Guide";
+import Methods from "./pages/app/methods/Methods";
+import Privacy from "./pages/app/privacy/Privacy";
+import Terms from "./pages/app/terms/Terms";
+import Learn from "./pages/learn/Learn";
 import RootLayout from "./layouts/RootLayout";
 
 const router = createBrowserRouter([
@@ -38,6 +44,14 @@ const router = createBrowserRouter([
           { path: "export", element: <ExportEvents /> },
           { path: "help/subscriptions", element: <SubscriptionsHelp /> },
           { path: "calendar", element: <CalendarPage /> },
+          { path: "calendar/:view/:year/:month/:day", element: <CalendarPage /> },
+          { path: "calendar/:year/:month", element: <CalendarPage /> },
+          { path: "learn", element: <Learn /> },
+          { path: "features", element: <Features /> },
+          { path: "guide", element: <Guide /> },
+          { path: "methods", element: <Methods /> },
+          { path: "privacy", element: <Privacy /> },
+          { path: "terms", element: <Terms /> },
           { path: "data-policy", element: <DataPolicy /> },
         ],
       },

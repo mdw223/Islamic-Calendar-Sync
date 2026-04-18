@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { Box } from "@mui/material";
+import GoogleTranslateWidget from "../components/GoogleTranslateWidget";
 
 export default function RootLayout() { return (
   <Box
@@ -9,6 +10,7 @@ export default function RootLayout() { return (
       minHeight: "100vh",
     }}
   >
+    <GoogleTranslateWidget />
     <Outlet />
   </Box>
 ); }

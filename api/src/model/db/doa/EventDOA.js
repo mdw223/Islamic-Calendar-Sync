@@ -1,5 +1,4 @@
 import { query, getConnection } from "../../db/DBConnection.js";
-
 import { Event } from "../../models/Event.js";
 
 
@@ -74,82 +73,61 @@ export default class EventDOA {
 
    * Create a new event for a user.
 
-   * @param {{ userId: number, name: string, location?: string, startDate: string, endDate: string,
+  * @param {{ userId: number, name: string, location?: string, startDate: string, endDate: string,
 
-   *           isAllDay?: boolean, description?: string, hide?: boolean,
-
-   *           eventTypeId: number, isTask?: boolean }} data
+  *           isAllDay?: boolean, description?: string, hide?: boolean }} data
 
    * @returns {Promise<Event>}
 
    */
 
   static async createEvent({
-
     userId,
-
     name,
-
     location = null,
-
     startDate,
-
     endDate,
-
     isAllDay = false,
-
     description = null,
-
     hide = false,
-
-    eventTypeId,
-
-    isTask = false,
-
     islamicDefinitionId = null,
-
     hijriMonth = null,
-
     hijriDay = null,
-
     durationDays = null,
-
     rrule = null,
-
     eventTimezone = null,
-
+    color = null,
   }) {
-
     const result = await query(
-
       `INSERT INTO event (
-
          userid, name, startdate, enddate, isallday,
-
-         description, location, hide, eventtypeid, istask,
-
+         description, location, hide,
          islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule,
-
-         eventtimezone, createdat, updatedat
-
+         eventtimezone, color, createdat, updatedat
        )
-
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-
-               $11, $12, $13, $14, $15, $16, NOW(), NOW())
-
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+               $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
        RETURNING *`,
-
-      [userId, name, startDate, endDate, isAllDay, description, location, hide,
-
-       eventTypeId, isTask, islamicDefinitionId, hijriMonth,
-
-       hijriDay, durationDays, rrule, eventTimezone],
-
+      [
+        userId,
+        name,
+        startDate,
+        endDate,
+        isAllDay,
+        description,
+        location,
+        hide,
+        islamicDefinitionId,
+        hijriMonth,
+        hijriDay,
+        durationDays,
+        rrule,
+        eventTimezone,
+        color,
+      ],
     );
 
     return Event.fromRow(result.rows[0]);
-
   }
 
 
@@ -164,7 +142,7 @@ export default class EventDOA {
 
    * @param {number} userId
 
-   * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide, eventTypeId, isTask }>} fields
+  * @param {Partial<{ name, location, startDate, endDate, isAllDay, description, hide }>} fields
 
    * @returns {Promise<Event | null>}
 
@@ -188,10 +166,6 @@ export default class EventDOA {
 
       hide: "hide",
 
-      eventTypeId: "eventtypeid",
-
-      isTask: "istask",
-
       islamicDefinitionId: "islamicdefinitionid",
 
       hijriMonth: "hijrimonth",
@@ -203,6 +177,8 @@ export default class EventDOA {
       rrule: "rrule",
 
       eventTimezone: "eventtimezone",
+
+      color: "color",
 
     };
 
@@ -377,6 +353,24 @@ export default class EventDOA {
 
   }
 
+  /**
+   * Update color on all events tied to an Islamic definition for a user.
+   * @param {number} userId
+   * @param {string} islamicDefinitionId
+   * @param {string | null} color
+   * @returns {Promise<number>} Number of rows updated.
+   */
+  static async updateColorByDefinitionId(userId, islamicDefinitionId, color) {
+    const result = await query(
+      `UPDATE event
+       SET color = $3, updatedat = NOW()
+       WHERE userid = $1 AND islamicdefinitionid = $2`,
+      [userId, islamicDefinitionId, color],
+    );
+
+    return result.rowCount;
+  }
+
 
 
   /**
@@ -410,22 +404,22 @@ export default class EventDOA {
           isAllDay = false,
           description = null,
           hide = false,
-          eventTypeId,
-          isTask = false,
+          islamicDefinitionId = null,
           hijriMonth = null,
           hijriDay = null,
           durationDays = null,
           rrule = null,
           eventTimezone = null,
+          color = null,
         } = data;
 
         const result = await client.query(
           `INSERT INTO event (
              userid, name, startdate, enddate, isallday,
-             description, location, hide, eventtypeid, istask,
-             islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, createdat, updatedat
+             description, location, hide,
+             islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
            RETURNING *`,
           [
             userId,
@@ -436,14 +430,13 @@ export default class EventDOA {
             description,
             location,
             hide,
-            eventTypeId,
-            isTask,
-            null,
+            islamicDefinitionId,
             hijriMonth,
             hijriDay,
             durationDays,
             rrule,
             eventTimezone,
+            color,
           ],
         );
 
@@ -471,23 +464,22 @@ export default class EventDOA {
       isAllDay = false,
       description = null,
       hide = false,
-      eventTypeId,
-      isTask = false,
       islamicDefinitionId,
       hijriMonth = null,
       hijriDay = null,
       durationDays = null,
       rrule = null,
       eventTimezone = null,
+      color = null,
     } = data;
 
     const result = await client.query(
       `INSERT INTO event (
          userid, name, startdate, enddate, isallday,
-         description, location, hide, eventtypeid, istask,
-         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, createdat, updatedat
+         description, location, hide,
+         islamicdefinitionid, hijrimonth, hijriday, durationdays, rrule, eventtimezone, color, createdat, updatedat
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
        ON CONFLICT (userid, islamicdefinitionid) WHERE islamicdefinitionid IS NOT NULL
        DO UPDATE SET
          name = EXCLUDED.name,
@@ -497,13 +489,12 @@ export default class EventDOA {
          description = EXCLUDED.description,
          location = EXCLUDED.location,
          hide = EXCLUDED.hide,
-         eventtypeid = EXCLUDED.eventtypeid,
-         istask = EXCLUDED.istask,
          hijrimonth = EXCLUDED.hijrimonth,
          hijriday = EXCLUDED.hijriday,
          durationdays = EXCLUDED.durationdays,
          rrule = EXCLUDED.rrule,
          eventtimezone = EXCLUDED.eventtimezone,
+         color = EXCLUDED.color,
          updatedat = NOW()
        RETURNING *`,
       [
@@ -515,14 +506,13 @@ export default class EventDOA {
         description,
         location,
         hide,
-        eventTypeId,
-        isTask,
         islamicDefinitionId,
         hijriMonth,
         hijriDay,
         durationDays,
         rrule,
         eventTimezone,
+        color,
       ],
     );
 

@@ -19,12 +19,21 @@ import IslamicDefinitionPreferenceDOA from "../model/db/doa/IslamicDefinitionPre
 import EventDOA from "../model/db/doa/EventDOA.js";
 import UserDOA from "../model/db/doa/UserDOA.js";
 
+const DEFAULT_DEFINITION_COLOR = "#7C3AED";
+
+export function resolveDefinitionDefaultColor(definition) {
+  return definition?.defaultColor ?? DEFAULT_DEFINITION_COLOR;
+}
+
 /**
  * Get the base definitions from the JSON file.
  * @returns {Array<Object>}
  */
 export function getBaseDefinitions() {
-  return islamicEventsData.events;
+  return islamicEventsData.events.map((def) => ({
+    ...def,
+    defaultColor: resolveDefinitionDefaultColor(def),
+  }));
 }
 
 /**
@@ -35,11 +44,14 @@ export function getBaseDefinitions() {
 export async function getMergedDefinitions(userId) {
   const baseDefs = getBaseDefinitions();
   const prefs = await IslamicDefinitionPreferenceDOA.findAllByUserId(userId);
-  const prefMap = new Map(prefs.map((p) => [p.definitionId, p.isHidden]));
+  const prefMap = new Map(prefs.map((p) => [p.definitionId, p]));
 
   return baseDefs.map((def) => ({
     ...def,
-    isHidden: prefMap.has(def.id) ? prefMap.get(def.id) : def.isHidden ?? false,
+    isHidden: prefMap.has(def.id)
+      ? prefMap.get(def.id).isHidden
+      : def.isHidden ?? false,
+    defaultColor: prefMap.get(def.id)?.defaultColor ?? resolveDefinitionDefaultColor(def),
   }));
 }
 

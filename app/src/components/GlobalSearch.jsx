@@ -10,7 +10,15 @@
  * Filter selection is persisted in localStorage so it survives close/reopen.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useNavigate } from "react-router";
 import {
   Box,
   Chip,
@@ -30,8 +38,13 @@ import {
 } from "@mui/material";
 import { Calendar, Search as SearchIcon, X as ClearIcon } from "lucide-react";
 import { useCalendar } from "../contexts/CalendarContext";
+import { useOptionalUser } from "../contexts/UserContext";
 import { readLS, writeLS } from "../util/LocalStorage";
-import EventModal from "./calendar/EventModal";
+import {
+  buildCalendarPath,
+  dateKeyToLocalDate,
+  getEventStartEndDateKeys,
+} from "./calendar/CalendarHelpers";
 
 // ── Data type registry ────────────────────────────────────────────────────
 // Each entry defines a searchable data type. Add more here in future.
@@ -59,19 +72,50 @@ function loadFilters() {
   return [...ALL_TYPES]; // default: all enabled
 }
 
+function formatEventTitleForDisplay(name, showArabicEventText) {
+  const raw = (name ?? "").trim();
+  if (!raw.includes("|")) return raw || "(Untitled)";
+
+  const parts = raw
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return "(Untitled)";
+  if (!showArabicEventText) return parts[1] ?? parts[0] ?? "(Untitled)";
+  return raw;
+}
+
+function stripHtml(value) {
+  return (value ?? "").replace(/<[^>]*>/g, "");
+}
+
+function getEventSearchScore(event, query) {
+  const title = (event.name ?? "").toLowerCase();
+  const description = stripHtml(event.description).toLowerCase();
+
+  if (title === query) return 0;
+  if (title.startsWith(query)) return 1;
+  if (title.includes(query)) return 2;
+  if (description.startsWith(query)) return 3;
+  if (description.includes(query)) return 4;
+  return 5;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function GlobalSearch() {
-  const { allEvents } = useCalendar();
+  const { allEvents, currentView } = useCalendar();
+  const { user } = useOptionalUser();
+  const showArabicEventText = user?.showArabicEventText !== false;
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState(loadFilters);
   const anchorRef = useRef(null);
   const inputRef = useRef(null);
-
-  // Event modal state (opened when clicking an event result).
-  const [modalEvent, setModalEvent] = useState(null);
+  const deferredQuery = useDeferredValue(query);
 
   // Persist filter changes.
   useEffect(() => {
@@ -100,7 +144,7 @@ export default function GlobalSearch() {
 
   // ── Build search results ────────────────────────────────────────────────
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     const items = [];
 
     if (activeFilters.includes(DATA_TYPES.EVENTS) && q) {
@@ -108,20 +152,28 @@ export default function GlobalSearch() {
         .filter(
           (e) =>
             (e.name && e.name.toLowerCase().includes(q)) ||
-            (e.description &&
-              e.description
-                .replace(/<[^>]*>/g, "")
-                .toLowerCase()
-                .includes(q)),
+            (e.description && stripHtml(e.description).toLowerCase().includes(q)),
+        )
+        .map((event) => ({
+          event,
+          score: getEventSearchScore(event, q),
+          title: formatEventTitleForDisplay(event.name, showArabicEventText),
+        }))
+        .sort(
+          (a, b) =>
+            a.score - b.score ||
+            a.title.localeCompare(b.title) ||
+            new Date(a.event.startDate ?? 0).getTime() -
+              new Date(b.event.startDate ?? 0).getTime(),
         )
         .slice(0, 20); // cap for performance
 
-      for (const ev of matched) {
+      for (const { event: ev, title } of matched) {
         items.push({
           type: DATA_TYPES.EVENTS,
           id: ev.eventId,
           data: ev,
-          primary: ev.name ?? "(Untitled)",
+          primary: title,
           secondary: ev.startDate
             ? new Date(ev.startDate).toLocaleDateString(undefined, {
                 year: "numeric",
@@ -135,7 +187,7 @@ export default function GlobalSearch() {
     }
 
     return items;
-  }, [query, allEvents, activeFilters]);
+  }, [deferredQuery, allEvents, activeFilters, showArabicEventText]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleOpen = () => {
@@ -149,7 +201,13 @@ export default function GlobalSearch() {
 
   const handleResultClick = (item) => {
     if (item.type === DATA_TYPES.EVENTS) {
-      setModalEvent(item.data);
+      const { startKey } = getEventStartEndDateKeys(item.data);
+      const date = startKey ? dateKeyToLocalDate(startKey) : null;
+      if (date) {
+        navigate(buildCalendarPath(currentView, date));
+      } else {
+        navigate(buildCalendarPath(currentView, new Date()));
+      }
     }
     handleClose();
   };
@@ -307,13 +365,6 @@ export default function GlobalSearch() {
           </Popper>
         </Box>
       </ClickAwayListener>
-
-      {/* Event modal — opened when clicking an event search result */}
-      <EventModal
-        open={Boolean(modalEvent)}
-        onClose={() => setModalEvent(null)}
-        event={modalEvent}
-      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { Chip, useMediaQuery } from "@mui/material";
 import { useMemo } from "react";
-import { DAY_NAMES, MONTH_NAMES } from "../../Constants";
+import { DAY_NAMES, MONTH_NAMES, VALID_VIEWS } from "../../Constants";
+import { useOptionalUser } from "../../contexts/UserContext";
 import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
 
 /**
@@ -8,7 +9,133 @@ import { getHijriMonthRangeLabel, getHijriParts } from "../../util/HijriUtils";
  * when grouping events by day.
  */
 export function toDateKey(date) {
-  return date.toISOString().slice(0, 10);
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Parse a YYYY-MM-DD key into a local Date object at midday to avoid DST/
+ * timezone edge cases around midnight.
+ */
+export function dateKeyToLocalDate(dateKey) {
+  if (!dateKey || typeof dateKey !== "string") return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return null;
+  }
+
+  const d = new Date(year, month - 1, day, 12, 0, 0, 0);
+  if (Number.isNaN(d.getTime())) return null;
+
+  // Guard against overflow dates like 2026-02-31.
+  if (
+    d.getFullYear() !== year ||
+    d.getMonth() !== month - 1 ||
+    d.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return d;
+}
+
+export function isValidCalendarView(view) {
+  return VALID_VIEWS.includes(view);
+}
+
+export function normalizeCalendarView(view, fallback = "month") {
+  return isValidCalendarView(view) ? view : fallback;
+}
+
+export function coerceCalendarDateForView(date, view) {
+  const next = new Date(date);
+  if (view === "month") {
+    next.setDate(1);
+  }
+  return next;
+}
+
+export function buildCalendarPath(view, date) {
+  const nextView = normalizeCalendarView(view);
+  const nextDate = coerceCalendarDateForView(date, nextView);
+  return `/calendar/${nextView}/${nextDate.getFullYear()}/${
+    nextDate.getMonth() + 1
+  }/${nextDate.getDate()}`;
+}
+
+export function buildCalendarMonthOptions(year) {
+  if (!Number.isInteger(year)) return [];
+
+  return MONTH_NAMES.map((monthName, monthIndex) => {
+    const hijriLabel = getHijriMonthRangeLabel(year, monthIndex);
+    const gregorianLabel = `${monthName} ${year}`;
+
+    return {
+      monthIndex,
+      gregorianLabel,
+      hijriLabel,
+      label: `${gregorianLabel} · ${hijriLabel}`,
+    };
+  });
+}
+
+export function parseCalendarRouteState({
+  view,
+  year,
+  month,
+  day,
+  fallbackView = "month",
+}) {
+  const nextView = normalizeCalendarView(view, fallbackView);
+  const parsedYear = Number.parseInt(year ?? "", 10);
+  const parsedMonth = Number.parseInt(month ?? "", 10);
+  const parsedDay = Number.parseInt(day ?? "", 10);
+
+  if (!Number.isInteger(parsedYear) || !Number.isInteger(parsedMonth)) {
+    return null;
+  }
+
+  if (nextView === "month") {
+    if (parsedMonth < 1 || parsedMonth > 12) return null;
+    return {
+      view: nextView,
+      cursor: new Date(parsedYear, parsedMonth - 1, 1, 12, 0, 0, 0),
+    };
+  }
+
+  if (
+    !Number.isInteger(parsedDay) ||
+    parsedMonth < 1 ||
+    parsedMonth > 12
+  ) {
+    return null;
+  }
+
+  const cursor = new Date(parsedYear, parsedMonth - 1, parsedDay, 12, 0, 0, 0);
+  if (
+    cursor.getFullYear() !== parsedYear ||
+    cursor.getMonth() !== parsedMonth - 1 ||
+    cursor.getDate() !== parsedDay
+  ) {
+    return null;
+  }
+
+  return {
+    view: nextView,
+    cursor,
+  };
 }
 
 function toLocalDateKeyFromIso(isoString) {
@@ -158,18 +285,13 @@ export function eventIsAllDayMultiDay(event) {
 }
 
 /**
- * Maps an event's `eventTypeId` to a colour from the theme palette so that
- * different Islamic event types are visually distinct on the calendar.
+ * Resolve event colour with a stable fallback when no explicit colour exists.
  */
 export function eventColor(event, theme) {
-  const palette = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-  ];
-  return palette[(event.eventTypeId ?? 1) % palette.length];
+  if (typeof event?.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(event.color)) {
+    return event.color;
+  }
+  return theme.palette.primary.main;
 }
 
 /**
@@ -179,23 +301,40 @@ export function eventColor(event, theme) {
  */
 export function EventChip({ event, onClick, theme }) {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { user } = useOptionalUser();
+  const showArabicEventText = user?.showArabicEventText !== false;
+
+  const chipLabel = useMemo(() => {
+    const raw = event?.name ?? "";
+    if (!raw.includes("|")) return raw;
+
+    const parts = raw
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) return raw;
+
+    const englishLabel = parts[1] ?? parts[0];
+    if (!showArabicEventText) return englishLabel;
+    if (isMobile) return englishLabel;
+    return raw;
+  }, [event?.name, isMobile, showArabicEventText]);
+
   return (
     <Chip
       key={event.eventId}
-      label={
-        isMobile
-          ? event.name.includes("|")
-            ? event.name.split("|")[1].trim()
-            : event.name
-          : event.name
-      }
+      label={chipLabel}
       size="small"
       onClick={(e) => {
         e.stopPropagation();
         onClick(event);
       }}
       sx={{
+        minWidth: 0,
         width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
         justifyContent: "flex-start",
         bgcolor: eventColor(event, theme),
         color: "#fff",
@@ -205,8 +344,9 @@ export function EventChip({ event, onClick, theme }) {
         cursor: "pointer",
         "& .MuiChip-label": {
           px: { xs: 0.25, sm: 0.75 },
+          whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: { xs: "clip", sm: "ellipsis" },
+          textOverflow: "ellipsis",
         },
       }}
     />

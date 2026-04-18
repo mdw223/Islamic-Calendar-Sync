@@ -72,7 +72,6 @@ function toIcsRRuleArg(value) {
  * SyncModal — offers three sync options:
  *  1. Download .ics   (functional, uses Ics.js)
  *  2. Subscription URL (opens Settings to generate/copy URL)
- *  3. Sync to Calendar (dummy, disabled when logged out)
  */
 export default function SyncModal({ open, onClose, user }) {
   const {
@@ -242,7 +241,7 @@ export default function SyncModal({ open, onClose, user }) {
             app.
           </Typography>
 
-          <FormControl size="small" sx={{ minWidth: 240, mb: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 240, mb: 1, mt: 1 }}>
             <InputLabel id="sync-islamic-scope-label">Islamic events</InputLabel>
             <Select
               labelId="sync-islamic-scope-label"
@@ -373,28 +372,6 @@ export default function SyncModal({ open, onClose, user }) {
             }}
           >
             {isLoggedIn ? "Open Manage Subscriptions" : "Go to Settings"}
-          </Button>
-        </Box>
-
-        <Divider />
-
-        {/* ── 3. Sync to Calendar ───────────────────────────────────── */}
-        <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            Sync to Calendar
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            {isLoggedIn
-              ? "Push events directly to Google Calendar or Outlook."
-              : "Sign in to sync events to your calendar provider."}
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<CalendarSync size={16} />}
-            disabled={!isLoggedIn}
-          >
-            Choose Calendar
           </Button>
         </Box>
       </DialogContent>

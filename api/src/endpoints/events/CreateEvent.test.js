@@ -31,7 +31,7 @@ describe("CreateEvent", () => {
   }
 
   test("returns 400 when required fields are missing", async () => {
-    fromRequest.mockReturnValue({ name: null, startDate: null, endDate: null, eventTypeId: null });
+    fromRequest.mockReturnValue({ name: null, startDate: null, endDate: null });
     const req = { body: {}, user: { userId: 8 } };
     const res = makeRes();
 
@@ -45,7 +45,6 @@ describe("CreateEvent", () => {
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
       rrule: "bad",
     });
     validateStoredUserRRule.mockReturnValue({ ok: false, message: "Invalid RRule string." });
@@ -63,7 +62,6 @@ describe("CreateEvent", () => {
       name: "Test",
       startDate: "2026-01-01",
       endDate: "2026-01-02",
-      eventTypeId: 1,
       rrule: "RRULE:FREQ=DAILY;COUNT=2",
       description: "d",
       location: "l",
@@ -75,8 +73,47 @@ describe("CreateEvent", () => {
     const res = makeRes();
     await CreateEvent(req, res);
 
-    expect(createEvent).toHaveBeenCalledWith(expect.objectContaining({ userId: 8, rrule: "FREQ=DAILY;COUNT=2" }));
+    expect(createEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 8, rrule: "FREQ=DAILY;COUNT=2" }),
+    );
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ success: true, event: { eventId: 11 } });
+  });
+
+  test("returns 400 when color format is invalid", async () => {
+    fromRequest.mockReturnValue({
+      name: "Test",
+      startDate: "2026-01-01",
+      endDate: "2026-01-02",
+      color: "red",
+    });
+    const req = { body: {}, user: { userId: 8 } };
+    const res = makeRes();
+
+    await CreateEvent(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test("defaults missing event type to custom and allows color", async () => {
+    fromRequest.mockReturnValue({
+      name: "Test",
+      startDate: "2026-01-01",
+      endDate: "2026-01-02",
+      color: "#112233",
+    });
+    createEvent.mockResolvedValue({ eventId: 12 });
+    const req = { body: {}, user: { userId: 8 } };
+    const res = makeRes();
+
+    await CreateEvent(req, res);
+
+    expect(createEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 8,
+        color: "#112233",
+      }),
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 });

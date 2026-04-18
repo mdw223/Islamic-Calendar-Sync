@@ -5,6 +5,7 @@ import {
   Typography,
   Paper,
   Button,
+  IconButton,
   TextField,
   Stack,
   Divider,
@@ -13,7 +14,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { ShieldCheck, MailQuestion } from "lucide-react";
+import { ShieldCheck, MailQuestion, ArrowLeft } from "lucide-react";
 import AppleIcon from "../../../assets/apple.svg";
 import MicrosoftIcon from "../../../assets/microsoft.svg";
 import GoogleIcon from "../../../assets/google.svg";
@@ -28,6 +29,14 @@ const LoginPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/");
+  };
 
   const handleSendMagicLink = async () => {
     if (!email) {
@@ -53,7 +62,22 @@ const LoginPage = () => {
       elevation={12}
       sx={{ p: 4, borderRadius: 5, width: "100%", textAlign: "center" }}
     >
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, position: "relative" }}>
+        <IconButton
+          onClick={handleBack}
+          size="small"
+          aria-label="Go back"
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            border: `1px solid ${alpha(muiTheme.palette.text.primary, 0.25)}`,
+            color: muiTheme.palette.text.primary,
+          }}
+        >
+          <ArrowLeft size={18} strokeWidth={2.5} />
+        </IconButton>
+
         <Box
           sx={{
             width: 64,

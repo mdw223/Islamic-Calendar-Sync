@@ -4,7 +4,6 @@
 -- Drop tables if they exist (in reverse order of dependencies)
 DROP TABLE IF EXISTS Event CASCADE;
 DROP TABLE IF EXISTS UserLocation CASCADE;
-DROP TABLE IF EXISTS EventType CASCADE;
 DROP TABLE IF EXISTS Prayer CASCADE;
 DROP TABLE IF EXISTS PrayerType CASCADE;
 DROP TABLE IF EXISTS CalculationMethod CASCADE;
@@ -54,6 +53,7 @@ CREATE TABLE "User" (
     CalculationMethodId INTEGER NULL,
     Hanafi BOOLEAN DEFAULT FALSE,
     Use24HourTime BOOLEAN NOT NULL DEFAULT FALSE,
+    ShowArabicEventText BOOLEAN NOT NULL DEFAULT TRUE,
     Salt VARCHAR(255),
     EmailUpdates BOOLEAN DEFAULT TRUE,
     Notifications BOOLEAN DEFAULT TRUE,
@@ -200,12 +200,6 @@ CREATE TABLE UserLocation (
 --     FOREIGN KEY (PrayerTypeId) REFERENCES PrayerType(PrayerTypeId) ON DELETE RESTRICT
 -- );
 
--- Create EventType table
-CREATE TABLE EventType (
-    EventTypeId SERIAL PRIMARY KEY,
-    Name VARCHAR(100) NOT NULL
-);
-
 -- Create Event table
 CREATE TABLE Event (
     EventId SERIAL PRIMARY KEY,
@@ -216,19 +210,19 @@ CREATE TABLE Event (
     Description TEXT,
     Location VARCHAR(1024),
     Hide BOOLEAN NOT NULL DEFAULT FALSE,
-    EventTypeId INTEGER NOT NULL,
     IsTask BOOLEAN NOT NULL DEFAULT FALSE,
     HijriMonth INTEGER,
     HijriDay INTEGER,
     DurationDays INTEGER,
     RRule VARCHAR(512) NULL,
     EventTimezone VARCHAR(100) NULL,
+    Color VARCHAR(7),
     IslamicDefinitionId VARCHAR(256),
+    AttributedDefinitionId VARCHAR(256),
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UserId INTEGER NULL,
-    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE,
-    FOREIGN KEY (EventTypeId) REFERENCES EventType(EventTypeId) ON DELETE RESTRICT
+    FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
 
 -- One Islamic series master per user + definition (see Sql.Migrations/002_islamic_event_masters.sql for dedup on existing DBs).
@@ -244,17 +238,27 @@ CREATE TABLE UserIslamicDefinitionPreference (
     UserId INTEGER NOT NULL,
     DefinitionId VARCHAR(256) NOT NULL,
     IsHidden BOOLEAN NOT NULL DEFAULT FALSE,
+    DefaultColor VARCHAR(7),
     PRIMARY KEY (UserId, DefinitionId),
     FOREIGN KEY (UserId) REFERENCES "User"(UserId) ON DELETE CASCADE
 );
+
+-- Applied schema migration tracking.
+CREATE TABLE IF NOT EXISTS SchemaMigration (
+    MigrationId VARCHAR(255) PRIMARY KEY,
+    Checksum VARCHAR(64) NOT NULL,
+    AppliedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    AppliedBy VARCHAR(255) NOT NULL DEFAULT CURRENT_USER
+);
+
+CREATE INDEX IF NOT EXISTS idx_schemamigration_appliedat
+    ON SchemaMigration (AppliedAt DESC);
 
 -- -- Create indexes for better query performance
 -- CREATE INDEX idx_provider_userid ON Provider(UserId);
 -- CREATE INDEX idx_provider_type ON Provider(ProviderTypeId);
 -- CREATE INDEX idx_calendar_provider ON Calendar(ProviderId);
 -- CREATE INDEX idx_prayer_type ON Prayer(PrayerTypeId);
--- CREATE INDEX idx_event_type ON Event(EventTypeId);
-
 -- -- Create function to automatically update UpdatedAt timestamp
 -- CREATE OR REPLACE FUNCTION update_updated_at_column()
 -- RETURNS TRIGGER AS $$
@@ -287,6 +291,14 @@ INSERT INTO AuthProviderType (Name) VALUES
     ('Apple'),
     ('Email');
 
+INSERT INTO SchemaMigration (MigrationId, Checksum) VALUES
+    ('001_add_event_and_preference_colors', 'init-baseline'),
+    ('002_add_show_arabic_event_text_to_user', 'init-baseline'),
+    ('003_add_attributed_definition_id_to_event', 'init-baseline'),
+    ('004_add_schema_migrations_table', 'init-baseline'),
+    ('005_remove_event_type', 'init-baseline')
+ON CONFLICT (MigrationId) DO NOTHING;
+
 -- Insert default calendar provider types (calendar integration providers)
 INSERT INTO CalendarProviderType (Name) VALUES 
     ('Google Calendar'),
@@ -314,9 +326,3 @@ INSERT INTO CalculationMethod (Name) VALUES
 --     ('Isha'),
 --     ('Custom');
 
--- Insert default event types
-INSERT INTO EventType (Name) VALUES 
-    ('Ramadan'),
-    ('Eid'),
-    ('Jumah'),
-    ('Custom');

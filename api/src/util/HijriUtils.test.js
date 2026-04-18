@@ -4,7 +4,6 @@ describe("HijriUtils all-day normalization", () => {
     titleAr: "اختبار",
     titleEn: "Test",
     description: "test",
-    eventTypeId: 1,
     isAllDay: true,
     hijriMonth: 9,
     hijriDay: 1,

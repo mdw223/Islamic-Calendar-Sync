@@ -11,8 +11,13 @@
  */
 
 import islamicEventsData from "../data/islamicEvents.json";
-import { EventTypeId } from "../Constants";
 import db from "../util/OfflineDb";
+
+const DEFAULT_DEFINITION_COLOR = "#7C3AED";
+
+function resolveDefinitionDefaultColor(definition) {
+  return definition?.defaultColor ?? DEFAULT_DEFINITION_COLOR;
+}
 
 // ── Hijri formatter ─────────────────────────────────────────────────────────
 const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
@@ -23,7 +28,10 @@ const HIJRI_NUMERIC_FORMATTER = new Intl.DateTimeFormat(
 // ── Base definitions ────────────────────────────────────────────────────────
 
 export function getBaseDefinitions() {
-  return islamicEventsData.events;
+  return islamicEventsData.events.map((def) => ({
+    ...def,
+    defaultColor: resolveDefinitionDefaultColor(def),
+  }));
 }
 
 // ── Merged definitions (base + Dexie preferences) ───────────────────────────
@@ -31,11 +39,14 @@ export function getBaseDefinitions() {
 export async function getMergedDefinitions() {
   const baseDefs = getBaseDefinitions();
   const prefs = await db.definitionPreferences.toArray();
-  const prefMap = new Map(prefs.map((p) => [p.definitionId, p.isHidden]));
+  const prefMap = new Map(prefs.map((p) => [p.definitionId, p]));
 
   return baseDefs.map((def) => ({
     ...def,
-    isHidden: prefMap.has(def.id) ? prefMap.get(def.id) : def.isHidden ?? false,
+    isHidden: prefMap.has(def.id)
+      ? prefMap.get(def.id).isHidden
+      : def.isHidden ?? false,
+    defaultColor: prefMap.get(def.id)?.defaultColor ?? resolveDefinitionDefaultColor(def),
   }));
 }
 
@@ -179,14 +190,13 @@ export function generateIslamicEventsForYear(gregorianYear, definitions, timezon
         endDate: allDayRange.endDate,
         isAllDay: def.isAllDay ?? true,
         description: def.description ?? null,
-        eventTypeId: def.eventTypeId ?? EventTypeId.CUSTOM,
-        isTask: false,
         hide: false,
         eventTimezone: timezone,
         rrule: recurrence.rrule,
         hijriMonth: recurrence.hijriMonth,
         hijriDay: recurrence.hijriDay,
         durationDays: recurrence.durationDays,
+        color: def.defaultColor ?? null,
       });
     }
   }

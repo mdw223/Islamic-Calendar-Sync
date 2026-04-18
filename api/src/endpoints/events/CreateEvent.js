@@ -3,6 +3,8 @@ import { Event } from '../../model/models/Event.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
 import { sanitizeDescription } from '../../util/sanitizeHtml.js';
 
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
 /**
  * POST /events
  * Create a new event for the current user.
@@ -12,10 +14,10 @@ export default async function CreateEvent(req, res) {
         const eventData = Event.fromRequest(req.body);
         eventData.description = sanitizeDescription(eventData.description);
 
-        if (!eventData.name || !eventData.startDate || !eventData.endDate || !eventData.eventTypeId) {
+        if (!eventData.name || !eventData.startDate || !eventData.endDate) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields: name, startDate, endDate, eventTypeId',
+                message: 'Missing required fields: name, startDate, endDate',
             });
         }
 
@@ -51,6 +53,15 @@ export default async function CreateEvent(req, res) {
                 });
             }
             eventData.rrule = rr.value || null;
+        }
+
+        if (eventData.color != null) {
+            if (typeof eventData.color !== "string" || !HEX_COLOR_RE.test(eventData.color)) {
+                return res.status(400).json({
+                    success: false,
+                    message: '"color" must be a hex color string like #1A2B3C.',
+                });
+            }
         }
 
         const event = await EventDOA.createEvent({ ...eventData, userId: req.user.userId });

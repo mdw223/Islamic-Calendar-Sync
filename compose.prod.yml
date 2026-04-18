@@ -32,6 +32,12 @@ services:
       - api
       - app
 
+  redis:
+    image: redis:latest
+    container_name: ics_redis_prod
+    ports:
+      - "6379:6379"
+
   database:
     image: postgres:15
     container_name: ics_postgres_db_prod

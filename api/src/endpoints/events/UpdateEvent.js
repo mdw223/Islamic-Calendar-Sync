@@ -2,6 +2,8 @@ import EventDOA from '../../model/db/doa/EventDOA.js';
 import { sanitizeDescription } from '../../util/SanitizeHtml.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
 
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
 /**
  * PUT /events/:eventId
  * Update an existing event owned by the current user.
@@ -42,6 +44,27 @@ export default async function UpdateEvent(req, res) {
                 success: false,
                 message: 'Event not found',
             });
+        }
+
+        if (userEvent.islamicDefinitionId) {
+            req.body.islamicDefinitionId = userEvent.islamicDefinitionId;
+        } else {
+            req.body.islamicDefinitionId = null;
+        }
+
+        if (req.body.color != null) {
+            if (typeof req.body.color !== "string" || !HEX_COLOR_RE.test(req.body.color)) {
+                return res.status(400).json({
+                    success: false,
+                    message: '"color" must be a hex color string like #1A2B3C.',
+                });
+            }
+            if (userEvent.islamicDefinitionId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Definition-linked Islamic events inherit definition color and cannot set per-event color.",
+                });
+            }
         }
 
         const updated = await EventDOA.updateEvent(eventId, userId, req.body);

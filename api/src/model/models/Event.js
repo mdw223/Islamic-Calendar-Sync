@@ -13,14 +13,13 @@ export class Event {
     this.isAllDay = null;
     this.description = null;
     this.hide = null;
-    this.eventTypeId = null;
-    this.isTask = null;
     this.islamicDefinitionId = null;
     this.hijriMonth = null;
     this.hijriDay = null;
     this.durationDays = null;
     this.rrule = null;
     this.eventTimezone = null;
+    this.color = null;
     this.userId = null;
     this.createdAt = null;
     this.updatedAt = null;
@@ -40,14 +39,13 @@ export class Event {
     event.endDate = body.endDate ?? null;
     event.isAllDay = body.isAllDay ?? false;
     event.description = sanitizeDescription(body.description);
-    event.eventTypeId = body.eventTypeId ?? null;
-    event.isTask = body.isTask ?? false;
     event.islamicDefinitionId = body.islamicDefinitionId ?? null;
     event.hijriMonth = body.hijriMonth ?? null;
     event.hijriDay = body.hijriDay ?? null;
     event.durationDays = body.durationDays ?? null;
     event.rrule = body.rrule ?? null;
     event.eventTimezone = body.eventTimezone ?? null;
+    event.color = body.color ?? null;
     event.hide = body.hide ?? false
     return event;
   }
@@ -67,14 +65,13 @@ export class Event {
     event.isAllDay = row.isallday;
     event.description = row.description;
     event.hide = row.hide;
-    event.eventTypeId = row.eventtypeid;
-    event.isTask = row.istask;
     event.islamicDefinitionId = row.islamicdefinitionid ?? null;
     event.hijriMonth = row.hijrimonth ?? null;
     event.hijriDay = row.hijriday ?? null;
     event.durationDays = row.durationdays ?? null;
     event.rrule = row.rrule ?? null;
     event.eventTimezone = row.eventtimezone ?? null;
+    event.color = row.color ?? null;
     event.userId = row.userid;
     event.createdAt = row.createdat;
     event.updatedAt = row.updatedat;
@@ -91,14 +88,13 @@ export class Event {
       isAllDay: this.isAllDay,
       description: this.description,
       hide: this.hide,
-      eventTypeId: this.eventTypeId,
-      isTask: this.isTask,
       islamicDefinitionId: this.islamicDefinitionId,
       hijriMonth: this.hijriMonth,
       hijriDay: this.hijriDay,
       durationDays: this.durationDays,
       rrule: this.rrule,
       eventTimezone: this.eventTimezone,
+      color: this.color,
       userId: this.userId,
     }
   }

@@ -274,20 +274,34 @@ export default function ManageSubscriptions() {
 
         {tab === 0 && (
           <Stack spacing={1.5}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "stretch", sm: "center" }}
+              spacing={{ xs: 1, sm: 0 }}
+            >
               <Typography variant="subtitle2" color="text.secondary">
                 Active URLs: {subscriptions.length}/{maxActiveUrls}
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                alignItems={{ xs: "stretch", sm: "center" }}
+              >
                 <Button
                   variant="outlined"
                   startIcon={<HelpCircle size={16} />}
                   onClick={() => navigate("/help/subscriptions")}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                   aria-label="Open subscription help"
                 >
                   How to add to calendar
                 </Button>
-                <Button variant="contained" onClick={resetWizardForCreate}>
+                <Button
+                  variant="contained"
+                  onClick={resetWizardForCreate}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
                   New Subscription URL
                 </Button>
               </Stack>

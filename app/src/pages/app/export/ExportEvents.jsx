@@ -485,7 +485,7 @@ export default function ExportEvents() {
                   {selectedYearsLabel}
                 </Button>
 
-                <FormControl size="small" sx={{ minWidth: 220 }}>
+                <FormControl size="small" sx={{ minWidth: 220, mt: 1 }}>
                   <InputLabel id="export-location-label">Location</InputLabel>
                   <Select
                     labelId="export-location-label"
