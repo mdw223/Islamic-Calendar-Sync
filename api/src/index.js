@@ -8,6 +8,7 @@ import responseSanitizer from "./middleware/ResponseSanitizer.js";
 import passport from "passport";
 import { authenticateJwt } from "./Passport.js";
 import cookieParser from "cookie-parser";
+import { rateLimiter } from "./middleware/RateLimiter.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 // Set req.user when a valid JWT is present (httpOnly cookie or Authorization Bearer); otherwise leave req.user undefined
 app.use(authenticateJwt);
+app.use(rateLimiter);
 
 app.use(requestLogger);
 // todo add request sanitizer here

@@ -6,7 +6,8 @@ export const appConfig = {
   TRUST_PROXY: true,
   BASE_URL: process.env.APP_BASE_URL || "http://localhost:5000",
   SUBSCRIPTION_URL: process.env.SUBSCRIPTION_URL || process.env.APP_BASE_URL,
-  API_SECRET: process.env.API_SECRET || 'secret'
+  API_SECRET: process.env.API_SECRET || 'secret',
+  RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX) || 100,
 };
 
 // JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.
@@ -56,4 +57,9 @@ export const authCookieConfig = {
 export const subscriptionConfig = {
   DEFAULT_RANGE_YEARS: Number(process.env.SUBSCRIPTION_DEFAULT_RANGE_YEARS) || 2,
   MAX_ACTIVE_URLS: Number(process.env.SUBSCRIPTION_MAX_ACTIVE_URLS) || 3,
+};
+
+export const redisConfig = {
+  HOST: process.env.REDIS_HOST || 'redis',
+  PORT: process.env.REDIS_PORT || 6379,
 };
