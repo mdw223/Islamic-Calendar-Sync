@@ -193,11 +193,7 @@ const LoginPage = () => {
               disabled={isLoading}
               sx={{ py: 1.5 }}
             >
-              {isLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                "Send Magic Link"
-              )}
+              {isLoading ? <CircularProgress size={24} /> : "Send Magic Link"}
             </Button>
           </Stack>
         </Stack>
@@ -224,7 +220,11 @@ const LoginPage = () => {
           >
             Continue
           </Button>
-          <Button variant="text" size="small" onClick={() => setStep("request")}>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setStep("request")}
+          >
             Change Email
           </Button>
         </Stack>

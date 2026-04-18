@@ -6,6 +6,7 @@
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
 import UserDOA from "../../model/db/doa/UserDOA.js";
+import { defaultLogger } from "../../middleware/logger.js";
 const MAX_DEFINITION_IDS = 200;
 
 export default async function ResetIslamicEvents(req, res) {
@@ -61,7 +62,7 @@ export default async function ResetIslamicEvents(req, res) {
       generatedYearsEnd,
     });
   } catch (error) {
-    console.error("ResetIslamicEvents error:", error);
+    defaultLogger.error("ResetIslamicEvents error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res.status(500).json({
       success: false,
       message: "Failed to reset Islamic events.",

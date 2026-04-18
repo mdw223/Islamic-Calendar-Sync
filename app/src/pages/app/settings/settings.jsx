@@ -201,7 +201,11 @@ export default function Settings() {
 
       skipNextHashScrollRef.current = true;
       if (currentHash !== sectionId) {
-        navigate({ pathname: location.pathname, search: location.search, hash: sectionId });
+        navigate({
+          pathname: location.pathname,
+          search: location.search,
+          hash: sectionId,
+        });
       }
 
       targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -225,18 +229,19 @@ export default function Settings() {
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-    
+
     // Refresh only when language changes so translation state updates.
     if (!languageChanged) {
       return;
     }
 
     if (language === "en") {
-      document.cookie = "googtrans=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie =
+        "googtrans=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.location.reload();
     } else {
       const expiryDate = new Date();
-      expiryDate.setTime(expiryDate.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
+      expiryDate.setTime(expiryDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
       document.cookie = `googtrans=/auto/${language};path=/;expires=${expiryDate.toUTCString()}`;
       window.location.reload();
     }
@@ -355,7 +360,10 @@ export default function Settings() {
         minWidth: 0,
       }}
     >
-      <Typography variant="h4" sx={{ fontSize: { xs: "1.9rem", sm: "2.125rem" } }}>
+      <Typography
+        variant="h4"
+        sx={{ fontSize: { xs: "1.9rem", sm: "2.125rem" } }}
+      >
         Settings
       </Typography>
 
@@ -375,7 +383,11 @@ export default function Settings() {
             direction="row"
             spacing={1}
             useFlexGap
-            sx={{ overflowX: "auto", pb: 0.25, flexWrap: { xs: "wrap", sm: "nowrap" } }}
+            sx={{
+              overflowX: "auto",
+              pb: 0.25,
+              flexWrap: { xs: "wrap", sm: "nowrap" },
+            }}
           >
             {sectionNavItems.map((section) => {
               const isActive = currentHash === section.id;
@@ -404,7 +416,11 @@ export default function Settings() {
         tabIndex={-1}
         aria-labelledby="settings-profile-title"
         variant="outlined"
-        sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          scrollMarginTop: SECTION_SCROLL_MARGIN,
+          minWidth: 0,
+        }}
       >
         <Typography
           id="settings-profile-title"
@@ -423,6 +439,10 @@ export default function Settings() {
               fullWidth
             />
           )}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Uses Google Translate for language translation. Select your
+            preferred language.
+          </Typography>
           <FormControl fullWidth>
             <InputLabel id="language-label">Language</InputLabel>
             <Select
@@ -490,7 +510,11 @@ export default function Settings() {
               InputProps={{ readOnly: true }}
             />
           )}
-          <Button variant="contained" onClick={handleSaveProfile} sx={{ width: { xs: "100%", sm: "auto" } }}>
+          <Button
+            variant="contained"
+            onClick={handleSaveProfile}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
             {saved ? "Saved" : "Save Profile"}
           </Button>
         </Stack>
@@ -504,7 +528,11 @@ export default function Settings() {
           tabIndex={-1}
           aria-labelledby="settings-calendar-subscription-title"
           variant="outlined"
-          sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
+          sx={{
+            p: { xs: 1.5, sm: 2 },
+            scrollMarginTop: SECTION_SCROLL_MARGIN,
+            minWidth: 0,
+          }}
         >
           <Typography
             id="settings-calendar-subscription-title"
@@ -550,7 +578,8 @@ export default function Settings() {
                   {subscription.name || "Untitled subscription"}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Created {new Date(Number(subscription.createdAt)).toLocaleString()}
+                  Created{" "}
+                  {new Date(Number(subscription.createdAt)).toLocaleString()}
                 </Typography>
                 <TextField
                   size="small"
@@ -563,7 +592,9 @@ export default function Settings() {
                   <Button
                     size="small"
                     variant="text"
-                    onClick={() => copySubscriptionUrl(subscription.subscriptionUrl)}
+                    onClick={() =>
+                      copySubscriptionUrl(subscription.subscriptionUrl)
+                    }
                     sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Copy URL
@@ -593,7 +624,11 @@ export default function Settings() {
         tabIndex={-1}
         aria-labelledby="settings-saved-locations-title"
         variant="outlined"
-        sx={{ p: { xs: 1.5, sm: 2 }, scrollMarginTop: SECTION_SCROLL_MARGIN, minWidth: 0 }}
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          scrollMarginTop: SECTION_SCROLL_MARGIN,
+          minWidth: 0,
+        }}
       >
         <Typography
           id="settings-saved-locations-title"
@@ -717,8 +752,8 @@ export default function Settings() {
             Danger Zone
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            Deleting your account is permanent. All your account data and associated
-            records will be removed.
+            Deleting your account is permanent. All your account data and
+            associated records will be removed.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
             <Button

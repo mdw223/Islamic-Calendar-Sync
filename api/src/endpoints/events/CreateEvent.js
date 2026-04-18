@@ -1,6 +1,7 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { Event } from '../../model/models/Event.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
+import { sanitizeDescription } from '../../util/sanitizeHtml.js';
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 
@@ -11,6 +12,7 @@ const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 export default async function CreateEvent(req, res) {
     try {
         const eventData = Event.fromRequest(req.body);
+        eventData.description = sanitizeDescription(eventData.description);
 
         if (!eventData.name || !eventData.startDate || !eventData.endDate) {
             return res.status(400).json({

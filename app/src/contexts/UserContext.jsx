@@ -8,7 +8,6 @@ import React, {
 import { createUser, defaultUser } from "../models/User";
 import APIClient from "../util/ApiClient";
 import OfflineClient from "../util/OfflineClient";
-import { setToken, clearToken } from "../util/AuthToken";
 
 const UserContext = createContext(undefined);
 const anonymousUserContextValue = {
@@ -89,22 +88,8 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // On mount: handle OAuth redirect (#token=...), then fetch current user (JWT in Authorization).
+  // On mount: fetch current user (auth JWT sent automatically via httpOnly cookie).
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const token = params.get("token");
-      if (token) {
-        setToken(decodeURIComponent(token));
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search,
-        );
-      }
-    }
-
     let cancelled = false;
 
     APIClient.getCurrentUser()
@@ -160,9 +145,8 @@ export const UserProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      await APIClient.logout();
+      await APIClient.logout(); // clears the httpOnly auth cookie server-side
     } finally {
-      clearToken();
       setUser(createUser(defaultUser));
       setUserLocations([]);
       setSubscriptions([]);
@@ -173,7 +157,6 @@ export const UserProvider = ({ children }) => {
     try {
       await APIClient.deleteAccount();
     } finally {
-      clearToken();
       setUser(createUser(defaultUser));
       setUserLocations([]);
       setSubscriptions([]);

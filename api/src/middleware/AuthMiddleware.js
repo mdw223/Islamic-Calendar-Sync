@@ -7,7 +7,7 @@ import {appConfig} from '../Config.js'
 
 /**
  * Optional authentication middleware to use if I want to require authentication for a route and an explicit message to the user if they are not authenticated.
- * Ensure the request is authenticated (has valid JWT). req.user is set by optionalJwtAuth when a valid Bearer token is present.
+ * Ensure the request is authenticated (has valid JWT). req.user is set by authenticateJwt when a valid JWT is present (httpOnly cookie or Authorization Bearer).
  */
 export function AuthenticateUser(req, res, next) {
   if (!req.user) {
@@ -102,14 +102,24 @@ export async function RequireSubscriptionToken(req, res, next) {
       return res.status(403).json({ success: false, message: "Invalid or revoked token" });
     }
 
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(token, "utf8")
-      .digest("hex");
-    const subscription = await SubscriptionTokenDOA.findActiveByUserIdAndHash(
-      userId,
-      tokenHash,
-    );
+    // Each URL has its own salt; PBKDF2(token, salt) only matches the row for that URL.
+    // Try each active subscription for this user until the derived hash matches the stored hash.
+    const candidates = await SubscriptionTokenDOA.findActiveByUserId(userId);
+    let subscription = null;
+    for (const row of candidates) {
+      if (!row?.tokenHash || !row?.salt) continue;
+      const tokenHash = await HashToken(token, row.salt);
+      const stored = Buffer.isBuffer(row.tokenHash)
+        ? row.tokenHash
+        : Buffer.from(row.tokenHash);
+      if (
+        tokenHash.length === stored.length &&
+        crypto.timingSafeEqual(tokenHash, stored)
+      ) {
+        subscription = row;
+        break;
+      }
+    }
     if (!subscription) {
       return res.status(403).json({ success: false, message: "Invalid or revoked token" });
     }
@@ -136,6 +146,20 @@ export async function RequireSubscriptionToken(req, res, next) {
 export function GenerateToken(user, salt) {
   const tokenSecret = appConfig.API_SECRET + salt;
   return jwt.sign({ userId: user.userId }, tokenSecret);
+}
+
+// only need to hash strings that are for comparison like passwords, but not access tokens in the database because we will need to use it again
+// hashing does not allow you to reverse the process to get the original string
+export async function HashToken(token, salt) {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(token, salt, 10000, 32, "sha256", (err, derivedKey) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(derivedKey);
+      }
+    });
+  });
 }
 
 

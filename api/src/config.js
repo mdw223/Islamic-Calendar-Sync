@@ -7,7 +7,8 @@ export const appConfig = {
   TRUST_PROXY: true,
   BASE_URL: process.env.APP_BASE_URL,
   SUBSCRIPTION_URL: process.env.SUBSCRIPTION_URL || process.env.APP_BASE_URL,
-  API_SECRET: process.env.API_SECRET
+  API_SECRET: process.env.API_SECRET,
+  RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX) || 100,
 };
 
 // JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.
@@ -36,6 +37,8 @@ export const googleAuthConfig = {
   CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL
 };
 
+// Session: used only on Google OAuth routes (/auth/google/login and /auth/google/redirect) to hold OIDC state.
+// Not used for app auth — JWT cookie handles that. Set SESSION_SECRET in production.
 export const microsoftAuthConfig = {
   CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
   CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
@@ -54,15 +57,21 @@ export const appleAuthConfig = {
   SCOPE: process.env.APPLE_SCOPE,
 };
 
-export const authProviderConfig = Object.freeze({
-  [AuthProviderKey.GOOGLE]: googleAuthConfig,
-  [AuthProviderKey.MICROSOFT]: microsoftAuthConfig,
-  [AuthProviderKey.APPLE]: appleAuthConfig,
-});
-
 // Session (required by passport-openidconnect for Google OAuth state). Set SESSION_SECRET in production.
 export const sessionConfig = {
   SECRET: process.env.SESSION_SECRET || process.env.JWT_SECRET,
+};
+
+// Shared cookie options for the auth JWT cookie (token).
+// Must be identical on res.cookie() (set) and res.clearCookie() (clear); any mismatch prevents clearing.
+export const authCookieConfig = {
+  NAME: "token",
+  OPTIONS: {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: (process.env.NODE_ENV || "development") === "production",
+  },
 };
 
 export const subscriptionConfig = {
@@ -73,4 +82,9 @@ export const subscriptionConfig = {
 export const smtpConfig = {
   SMTP_PROVIDER_API_KEY: process.env.SMTP_PROVIDER_API_KEY,
   SMTP_EMAIL: process.env.SMTP_EMAIL
+};
+
+export const redisConfig = {
+  HOST: process.env.REDIS_HOST || 'redis',
+  PORT: process.env.REDIS_PORT || 6379,
 };

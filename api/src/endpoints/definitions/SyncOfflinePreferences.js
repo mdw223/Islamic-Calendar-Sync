@@ -22,6 +22,7 @@ import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinition
 import EventDOA from "../../model/db/doa/EventDOA.js";
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+import { defaultLogger } from "../../middleware/logger.js";
 export default async function SyncOfflinePreferences(req, res) {
   try {
     const { preferences } = req.body;
@@ -88,7 +89,7 @@ export default async function SyncOfflinePreferences(req, res) {
 
     return res.status(200).json({ success: true, syncedCount: synced });
   } catch (error) {
-    console.error("SyncOfflinePreferences error:", error);
+    defaultLogger.error("SyncOfflinePreferences error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res
       .status(500)
       .json({ success: false, message: "Failed to sync offline preferences." });

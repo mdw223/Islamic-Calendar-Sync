@@ -1,5 +1,4 @@
 import HTTPClient from "./HttpClient";
-import { getToken } from "./AuthToken";
 // this is like the .data layer interacting with the backend
 // HTTPClient.baseURL already contains APP_API_URL (e.g. /api)
 
@@ -128,17 +127,10 @@ export default class APIClient {
       qs.set("includeAll", String(query.includeAll));
     }
 
-    const token = getToken();
-    const headers = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
     const path = qs.toString() ? `/events.ics?${qs.toString()}` : "/events.ics";
     const response = await fetch(`${HTTPClient.baseURL}${path}`, {
       method: "GET",
       credentials: "include",
-      headers,
     });
 
     if (!response.ok) {

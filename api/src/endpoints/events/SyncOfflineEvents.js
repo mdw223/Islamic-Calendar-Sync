@@ -19,6 +19,8 @@
  *   500 — server error
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
+import { defaultLogger } from "../../middleware/logger.js";
+import { sanitizeDescription } from "../../util/sanitizeHtml.js";
 export default async function SyncOfflineEvents(req, res) {
   try {
     const { events } = req.body;
@@ -41,7 +43,7 @@ export default async function SyncOfflineEvents(req, res) {
         .json({ success: false, message: "Too many events (max 2000)." });
     }
 
-    // Validate each event minimally.
+    // Validate each event minimally and sanitize HTML fields.
     for (const e of events) {
       if (!e.name || !e.startDate || !e.endDate) {
         return res.status(400).json({
@@ -50,13 +52,14 @@ export default async function SyncOfflineEvents(req, res) {
             "Every event must have name, startDate, and endDate.",
         });
       }
+      e.description = sanitizeDescription(e.description);
     }
 
     const persisted = await EventDOA.bulkUpsert(events, req.user.userId);
 
     return res.status(201).json({ success: true, syncedCount: persisted.length });
   } catch (error) {
-    console.error("SyncOfflineEvents error:", error);
+    defaultLogger.error("SyncOfflineEvents error", { error, requestId: req.requestId, userId: req.user?.userId });
     return res
       .status(500)
       .json({ success: false, message: "Failed to sync offline events." });

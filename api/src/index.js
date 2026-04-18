@@ -1,15 +1,16 @@
 import requestLogger, { defaultLogger } from "./middleware/Logger.js";
 import express from "express";
-import { appConfig, sessionConfig } from "./Config.js";
+import { appConfig } from "./Config.js";
 import routes from "./endpoints/Routes.js";
 import ErrorHandlerMiddleware from "./middleware/ErrorHandlerMiddleware.js";
 import NotFoundMiddleware from "./middleware/NotFoundMiddleware.js";
 import responseSanitizer from "./middleware/ResponseSanitizer.js";
+import requestSanitizer from "./middleware/RequestSanitizer.js";
 import passport from "passport";
-import session from "express-session";
-import { optionalJwtAuth } from "./Passport.js";
+import { authenticateJwt } from "./Passport.js";
 import cookieParser from "cookie-parser";
 import { pool } from "./model/db/DBConnection.js";
+import { rateLimiter } from "./middleware/RateLimiter.js";
 
 const app = express();
 const EXPECTED_LATEST_MIGRATION = "005_remove_event_type";
@@ -61,23 +62,15 @@ app.set("trust proxy", true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(
-  session({
-    secret: sessionConfig.SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: appConfig.NODE_ENV === "production", sameSite: "lax" },
-  })
-);
 app.use(passport.initialize());
-// Optional JWT: set req.user when Authorization: Bearer <token> is valid; otherwise leave req.user undefined
-app.use(optionalJwtAuth);
+// Set req.user when a valid JWT is present (httpOnly cookie or Authorization Bearer); otherwise leave req.user undefined
+app.use(authenticateJwt);
+app.use(rateLimiter);
 
 app.use(requestLogger);
-app.use(responseSanitizer); // Strip redacted keys (salt, tokens, etc.) from res.json() bodies
-
+app.use(requestSanitizer); // Strip __proto__, constructor, prototype keys from req.body/query/params
+app.use(responseSanitizer); // Wrap res.json() to strip redacted keys (salt, tokens, etc.) before sending
 app.use(routes);
-
 app.use(NotFoundMiddleware);
 app.use(ErrorHandlerMiddleware);
 

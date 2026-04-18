@@ -3,9 +3,9 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
+import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig, smtpConfig, microsoftAuthConfig, appleAuthConfig } from "./Config.js";
 // import { Strategy as MicrosoftStrategy } from "passport-microsoft";
 // import AppleStrategy from "passport-apple";
-import { appConfig, authProviderConfig, jwtConfig, smtpConfig } from "./Config.js";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
 import { AuthProviderKey, AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
@@ -29,14 +29,21 @@ export function signToken(user) {
   );
 }
 
-/** Bearer only; `?token=` on subscription routes is an opaque secret, not a JWT. */
-const jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+/**
+ * Extract JWT from the httpOnly cookie first, then fall back to Authorization: Bearer.
+ * `?token=` on subscription routes is an opaque secret, not a JWT — handled separately.
+ */
+function jwtFromCookieOrBearerExtractor(req) {
+  const fromCookie = req?.cookies?.token ?? null;
+  if (fromCookie) return fromCookie;
+  return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+}
 
-// JWT strategy: extract token from Authorization: Bearer <token>, verify, load user, set req.user
+// JWT strategy: extract token from cookie or Authorization: Bearer, verify, load user, set req.user
 passport.use(
   new JwtStrategy(
     {
-      jwtFromRequest,
+      jwtFromRequest: jwtFromCookieOrBearerExtractor,
       secretOrKey: jwtConfig.SECRET,
       algorithms: [jwtConfig.ALGORITHM],
     },
@@ -53,11 +60,14 @@ passport.use(
 );
 
 /**
- * Optional JWT auth middleware: if Authorization Bearer token is present and valid,
+ * JWT auth middleware: if a valid JWT is present (httpOnly cookie or Authorization Bearer),
  * sets req.user; otherwise leaves req.user undefined. Never sends 401 (so public and
  * protected routes can share the same pipeline).
+ * 
+ * This method calls passport.authenticate("jwt"... which invokes the JWT strategy defined above,
+ * which extracts the JWT from the cookie or Authorization: Bearer header, verifies it, loads the user, and sets req.user...
  */
-export function optionalJwtAuth(req, res, next) {
+export function authenticateJwt(req, res, next) {
   passport.authenticate("jwt", { session: false }, (err, user) => {
     if (err) return next(err);
     req.user = user ?? undefined;
@@ -68,10 +78,6 @@ export function optionalJwtAuth(req, res, next) {
 // Configure the Google strategy for use by Passport.
 // passport-openidconnect passes tokens only when the verify callback has 8+ parameters.
 // With 9 params (passReqToCallback): req, issuer, profile, context, idToken, accessToken, refreshToken, params, verified
-const googleAuthConfig = authProviderConfig[AuthProviderKey.GOOGLE];
-// const microsoftAuthConfig = authProviderConfig[AuthProviderKey.MICROSOFT];
-// const appleAuthConfig = authProviderConfig[AuthProviderKey.APPLE];
-
 passport.use(
   new GoogleStrategy(
     {
@@ -188,25 +194,22 @@ const googleRedirectHandler = async (req, res) => {
     const user = req.user;
     const tokens = req.googleTokens;
 
-    if (tokens) {
-      const expiresAt = tokens.expires_in
-        ? new Date(Date.now() + tokens.expires_in * 1000)
-        : null;
-
-      // Store OAuth tokens in User table for authentication
-      await UserDOA.updateUser(user.userId, {
-        accesstoken: tokens.access_token,
-        refreshtoken: tokens.refresh_token || null,
-        expiresat: expiresAt,
-        scopes: tokens.scope || null,
-        isexpired: false,
-      });
-    }
+    // OAuth tokens are not stored — Google is used for identity only, not API calls.
+    // const expiresAt = tokens?.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null;
+    // if (tokens) {
+    //   await UserDOA.updateUser(user.userId, {
+    //     accesstoken: tokens.access_token,
+    //     refreshtoken: tokens.refresh_token || null,
+    //     expiresat: expiresAt,
+    //     scopes: tokens.scope || null,
+    //     isexpired: false,
+    //   });
+    // }
 
     const token = signToken(user);
     const frontendBase = appConfig.BASE_URL;
-    // Redirect with token in hash so frontend can read and store it (e.g. in memory or localStorage)
-    res.redirect(`${frontendBase}#token=${encodeURIComponent(token)}`);
+    res.cookie(authCookieConfig.NAME, token, authCookieConfig.OPTIONS);
+    res.redirect(`${frontendBase}`);
   } catch (error) {
     defaultLogger.error("Error in Google OAuth redirect handler", {
       requestId: req?.requestId,
@@ -494,10 +497,10 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
         throw new Error("Google profile did not include an email address");
     }
 
-    // Calculate expiration time if tokens provided
-    const expiresAt = tokens?.expires_in
-        ? new Date(Date.now() + tokens.expires_in * 1000)
-        : null;
+    // OAuth tokens are not stored — Google is used for identity only, not API calls.
+    // const expiresAt = tokens?.expires_in
+    //     ? new Date(Date.now() + tokens.expires_in * 1000)
+    //     : null;
 
     // Find or create user with Google auth provider
     let user = await UserDOA.getUserByEmail(email);
@@ -509,54 +512,57 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
             name,
             authProviderTypeId: AuthProviderTypeId.GOOGLE,
         });
-        // Store OAuth tokens
-        await UserDOA.updateUser(user.userId, {
-            accesstoken: tokens?.access_token || null,
-            refreshtoken: tokens?.refresh_token || null,
-            expiresat: expiresAt,
-            scopes: tokens?.scope || null,
-            isexpired: false,
-        });
+        // await UserDOA.updateUser(user.userId, {
+        //     accesstoken: tokens?.access_token || null,
+        //     refreshtoken: tokens?.refresh_token || null,
+        //     expiresat: expiresAt,
+        //     scopes: tokens?.scope || null,
+        //     isexpired: false,
+        // });
     } else if (tokens) {
-        // Update existing user with new tokens
+        // Update auth provider type only; tokens are not persisted.
         await UserDOA.updateUser(user.userId, {
             authprovidertypeid: AuthProviderTypeId.GOOGLE,
-            accesstoken: tokens.access_token,
-            refreshtoken: tokens.refresh_token || user.refreshToken,
-            expiresat: expiresAt,
-            scopes: tokens.scope || user.scopes,
-            isexpired: false,
+            // accesstoken: tokens.access_token,
+            // refreshtoken: tokens.refresh_token || user.refreshToken,
+            // expiresat: expiresAt,
+            // scopes: tokens.scope || user.scopes,
+            // isexpired: false,
         });
+        // await UserDOA.updateUser(user.userId, {
+        //     authprovidertypeid: AuthProviderTypeId.GOOGLE,
+        //     accesstoken: tokens.access_token,
+        //     refreshtoken: tokens.refresh_token || user.refreshToken,
+        //     expiresat: expiresAt,
+        //     scopes: tokens.scope || user.scopes,
+        //     isexpired: false,
+        // });
     }
 
-    // Optionally create/update CalendarProvider for calendar integration
-    // This is separate from authentication - used for calendar API access
-    let calendarProvider = await CalendarProviderDOA.findByUserAndType(
-        user.userId,
-        CalendarProviderTypeId.GOOGLE_CALENDAR,
-    );
-
-    if (!calendarProvider && tokens) {
-        // Create calendar provider for this user
-        await CalendarProviderDOA.createCalendarProvider({
-            userId: user.userId,
-            calendarProviderTypeId: CalendarProviderTypeId.GOOGLE_CALENDAR,
-            email,
-            accessToken: tokens.access_token || null,
-            refreshToken: tokens.refresh_token || null,
-            expiresAt: expiresAt,
-            scopes: tokens.scope || null,
-            salt: null,
-        });
-    } else if (calendarProvider && tokens) {
-        // Update calendar provider tokens
-        await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
-            expiresAt: expiresAt,
-            scopes: tokens.scope || calendarProvider.scopes,
-        });
-    }
+    // CalendarProvider token storage disabled — no Google Calendar API calls are made.
+    // let calendarProvider = await CalendarProviderDOA.findByUserAndType(
+    //     user.userId,
+    //     CalendarProviderTypeId.GOOGLE_CALENDAR,
+    // );
+    // if (!calendarProvider && tokens) {
+    //     await CalendarProviderDOA.createCalendarProvider({
+    //         userId: user.userId,
+    //         calendarProviderTypeId: CalendarProviderTypeId.GOOGLE_CALENDAR,
+    //         email,
+    //         accessToken: tokens.access_token || null,
+    //         refreshToken: tokens.refresh_token || null,
+    //         expiresAt: expiresAt,
+    //         scopes: tokens.scope || null,
+    //         salt: null,
+    //     });
+    // } else if (calendarProvider && tokens) {
+    //     await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
+    //         accessToken: tokens.access_token,
+    //         refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
+    //         expiresAt: expiresAt,
+    //         scopes: tokens.scope || calendarProvider.scopes,
+    //     });
+    // }
 
     // Update last login timestamp
     await UserDOA.updateLastLogin(user.userId);

@@ -12,6 +12,7 @@ services:
       - ./logs:/app/logs
     depends_on:
       - database
+      - redis
 
   # Frontend React App
   app:
