@@ -3,11 +3,16 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig } from "./Config.js";
+import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig, authProviderConfig, smtpConfig } from "./Config.js";
+// import { Strategy as MicrosoftStrategy } from "passport-microsoft";
+// import AppleStrategy from "passport-apple";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
 import jwt from "jsonwebtoken";
-import { AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
+import { AuthProviderKey, AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
 import { generateForNewUser } from "./services/IslamicEventService.js";
+import { Strategy as MagicLinkStrategy } from "passport-magic-link";
+import { Resend } from "resend";
+import MagicLinkTokenDOA from "./model/db/doa/MagicLinkTokenDOA.js";
 
 /**
  * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
@@ -73,6 +78,10 @@ export function authenticateJwt(req, res, next) {
 // Configure the Google strategy for use by Passport.
 // passport-openidconnect passes tokens only when the verify callback has 8+ parameters.
 // With 9 params (passReqToCallback): req, issuer, profile, context, idToken, accessToken, refreshToken, params, verified
+const googleAuthConfig = authProviderConfig[AuthProviderKey.GOOGLE];
+// const microsoftAuthConfig = authProviderConfig[AuthProviderKey.MICROSOFT];
+// const appleAuthConfig = authProviderConfig[AuthProviderKey.APPLE];
+
 passport.use(
   new GoogleStrategy(
     {
@@ -98,6 +107,70 @@ passport.use(
     },
   ),
 );
+
+// passport.use(
+//   new MicrosoftStrategy(
+//     {
+//       clientID: microsoftAuthConfig.CLIENT_ID,
+//       clientSecret: microsoftAuthConfig.CLIENT_SECRET,
+//       callbackURL: microsoftAuthConfig.CALLBACK_URL,
+//       tenant: microsoftAuthConfig.TENANT,
+//       scope: scopeToArray(microsoftAuthConfig.SCOPE),
+//       passReqToCallback: true,
+//     },
+//     async (req, accessToken, refreshToken, profile, done) => {
+//       try {
+//         const tokens = {
+//           access_token: accessToken,
+//           refresh_token: refreshToken || undefined,
+//           scope: microsoftAuthConfig.SCOPE,
+//         };
+//         const user = await findOrCreateUserFromMicrosoftProfile(profile, tokens);
+//         req.microsoftTokens = tokens;
+//         done(null, user);
+//       } catch (err) {
+//         done(err);
+//       }
+//     },
+//   ),
+// );
+
+// passport.use(
+//   new AppleStrategy(
+//     {
+//       clientID: appleAuthConfig.CLIENT_ID,
+//       teamID: appleAuthConfig.TEAM_ID,
+//       callbackURL: appleAuthConfig.CALLBACK_URL,
+//       keyID: appleAuthConfig.KEY_ID,
+//       privateKeyLocation: appleAuthConfig.PRIVATE_KEY_LOCATION,
+//       privateKeyString: appleAuthConfig.PRIVATE_KEY,
+//       passReqToCallback: true,
+//       scope: scopeToArray(appleAuthConfig.SCOPE),
+//     },
+//     async (req, accessToken, refreshToken, idToken, profile, done) => {
+//       try {
+//         const tokens = {
+//           access_token: accessToken,
+//           refresh_token: refreshToken || undefined,
+//           id_token: idToken,
+//           scope: appleAuthConfig.SCOPE,
+//         };
+//         const user = await findOrCreateUserFromAppleProfile(
+//           {
+//             profile,
+//             appleUserPayload: parseAppleUser(req?.body?.user),
+//             decodedIdToken: typeof idToken === "string" ? jwt.decode(idToken) : null,
+//           },
+//           tokens,
+//         );
+//         req.appleTokens = tokens;
+//         done(null, user);
+//       } catch (err) {
+//         done(err);
+//       }
+//     },
+//   ),
+// );
 
 /**
  * GET /auth/google/login
@@ -168,6 +241,250 @@ export const googleRedirect = [
   }),
   googleRedirectHandler,
 ];
+
+// export const microsoftLogin = passport.authenticate("microsoft", {
+//   scope: scopeToArray(microsoftAuthConfig.SCOPE),
+//   prompt: "select_account",
+// });
+
+// const microsoftRedirectHandler = async (req, res) => {
+//   try {
+//     const token = signToken(req.user);
+//     res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
+//   } catch (error) {
+//     defaultLogger.error("Error in Microsoft OAuth redirect handler", {
+//       requestId: req?.requestId,
+//       userId: extractUserId(req),
+//       method: req?.method,
+//       path: req?.originalUrl?.split("?")[0] ?? req?.url,
+//       ip: req?.ip,
+//       userAgent: req?.get?.("user-agent"),
+//       error,
+//     });
+//     res
+//       .status(500)
+//       .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
+//   }
+// };
+
+// export const microsoftRedirect = [
+//   passport.authenticate("microsoft", {
+//     failureRedirect: "/login",
+//     session: false,
+//   }),
+//   microsoftRedirectHandler,
+// ];
+
+// export const appleLogin = passport.authenticate("apple", {
+//   scope: scopeToArray(appleAuthConfig.SCOPE),
+// });
+
+// const appleRedirectHandler = async (req, res) => {
+//   try {
+//     const token = signToken(req.user);
+//     res.redirect(`${appConfig.BASE_URL}#token=${encodeURIComponent(token)}`);
+//   } catch (error) {
+//     defaultLogger.error("Error in Apple OAuth redirect handler", {
+//       requestId: req?.requestId,
+//       userId: extractUserId(req),
+//       method: req?.method,
+//       path: req?.originalUrl?.split("?")[0] ?? req?.url,
+//       ip: req?.ip,
+//       userAgent: req?.get?.("user-agent"),
+//       error,
+//     });
+//     res
+//       .status(500)
+//       .redirect(`${appConfig.BASE_URL}/login?error=oauth_failed`);
+//   }
+// };
+
+// export const appleRedirect = [
+//   passport.authenticate("apple", {
+//     failureRedirect: "/login",
+//     session: false,
+//   }),
+//   appleRedirectHandler,
+// ];
+
+/**
+ * Initialize Resend client for sending magic-link emails
+ */
+const resend = new Resend(smtpConfig.SMTP_PROVIDER_API_KEY);
+
+/**
+ * Persist token usage in DB so token one-time checks survive restarts and multi-instance deployments.
+ */
+class DbMagicLinkStorage {
+  async set(key, value) {
+    await MagicLinkTokenDOA.replaceUserTokens(String(key), value || {});
+  }
+
+  async get(key) {
+    return MagicLinkTokenDOA.getUserTokens(String(key));
+  }
+
+  async delete(key) {
+    return MagicLinkTokenDOA.deleteUserTokens(String(key));
+  }
+}
+
+/**
+ * Magic-link strategy with Resend email integration.
+ * When user requests a magic link:
+ *   1. sendToken callback: generate token and email to user
+ *   2. verify callback: user clicks link, token validated, user authenticated
+ */
+passport.use(
+  new MagicLinkStrategy(
+    {
+      secret: jwtConfig.SECRET,
+      userFields: ["email"],
+      tokenField: "token",
+      ttl: 600, // 10 minutes
+      allowPost: true,
+      passReqToCallbacks: false,
+      verifyUserAfterToken: true,
+      storage: new DbMagicLinkStorage(),
+    },
+    // sendToken callback: called when user requests magic link
+    async (user, token) => {
+      try {
+        if (!user.email) {
+          throw new Error("User email is required for magic link");
+        }
+
+        // Construct full magic-link URL
+        const magicLink = `${appConfig.BASE_URL}/api/auth/magiclink/verify?token=${encodeURIComponent(token)}`;
+
+        // Send email via Resend
+        const { error } = await resend.emails.send({
+          from: smtpConfig.SMTP_EMAIL,
+          to: user.email,
+          subject: "Sign in to Islamic Calendar Sync",
+          html: `
+            <h3>Hello!</h3>
+            <p>Click the link below to sign in to Islamic Calendar Sync:</p>
+            <p><a href="${magicLink}">Sign In</a></p>
+            <p>This link expires in 10 minutes.</p>
+          `,
+        });
+
+        if (error) {
+          defaultLogger.error("Failed to send magic link email", {
+            email: user.email,
+            error,
+          });
+          throw error;
+        }
+
+        defaultLogger.info("Magic link email sent", { email: user.email });
+        return true;
+      } catch (err) {
+        defaultLogger.error("Error in sendToken callback", { error: err });
+        throw err;
+      }
+    },
+    // verify callback: called when user clicks the token link
+    async (user) => {
+      try {
+        if (!user.email) {
+          throw new Error("User email is required for authentication");
+        }
+
+        // Find or create user by email
+        let dbUser = await UserDOA.getUserByEmail(user.email);
+
+        if (!dbUser) {
+          // New user: create account with EMAIL auth provider
+          dbUser = await UserDOA.createUser({
+            email: user.email,
+            name: user.email, // Use email as fallback name
+            authProviderTypeId: AuthProviderTypeId.EMAIL,
+          });
+          defaultLogger.info("New user created via magic link", {
+            email: user.email,
+            userId: dbUser.userId,
+          });
+        }
+
+        // Update last login timestamp
+        await UserDOA.updateLastLogin(dbUser.userId);
+        defaultLogger.info("Magic link login successful", {
+          email: user.email,
+          userId: dbUser.userId,
+        });
+
+        return dbUser;
+      } catch (err) {
+        defaultLogger.error("Error in verify callback", { error: err });
+        throw err;
+      }
+    }
+  )
+);
+
+/**
+ * POST /auth/magiclink/send
+ * Request a magic link email.
+ * Expected POST body: { email: "user@example.com" }
+ */
+export const magicLinkSend = [
+  passport.authenticate("magiclink", {
+    action: "requestToken",
+    failureRedirect: "/login?error=magic_link_send_failed",
+    session: false,
+  }),
+  (req, res, next) => {
+    res.json({
+      success: true,
+      message: "Check your email for a magic link to sign in.",
+    });
+  },
+];
+
+/**
+ * GET /login/check-email
+ * Page informing user to check their email for the magic link
+ */
+export const checkEmailPage = (req, res, next) => {
+  res.json({
+    status: "success",
+    message: "Check your email for a magic link to sign in.",
+  });
+};
+
+/**
+ * GET /auth/magiclink/verify
+ * Verify the token from the magic link and log the user in.
+ * Query param: ?token=<magic_token>
+ */
+export const magicLinkVerify = [
+  passport.authenticate("magiclink", {
+    action: "acceptToken",
+    failureRedirect: "/login?error=invalid_token",
+    session: false,
+    userPrimaryKey: "email",
+  }),
+  (req, res, next) => {
+    try {
+      // User is authenticated; issue JWT
+      const token = signToken(req.user);
+      const frontendBase = appConfig.BASE_URL;
+
+      // Redirect to frontend with token in hash
+      res.redirect(
+        `${frontendBase}#token=${encodeURIComponent(token)}`
+      );
+    } catch (err) {
+      defaultLogger.error("Error in magic link verify handler", {
+        error: err,
+      });
+      res.redirect(`${appConfig.BASE_URL}/login?error=callback_failed`);
+    }
+  },
+];
+
 
 /**
    * Find or create a user based on a Google profile.
@@ -264,5 +581,125 @@ export async function findOrCreateUserFromGoogleProfile(profile, tokens = null) 
 
     return user;
 }
+
+  // export async function findOrCreateUserFromMicrosoftProfile(profile, tokens = null) {
+  //   const email =
+  //     profile?.emails?.[0]?.value ||
+  //     profile?._json?.mail ||
+  //     profile?._json?.userPrincipalName ||
+  //     null;
+  //   const name = profile?.displayName || email;
+
+  //   if (!email) {
+  //     throw new Error("Microsoft profile did not include an email address");
+  //   }
+
+  //   let user = await UserDOA.getUserByEmail(email);
+
+  //   if (!user) {
+  //     user = await UserDOA.createUser({
+  //       email,
+  //       name,
+  //       authProviderTypeId: AuthProviderTypeId.MICROSOFT,
+  //     });
+  //   }
+
+  //   if (tokens) {
+  //     await UserDOA.updateUser(user.userId, {
+  //       authprovidertypeid: AuthProviderTypeId.MICROSOFT,
+  //       accesstoken: tokens.access_token,
+  //       refreshtoken: tokens.refresh_token || user.refreshToken,
+  //       scopes: tokens.scope || user.scopes,
+  //       isexpired: false,
+  //     });
+  //   }
+
+  //   let calendarProvider = await CalendarProviderDOA.findByUserAndType(
+  //     user.userId,
+  //     CalendarProviderTypeId.MICROSOFT_OUTLOOK,
+  //   );
+
+  //   if (!calendarProvider && tokens) {
+  //     await CalendarProviderDOA.createCalendarProvider({
+  //       userId: user.userId,
+  //       calendarProviderTypeId: CalendarProviderTypeId.MICROSOFT_OUTLOOK,
+  //       email,
+  //       accessToken: tokens.access_token || null,
+  //       refreshToken: tokens.refresh_token || null,
+  //       expiresAt: null,
+  //       scopes: tokens.scope || null,
+  //       salt: null,
+  //     });
+  //   } else if (calendarProvider && tokens) {
+  //     await CalendarProviderDOA.updateTokens(calendarProvider.calendarProviderId, {
+  //       accessToken: tokens.access_token,
+  //       refreshToken: tokens.refresh_token || calendarProvider.refreshToken,
+  //       expiresAt: null,
+  //       scopes: tokens.scope || calendarProvider.scopes,
+  //     });
+  //   }
+
+  //   await UserDOA.updateLastLogin(user.userId);
+  //   return UserDOA.findById(user.userId);
+  // }
+
+  // export async function findOrCreateUserFromAppleProfile(identity, tokens = null) {
+  //   const email =
+  //     identity?.appleUserPayload?.email ||
+  //     identity?.profile?.emails?.[0]?.value ||
+  //     identity?.decodedIdToken?.email ||
+  //     null;
+  //   const fullName = identity?.appleUserPayload?.name
+  //     ? `${identity.appleUserPayload.name.firstName || ""} ${identity.appleUserPayload.name.lastName || ""}`.trim()
+  //     : "";
+  //   const name = fullName || identity?.profile?.displayName || email;
+
+  //   if (!email) {
+  //     throw new Error("Apple profile did not include an email address");
+  //   }
+
+  //   let user = await UserDOA.getUserByEmail(email);
+
+  //   if (!user) {
+  //     user = await UserDOA.createUser({
+  //       email,
+  //       name,
+  //       authProviderTypeId: AuthProviderTypeId.APPLE,
+  //     });
+  //   }
+
+  //   if (tokens) {
+  //     await UserDOA.updateUser(user.userId, {
+  //       authprovidertypeid: AuthProviderTypeId.APPLE,
+  //       accesstoken: tokens.access_token || user.accessToken,
+  //       refreshtoken: tokens.refresh_token || user.refreshToken,
+  //       scopes: tokens.scope || user.scopes,
+  //       isexpired: false,
+  //     });
+  //   }
+
+  //   await UserDOA.updateLastLogin(user.userId);
+  //   return UserDOA.findById(user.userId);
+  // }
+
+  // function scopeToArray(scope) {
+  //   if (!scope) return [];
+  //   if (Array.isArray(scope)) return scope;
+  //   return String(scope)
+  //     .split(" ")
+  //     .map((item) => item.trim())
+  //     .filter(Boolean);
+  // }
+
+  // function parseAppleUser(value) {
+  //   if (!value) return null;
+  //   if (typeof value === "object") return value;
+  //   if (typeof value !== "string") return null;
+  //   try {
+  //     return JSON.parse(value);
+  //   } catch {
+  //     return null;
+  //   }
+  // }
 
 export default passport;

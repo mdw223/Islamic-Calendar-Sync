@@ -3,7 +3,17 @@ import session from "express-session";
 import healthRoutes from "./health/Health.js";
 import { Logout } from "./users/LoginUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
-import { googleLogin, googleRedirect } from "../Passport.js";
+import {
+	googleLogin,
+	googleRedirect,
+	// microsoftLogin,
+	// microsoftRedirect,
+	// appleLogin,
+	// appleRedirect,
+	magicLinkSend,
+	checkEmailPage,
+	magicLinkVerify,
+} from "../Passport.js";
 import { AuthUser } from '../Constants.js';
 import { appConfig, sessionConfig } from "../Config.js";
 import GetCurrentUser from './users/GetCurrentUser.js';
@@ -62,6 +72,15 @@ router.get("/users/:userId", Auth([AuthUser.SAME_USER, AuthUser.ADMIN]), GetUser
 // Can do Auth([AuthUser.SAME_USER | AuthUser.SUBSCRIBED_USER, AuthUser.ADMIN]) for ex
 router.get("/auth/google/login", googleSession, googleLogin);
 router.get("/auth/google/redirect", googleSession, ...googleRedirect);
+// router.get("/auth/microsoft/login", microsoftLogin);
+// router.get("/auth/microsoft/redirect", ...microsoftRedirect);
+// router.get("/auth/apple/login", appleLogin);
+// router.get("/auth/apple/redirect", ...appleRedirect);
+// router.post("/auth/apple/redirect", ...appleRedirect);
+// Magic-link login
+router.post("/auth/magiclink/send", ...magicLinkSend);
+router.get("/login/check-email", checkEmailPage);
+router.get("/auth/magiclink/verify", ...magicLinkVerify);
 
 // Subscription management (Bearer JWT)
 router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);
