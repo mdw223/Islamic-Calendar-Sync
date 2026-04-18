@@ -195,20 +195,20 @@ const howItWorks = [
 
 const faqs = [
   {
-    q: "How do I sync my prayers?",
-    a: "Simply log in with your provider, select your location, and click the Sync button in the Calendar dashboard.",
+    q: "How do I sync events to my calendar?",
+    a: "Simply log in with your provider, select Subscriptions in the navbar, and go through the steps to configure your events to subscribe to your calendar.",
   },
   {
-    q: "How do upcoming Islamic days appear on Home?",
-    a: "Generate events for at least one year in Calendar. Once generated, Home automatically shows your next upcoming Islamic days.",
+    q: "How do upcoming Islamic days appear in the calendar and home page?",
+    a: "Generate events for at least one year in Calendar.",
   },
   {
     q: "Can I choose which Islamic events are included?",
-    a: "Yes. Use the Islamic definitions panel to hide, show, or recolor definitions before syncing or exporting.",
+    a: "Yes. In the Calendar, use the Islamic definitions side panel to hide, show, or recolor definitions before syncing or exporting.",
   },
   {
     q: "Where can I learn what each event means?",
-    a: "Use the Learn page for concise draft summaries and significance notes for each tracked Islamic event.",
+    a: "Use the Learn page for concise summaries and significance notes for each Islamic event.",
   },
 ];
 
@@ -322,14 +322,16 @@ const Home = () => {
               Designed for practical daily consistency
             </span>
             <h1 className="lp-hero-headline">
-              Build a Living Islamic Calendar for
+              Sync the Islamic Calendar to
               <br />
-              <span className="lp-gradient-text">Your Real Daily Routine</span>
+              <span className="lp-gradient-text">
+                Your Life With Understanding
+              </span>
             </h1>
             <p className="lp-hero-sub">
-              Generate upcoming Islamic events, control what appears, and keep
-              Google, Outlook, Apple, and subscription feeds aligned with your
-              worship rhythm.
+              Generate upcoming Islamic events, control what appears, and sync
+              to your Google, Outlook, Apple, Calendar of your choice, and learn
+              the significance of each event when you need it.
             </p>
             <div className="lp-hero-ctas" style={{ justifyContent: "center" }}>
               <RouterLink
@@ -703,9 +705,8 @@ const Home = () => {
             </div>
             <h2 className="lp-cta-title">Explore Meanings on the Learn Page</h2>
             <p className="lp-cta-desc">
-              Read concise significance notes for every tracked Islamic event,
-              then refine them over time with your preferred scholarship
-              summaries.
+              Read concise significance of every Islamic event, then learn how
+              to sync them to your life.
             </p>
             <RouterLink to="/learn" className="lp-btn lp-btn-primary lp-btn-lg">
               Open Learn
@@ -718,7 +719,9 @@ const Home = () => {
       <section className="lp-section lp-faq-section" id="faq">
         <div className="lp-container">
           <div className="lp-section-header animate-on-scroll" data-delay="0">
-            <h2 className="lp-section-title">Frequently Asked Questions</h2>
+            <h2 className="lp-section-title" id="faq">
+              Frequently Asked Questions
+            </h2>
           </div>
           <div className="lp-faq-list">
             {faqs.map((faq, idx) => (

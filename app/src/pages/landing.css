@@ -588,7 +588,7 @@
   background: var(--lp-a10);
   border: 1px solid var(--lp-a18);
   color: var(--lp-accent-bright);
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
 }
 .lp-feature-title {
   font-size: 1.0625rem;

@@ -36,8 +36,8 @@ const Footer = () => {
               Islamic Calendar Sync
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Empowering the Ummah with precise schedule synchronization and
-              event management since 2026.
+              Empowering the Ummah with precise Islamic calendar synchronization
+              management since 2026.
             </Typography>
           </Grid>
           <Grid item xs={6} md={2}>
@@ -159,18 +159,15 @@ const Footer = () => {
               >
                 <Github size={18} />
               </IconButton>
-              <IconButton size="small" component="a" href="mailto:malik.code@proton.me" aria-label="Email malik.code@proton.me">
+              <IconButton
+                size="small"
+                component="a"
+                href="mailto:malik.code@proton.me"
+                aria-label="Email malik.code@proton.me"
+              >
                 <Mail size={18} />
               </IconButton>
             </Stack>
-            <Link
-              href="mailto:malik.code@proton.me"
-              underline="hover"
-              color="text.secondary"
-              sx={{ typography: "caption" }}
-            >
-              malik.code@proton.me
-            </Link>
           </Grid>
         </Grid>
 
