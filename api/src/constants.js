@@ -18,6 +18,16 @@ export const AuthProviderTypeId = Object.freeze({
 });
 
 /**
+ * Enum-like keys for auth provider configuration and strategy naming.
+ */
+export const AuthProviderKey = Object.freeze({
+  GOOGLE: "google",
+  MICROSOFT: "microsoft",
+  APPLE: "apple",
+  EMAIL: "email",
+});
+
+/**
  * Enum-like mapping for CalendarProviderType identifiers.
  * Backed by the CalendarProviderType table (CalendarProviderTypeId, Name).
  */

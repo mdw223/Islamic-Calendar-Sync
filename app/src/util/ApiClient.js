@@ -38,22 +38,25 @@ export default class APIClient {
   }
 
   /**
-   * Send a verification code to the user's email.
+   * Request a magic-link email for login.
    * @param {string} email - User's email address
-   * @param {string} name - User's name
    */
-  static async sendVerificationCode(email, name) {
-    return HTTPClient.post("/users/send-code", { email, name });
+  static async requestMagicLink(email) {
+    return HTTPClient.post("/auth/magiclink/send", { email });
   }
 
   /**
-   * Verify the code and log in the user.
-   * Returns { token, user }; store the token and send as Authorization: Bearer on subsequent requests.
-   * @param {string} email - User's email address
-   * @param {string} code - Verification code
+   * Backward-compatible wrapper; magic-link flow does not require name.
    */
-  static async verifyCode(email, code) {
-    return HTTPClient.post("/users/verify-code", { email, code });
+  static async sendVerificationCode(email) {
+    return APIClient.requestMagicLink(email);
+  }
+
+  /**
+   * Backward-compatible wrapper for magic-link flow.
+   */
+  static async verifyCode() {
+    throw new Error("Verification codes are no longer used. Please use the magic link in your email.");
   }
 
   /**

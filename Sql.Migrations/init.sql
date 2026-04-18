@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS CalendarProvider CASCADE;
 DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
+DROP TABLE IF EXISTS MagicLinkUsedToken CASCADE;
 DROP TABLE IF EXISTS SubscriptionDefinitionSelection CASCADE;
 DROP TABLE IF EXISTS SubscriptionToken CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
@@ -79,6 +80,18 @@ CREATE TABLE SubscriptionToken (
 
 CREATE INDEX idx_subscriptiontoken_userid ON SubscriptionToken(UserId);
 CREATE INDEX idx_subscriptiontoken_tokenhash ON SubscriptionToken(TokenHash);
+
+-- Stores used magic-link JWTs by user key so one-time enforcement survives restarts.
+CREATE TABLE MagicLinkUsedToken (
+    UserUid VARCHAR(255) NOT NULL,
+    Token TEXT NOT NULL,
+    ExpiresAt BIGINT NOT NULL,
+    CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (UserUid, Token)
+);
+
+CREATE INDEX idx_magiclinkusedtoken_useruid ON MagicLinkUsedToken(UserUid);
+CREATE INDEX idx_magiclinkusedtoken_expiresat ON MagicLinkUsedToken(ExpiresAt);
 
 -- Selected definitions for each subscription URL (includes pseudo definitions).
 CREATE TABLE SubscriptionDefinitionSelection (

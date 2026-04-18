@@ -128,7 +128,6 @@ export class User {
   }
 
   updatePreferences(preferences) {
-    // TODO USE THESE
     if (preferences && typeof preferences.notifications !== "undefined")
       this.notifications = preferences.notifications;
     if (preferences && typeof preferences.emailUpdates !== "undefined")
