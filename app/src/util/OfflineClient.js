@@ -65,7 +65,6 @@ export default class OfflineClient {
       ...rest,
       location: rest.location ?? null,
       eventTimezone: rest.eventTimezone ?? null,
-      isTask: rest.isTask ?? false,
       hide: rest.hide ?? false,
       islamicDefinitionId: rest.islamicDefinitionId ?? null,
       createdAt: now,
@@ -187,9 +186,14 @@ export default class OfflineClient {
     return { success: true, definitions };
   }
 
-  static async updateDefinitionPreference(definitionId, isHidden) {
-    // Upsert preference.
-    await db.definitionPreferences.put({ definitionId, isHidden });
+  static async updateDefinitionPreference(definitionId, isHidden, defaultColor = null) {
+    // Merge with existing preference to avoid dropping color/isHidden when updating one field.
+    const existingPreference = await db.definitionPreferences.get(definitionId);
+    await db.definitionPreferences.put({
+      definitionId,
+      isHidden,
+      defaultColor: defaultColor ?? existingPreference?.defaultColor ?? null,
+    });
 
     // Update hide flag on all matching events in IndexedDB.
     const matching = await db.events
@@ -199,7 +203,11 @@ export default class OfflineClient {
 
     if (matching.length > 0) {
       await db.events.bulkPut(
-        matching.map((e) => ({ ...e, hide: isHidden })),
+        matching.map((e) => ({
+          ...e,
+          hide: isHidden,
+          color: defaultColor ?? e.color ?? null,
+        })),
       );
     }
 
@@ -207,8 +215,31 @@ export default class OfflineClient {
       success: true,
       definitionId,
       isHidden,
+      defaultColor: defaultColor ?? existingPreference?.defaultColor ?? null,
       eventsUpdated: matching.length,
     };
+  }
+
+  static async updateDefinitionPreferences(preferences) {
+    if (!Array.isArray(preferences)) {
+      throw new Error('Expected "preferences" to be an array.');
+    }
+
+    if (preferences.length === 0) {
+      return { success: true, syncedCount: 0 };
+    }
+
+    await Promise.all(
+      preferences.map(({ definitionId, isHidden, defaultColor = null }) =>
+        OfflineClient.updateDefinitionPreference(
+          definitionId,
+          isHidden,
+          defaultColor,
+        ),
+      ),
+    );
+
+    return { success: true, syncedCount: preferences.length };
   }
 
   // ── Sync helpers ───────────────────────────────────────────────────────
@@ -245,8 +276,9 @@ export default class OfflineClient {
       userProfile: userProfile
         ? {
             language: userProfile.language ?? null,
-            hanafi: !!userProfile.hanafi,
             use24HourTime: !!userProfile.use24HourTime,
+            showArabicEventText:
+              userProfile.showArabicEventText !== false,
           }
         : null,
       generatedYearsStart: generationMeta?.generatedYearsStart ?? null,
@@ -289,8 +321,8 @@ export default class OfflineClient {
       success: true,
       user: {
         language: profile?.language ?? null,
-        hanafi: !!profile?.hanafi,
         use24HourTime: !!profile?.use24HourTime,
+        showArabicEventText: profile?.showArabicEventText !== false,
       },
     };
   }
@@ -303,12 +335,14 @@ export default class OfflineClient {
         updates?.language !== undefined
           ? updates.language
           : (existing?.language ?? null),
-      hanafi:
-        updates?.hanafi !== undefined ? !!updates.hanafi : !!existing?.hanafi,
       use24HourTime:
         updates?.use24HourTime !== undefined
           ? !!updates.use24HourTime
           : !!existing?.use24HourTime,
+      showArabicEventText:
+        updates?.showArabicEventText !== undefined
+          ? !!updates.showArabicEventText
+          : existing?.showArabicEventText !== false,
       updatedAt: new Date().toISOString(),
     };
     await db.userProfile.put(next);

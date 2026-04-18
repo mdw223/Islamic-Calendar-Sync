@@ -12,7 +12,7 @@ export default class IslamicDefinitionPreferenceDOA {
    */
   static async findAllByUserId(userId) {
     const result = await query(
-      `SELECT definitionid, ishidden
+      `SELECT definitionid, ishidden, defaultcolor
        FROM userislamicdefinitionpreference
        WHERE userid = $1`,
       [userId],
@@ -20,6 +20,7 @@ export default class IslamicDefinitionPreferenceDOA {
     return result.rows.map((row) => ({
       definitionId: row.definitionid,
       isHidden: row.ishidden,
+      defaultColor: row.defaultcolor ?? null,
     }));
   }
 
@@ -28,25 +29,32 @@ export default class IslamicDefinitionPreferenceDOA {
    * @param {number} userId
    * @param {string} definitionId
    * @param {boolean} isHidden
-   * @returns {Promise<{ definitionId: string, isHidden: boolean }>}
+   * @param {string | null} defaultColor
+   * @returns {Promise<{ definitionId: string, isHidden: boolean, defaultColor: string | null }>}
    */
-  static async upsertPreference(userId, definitionId, isHidden) {
+  static async upsertPreference(userId, definitionId, isHidden, defaultColor = null) {
     const result = await query(
-      `INSERT INTO userislamicdefinitionpreference (userid, definitionid, ishidden)
-       VALUES ($1, $2, $3)
+      `INSERT INTO userislamicdefinitionpreference (userid, definitionid, ishidden, defaultcolor)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (userid, definitionid)
-       DO UPDATE SET ishidden = EXCLUDED.ishidden
-       RETURNING definitionid, ishidden`,
-      [userId, definitionId, isHidden],
+       DO UPDATE SET
+         ishidden = EXCLUDED.ishidden,
+         defaultcolor = COALESCE(EXCLUDED.defaultcolor, userislamicdefinitionpreference.defaultcolor)
+       RETURNING definitionid, ishidden, defaultcolor`,
+      [userId, definitionId, isHidden, defaultColor],
     );
     const row = result.rows[0];
-    return { definitionId: row.definitionid, isHidden: row.ishidden };
+    return {
+      definitionId: row.definitionid,
+      isHidden: row.ishidden,
+      defaultColor: row.defaultcolor ?? null,
+    };
   }
 
   /**
    * Bulk upsert preferences for a user.
    * @param {number} userId
-   * @param {Array<{ definitionId: string, isHidden: boolean }>} preferences
+  * @param {Array<{ definitionId: string, isHidden: boolean, defaultColor?: string | null }>} preferences
    * @returns {Promise<void>}
    */
   static async bulkUpsert(userId, preferences) {
@@ -54,11 +62,13 @@ export default class IslamicDefinitionPreferenceDOA {
 
     for (const pref of preferences) {
       await query(
-        `INSERT INTO userislamicdefinitionpreference (userid, definitionid, ishidden)
-         VALUES ($1, $2, $3)
+        `INSERT INTO userislamicdefinitionpreference (userid, definitionid, ishidden, defaultcolor)
+         VALUES ($1, $2, $3, $4)
          ON CONFLICT (userid, definitionid)
-         DO UPDATE SET ishidden = EXCLUDED.ishidden`,
-        [userId, pref.definitionId, pref.isHidden],
+         DO UPDATE SET
+           ishidden = EXCLUDED.ishidden,
+           defaultcolor = COALESCE(EXCLUDED.defaultcolor, userislamicdefinitionpreference.defaultcolor)`,
+        [userId, pref.definitionId, pref.isHidden, pref.defaultColor ?? null],
       );
     }
   }

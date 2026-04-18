@@ -40,12 +40,46 @@ const palettes = {
     secondary: {
       main: "#3b82f6",
     },
+    grey: {
+      50: "#f8fafc",
+      100: "#f1f5f9",
+      200: "#e2e8f0",
+      300: "#cbd5e1",
+      400: "#94a3b8",
+      500: "#64748b",
+      600: "#475569",
+      700: "#334155",
+      800: "#1e293b",
+      900: "#0f172a",
+    },
     background: {
-      default: "#ffffff",
+      default: "#f8fafc",
       paper: "#ffffff",
     },
     text: {
       primary: "#1e293b",
+      secondary: "#475569",
+      disabled: "#94a3b8",
+    },
+    divider: "#e2e8f0",
+    action: {
+      hover: "rgba(15, 23, 42, 0.04)",
+      selected: "rgba(15, 23, 42, 0.08)",
+      disabled: "rgba(15, 23, 42, 0.26)",
+      disabledBackground: "rgba(15, 23, 42, 0.12)",
+      focus: "rgba(15, 23, 42, 0.14)",
+    },
+    success: {
+      main: "#059669",
+    },
+    info: {
+      main: "#2563eb",
+    },
+    warning: {
+      main: "#d97706",
+    },
+    error: {
+      main: "#dc2626",
     },
   },
   dark: {

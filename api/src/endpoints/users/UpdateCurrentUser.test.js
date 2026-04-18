@@ -19,12 +19,25 @@ describe("UpdateCurrentUser", () => {
 
   test("updates only provided fields and normalizes booleans", async () => {
     updateUser.mockResolvedValue({ userId: 7, name: "Ali" });
-    const req = { user: { userId: 7 }, body: { name: "Ali", hanafi: 1, use24HourTime: 0 } };
+    const req = {
+      user: { userId: 7 },
+      body: {
+        name: "Ali",
+        hanafi: 1,
+        use24HourTime: 0,
+        showArabicEventText: 0,
+      },
+    };
     const res = makeRes();
 
     await UpdateCurrentUser(req, res);
 
-    expect(updateUser).toHaveBeenCalledWith(7, { name: "Ali", hanafi: true, use24hourtime: false });
+    expect(updateUser).toHaveBeenCalledWith(7, {
+      name: "Ali",
+      hanafi: true,
+      use24hourtime: false,
+      showarabiceventtext: false,
+    });
     expect(res.json).toHaveBeenCalledWith({ success: true, user: { userId: 7, name: "Ali" } });
   });
 

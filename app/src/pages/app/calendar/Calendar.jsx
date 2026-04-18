@@ -14,11 +14,16 @@
  * whichever view (month / week / day) is currently active.
  */
 
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { useState } from "react";
 import CalendarComponent from "../../../components/calendar/Calendar";
 import IslamicEventsPanel from "../../../components/calendar/IslamicEventsPanel";
 
 export default function CalendarPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+
   return (
     <Box
       sx={{
@@ -32,21 +37,27 @@ export default function CalendarPage() {
       }}
     >
       {/* Left sidebar — Islamic event definitions checklist */}
-      <IslamicEventsPanel />
+      <IslamicEventsPanel
+        open={isPanelOpen}
+        onToggleOpen={() => setIsPanelOpen((prev) => !prev)}
+        isMobile={isMobile}
+      />
 
       {/* Right side — the actual calendar (takes all remaining space) */}
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: 0, // allows the calendar to shrink below its natural width
-          display: "flex",
-          flexDirection: "column",
-          p: { xs: "0px", sm: 2 },
-          overflow: "hidden",
-        }}
-      >
-        <CalendarComponent />
-      </Box>
+      {!(isMobile && isPanelOpen) && (
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0, // allows the calendar to shrink below its natural width
+            display: "flex",
+            flexDirection: "column",
+            p: { xs: "0px", sm: 2 },
+            overflow: "hidden",
+          }}
+        >
+          <CalendarComponent />
+        </Box>
+      )}
     </Box>
   );
 }

@@ -18,10 +18,12 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
+
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 export default async function UpdateDefinitionPreference(req, res) {
   try {
     const { definitionId } = req.params;
-    const { isHidden } = req.body;
+    const { isHidden, defaultColor } = req.body;
 
     if (typeof isHidden !== "boolean") {
       return res.status(400).json({
@@ -30,25 +32,47 @@ export default async function UpdateDefinitionPreference(req, res) {
       });
     }
 
+    if (
+      defaultColor != null &&
+      (typeof defaultColor !== "string" || !HEX_COLOR_RE.test(defaultColor))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: '"defaultColor" must be a hex color string like #1A2B3C.',
+      });
+    }
+
     // Upsert the preference
-    await IslamicDefinitionPreferenceDOA.upsertPreference(
+    const updatedPref = await IslamicDefinitionPreferenceDOA.upsertPreference(
+      req.user.userId,
+      definitionId,
+      isHidden,
+      defaultColor ?? null,
+    );
+
+    // Update the hide flag on all matching events
+    const visibilityUpdated = await EventDOA.updateHideByDefinitionId(
       req.user.userId,
       definitionId,
       isHidden,
     );
 
-    // Update the hide flag on all matching events
-    const eventsUpdated = await EventDOA.updateHideByDefinitionId(
-      req.user.userId,
-      definitionId,
-      isHidden,
-    );
+    let colorUpdated = 0;
+    if (defaultColor != null) {
+      colorUpdated = await EventDOA.updateColorByDefinitionId(
+        req.user.userId,
+        definitionId,
+        defaultColor,
+      );
+    }
 
     return res.json({
       success: true,
       definitionId,
       isHidden,
-      eventsUpdated,
+      defaultColor: updatedPref.defaultColor,
+      eventsUpdated: visibilityUpdated,
+      colorUpdated,
     });
   } catch (error) {
     console.error("UpdateDefinitionPreference error:", error);

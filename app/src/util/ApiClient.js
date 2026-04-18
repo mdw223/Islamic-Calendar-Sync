@@ -170,7 +170,7 @@ export default class APIClient {
 
   /**
    * Create a new event.
-   * @param {{ name, location?, startDate, endDate, isAllDay, description, hide, eventTypeId, isTask }} eventData
+    * @param {{ name, location?, startDate, endDate, isAllDay, description, hide }} eventData
    */
   static async createEvent(eventData) {
     const { eventId, ...payload } = eventData;
@@ -180,7 +180,7 @@ export default class APIClient {
   /**
    * Update an existing event by its ID.
    * @param {number} eventId
-   * @param {{ name?, location?, startDate?, endDate?, isAllDay?, description?, hide?, eventTypeId?, isTask? }} updates
+    * @param {{ name?, location?, startDate?, endDate?, isAllDay?, description?, hide? }} updates
    */
   static async updateEvent(eventId, updates) {
     return HTTPClient.put(`/events/${eventId}`, updates);
@@ -240,10 +240,23 @@ export default class APIClient {
    *
    * @param {string} definitionId
    * @param {boolean} isHidden
+   * @param {string | null} defaultColor
    * @returns {Promise<{ success: boolean, definitionId: string, isHidden: boolean, eventsUpdated: number }>}
    */
-  static async updateDefinitionPreference(definitionId, isHidden) {
-    return HTTPClient.put(`/definitions/${definitionId}`, { isHidden });
+  static async updateDefinitionPreference(definitionId, isHidden, defaultColor = null) {
+    const payload = { isHidden };
+    if (defaultColor != null) payload.defaultColor = defaultColor;
+    return HTTPClient.put(`/definitions/${definitionId}`, payload);
+  }
+
+  /**
+   * Update multiple definition preferences in a single request.
+   *
+   * @param {Array<{ definitionId: string, isHidden: boolean, defaultColor?: string | null }>} preferences
+   * @returns {Promise<{ success: boolean, syncedCount: number }>}
+   */
+  static async updateDefinitionPreferences(preferences) {
+    return HTTPClient.post("/definitions/sync", { preferences });
   }
 
   // ── Offline → Server sync ─────────────────────────────────────────────────
@@ -266,7 +279,7 @@ export default class APIClient {
    * @returns {Promise<{ success: boolean, syncedCount: number }>}
    */
   static async syncOfflinePreferences(preferences) {
-    return HTTPClient.post("/definitions/sync", { preferences });
+    return APIClient.updateDefinitionPreferences(preferences);
   }
 
   static async getUserLocations() {

@@ -9,6 +9,8 @@
  *
  * Schema version history:
  *   v1 — initial: events, definitionPreferences
+ *   v7 — remove attributedDefinitionId from events
+ *   v8 — remove legacy event type indexing from events
  */
 
 import Dexie from "dexie";
@@ -18,27 +20,35 @@ const db = new Dexie("IslamicCalendarSync");
 db.version(2).stores({
   // ++id  = auto-increment primary key
   // Indexed fields after the PK allow efficient querying / upsert-by-key.
-  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  events: "++id, islamicDefinitionId, startDate",
 
   // definitionId is the primary key (matches islamicEvents.json `id`).
   definitionPreferences: "definitionId",
 });
 
 db.version(3).stores({
-  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  events: "++id, islamicDefinitionId, startDate",
   definitionPreferences: "definitionId",
   generationMeta: "key",
 });
 
 db.version(4).stores({
-  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  events: "++id, islamicDefinitionId, startDate",
   definitionPreferences: "definitionId",
   generationMeta: "key",
   userLocations: "++id, name, timezone, isDefault",
 });
 
 db.version(5).stores({
-  events: "++id, islamicDefinitionId, eventTypeId, startDate",
+  events: "++id, islamicDefinitionId, startDate",
+  definitionPreferences: "definitionId",
+  generationMeta: "key",
+  userLocations: "++id, name, timezone, isDefault",
+  userProfile: "key",
+});
+
+db.version(8).stores({
+  events: "++id, islamicDefinitionId, startDate",
   definitionPreferences: "definitionId",
   generationMeta: "key",
   userLocations: "++id, name, timezone, isDefault",

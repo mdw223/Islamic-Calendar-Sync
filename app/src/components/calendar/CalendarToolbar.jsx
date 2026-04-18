@@ -1,20 +1,6 @@
-import {
-  CalendarDays as TodayIcon,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import {
-  Box,
-  Button,
-  IconButton,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, IconButton, ListItemText, Menu, MenuItem, Paper, ToggleButton, ToggleButtonGroup, Tooltip, useMediaQuery, useTheme } from "@mui/material";
+import { useState } from "react";
+import { CalendarDays as TodayIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
  * CalendarToolbar
@@ -28,6 +14,9 @@ import {
  */
 export default function CalendarToolbar({
   toolbarLabel,
+  monthOptions,
+  currentMonthIndex,
+  onMonthSelect,
   currentView,
   changeView,
   goToday,
@@ -36,6 +25,68 @@ export default function CalendarToolbar({
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [monthMenuAnchorEl, setMonthMenuAnchorEl] = useState(null);
+  const monthMenuOpen = Boolean(monthMenuAnchorEl);
+
+  const handleOpenMonthMenu = (event) => {
+    setMonthMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMonthMenu = () => {
+    setMonthMenuAnchorEl(null);
+  };
+
+  const handleSelectMonth = (monthIndex) => {
+    onMonthSelect?.(monthIndex);
+    handleCloseMonthMenu();
+  };
+
+  const renderMonthButton = (sx = {}) => (
+    <Tooltip title="Jump to month">
+      <Button
+        variant="text"
+        color="inherit"
+        onClick={handleOpenMonthMenu}
+        aria-haspopup="menu"
+        aria-expanded={monthMenuOpen ? "true" : undefined}
+        sx={{
+          flex: 1,
+          px: 1,
+          textTransform: "none",
+          justifyContent: "center",
+          minWidth: 0,
+          fontWeight: 600,
+          ...sx,
+        }}
+      >
+        {toolbarLabel}
+      </Button>
+    </Tooltip>
+  );
+
+  const renderMonthMenu = (anchorOrigin, transformOrigin) => (
+    <Menu
+      anchorEl={monthMenuAnchorEl}
+      open={monthMenuOpen}
+      onClose={handleCloseMonthMenu}
+      anchorOrigin={anchorOrigin}
+      transformOrigin={transformOrigin}
+      PaperProps={{ sx: { minWidth: 280 } }}
+    >
+      {monthOptions?.map((option) => (
+        <MenuItem
+          key={option.monthIndex}
+          selected={option.monthIndex === currentMonthIndex}
+          onClick={() => handleSelectMonth(option.monthIndex)}
+        >
+          <ListItemText
+            primary={option.gregorianLabel}
+            secondary={option.hijriLabel}
+          />
+        </MenuItem>
+      ))}
+    </Menu>
+  );
 
   if (isMobile) {
     return (
@@ -50,7 +101,6 @@ export default function CalendarToolbar({
           borderRadius: 0,
         }}
       >
-        {/* Row 1: Prev | centered label | Next */}
         <Box
           sx={{
             display: "flex",
@@ -63,20 +113,13 @@ export default function CalendarToolbar({
             <ChevronLeft />
           </IconButton>
 
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            sx={{ flex: 1, textAlign: "center" }}
-          >
-            {toolbarLabel}
-          </Typography>
+          {renderMonthButton({ mx: 0.5 })}
 
           <IconButton size="small" onClick={goNext} aria-label="Next">
             <ChevronRight />
           </IconButton>
         </Box>
 
-        {/* Row 2: View toggle | Today button */}
         <Box
           sx={{
             display: "flex",
@@ -109,11 +152,15 @@ export default function CalendarToolbar({
             </Button>
           </Tooltip>
         </Box>
+
+        {renderMonthMenu(
+          { horizontal: "center", vertical: "bottom" },
+          { horizontal: "center", vertical: "top" },
+        )}
       </Paper>
     );
   }
 
-  // ── Desktop layout ──────────────────────────────────────────────────────
   return (
     <Paper
       elevation={0}
@@ -147,9 +194,7 @@ export default function CalendarToolbar({
         <ChevronRight />
       </IconButton>
 
-      <Typography variant="subtitle1" fontWeight={600} sx={{ flex: 1, mx: 1 }}>
-        {toolbarLabel}
-      </Typography>
+      {renderMonthButton({ mx: 1 })}
 
       <ToggleButtonGroup
         value={currentView}
@@ -161,6 +206,11 @@ export default function CalendarToolbar({
         <ToggleButton value="week">Week</ToggleButton>
         <ToggleButton value="day">Day</ToggleButton>
       </ToggleButtonGroup>
+
+      {renderMonthMenu(
+        { horizontal: "center", vertical: "bottom" },
+        { horizontal: "center", vertical: "top" },
+      )}
     </Paper>
   );
 }

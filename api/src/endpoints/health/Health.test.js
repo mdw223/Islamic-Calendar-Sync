@@ -39,14 +39,30 @@ describe("Health routes", () => {
 
   test("GET /db returns connected when query succeeds", async () => {
     const handler = getRouteHandler("/db");
-    poolQuery.mockResolvedValue({});
+    poolQuery
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({
+        rows: [{ migrationid: "004_add_schema_migrations_table", appliedat: "2026-04-16T00:00:00.000Z" }],
+      })
+      .mockResolvedValueOnce({ rows: [{ pendingcount: 0 }] });
     const req = {};
     const res = { json: jest.fn().mockReturnThis(), status: jest.fn().mockReturnThis() };
 
     await handler(req, res);
 
     expect(poolQuery).toHaveBeenCalledWith("SELECT 1");
-    expect(res.json).toHaveBeenCalledWith({ status: "OK", database: "connected" });
+    expect(res.json).toHaveBeenCalledWith({
+      status: "OK",
+      database: "connected",
+      migrations: {
+        trackingAvailable: true,
+        latestApplied: {
+          id: "004_add_schema_migrations_table",
+          appliedAt: "2026-04-16T00:00:00.000Z",
+        },
+        pendingCount: 0,
+      },
+    });
   });
 
   test("GET /db returns 503 and logs when query fails", async () => {

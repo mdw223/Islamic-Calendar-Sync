@@ -1,8 +1,3 @@
-import { EventTypeId } from "../Constants";
-
-// ── Allowed eventTypeId values ──────────────────────────────────────────────
-const VALID_EVENT_TYPE_IDS = new Set(Object.values(EventTypeId));
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Returns true when `v` is a non-empty string (after trimming). */
@@ -29,8 +24,6 @@ export const defaultEvent = Object.freeze({
   isAllDay: true,
   description: null,
   hide: false,
-  eventTypeId: EventTypeId.CUSTOM,
-  isTask: false,
   islamicDefinitionId: null,
   hijriMonth: null,
   hijriDay: null,
@@ -52,8 +45,6 @@ export function fromApiRow(row) {
     isAllDay: row.isallday ?? true,
     description: row.description ?? null,
     hide: row.hide ?? false,
-    eventTypeId: row.eventtypeid ?? EventTypeId.CUSTOM,
-    isTask: row.istask ?? false,
     islamicDefinitionId: row.islamicdefinitionid ?? null,
     hijriMonth: row.hijrimonth ?? null,
     hijriDay: row.hijriday ?? null,
@@ -84,8 +75,6 @@ export class Event {
     this.isAllDay = normalized.isAllDay ?? true;
     this.description = normalized.description ?? null;
     this.hide = normalized.hide ?? false;
-    this.eventTypeId = normalized.eventTypeId ?? EventTypeId.CUSTOM;
-    this.isTask = normalized.isTask ?? false;
     this.hijriMonth = normalized.hijriMonth ?? null;
     this.hijriDay = normalized.hijriDay ?? null;
     this.durationDays = normalized.durationDays ?? null;
@@ -124,15 +113,8 @@ export class Event {
       errors.push("endDate must not be earlier than startDate.");
     }
 
-    // eventTypeId — must be one of the known EventTypeId values.
-    if (!VALID_EVENT_TYPE_IDS.has(this.eventTypeId)) {
-      errors.push(
-        `eventTypeId must be one of [${[...VALID_EVENT_TYPE_IDS].join(", ")}], got ${this.eventTypeId}.`,
-      );
-    }
-
     // Boolean coercion sanity — catch accidental string / number values.
-    for (const flag of ["isAllDay", "hide", "isTask"]) {
+    for (const flag of ["isAllDay", "hide"]) {
       if (typeof this[flag] !== "boolean") {
         errors.push(`${flag} must be a boolean, got ${typeof this[flag]}.`);
       }
@@ -175,8 +157,6 @@ export class Event {
       isAllDay: this.isAllDay,
       description: this.description,
       hide: this.hide,
-      eventTypeId: this.eventTypeId,
-      isTask: this.isTask,
       islamicDefinitionId: this.islamicDefinitionId,
       hijriMonth: this.hijriMonth,
       hijriDay: this.hijriDay,

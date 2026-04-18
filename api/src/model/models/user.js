@@ -19,6 +19,7 @@ export class User {
     this.calculationMethodId = null;
     this.hanafi = null;
     this.use24HourTime = null;
+    this.showArabicEventText = null;
     this.salt = null;
     this.emailUpdates = null;
     this.notifications = null;
@@ -52,6 +53,7 @@ export class User {
     user.calculationMethodId = row.calculationmethodid;
     user.hanafi = row.hanafi;
     user.use24HourTime = row.use24hourtime ?? false;
+    user.showArabicEventText = row.showarabiceventtext ?? true;
     user.salt = row.salt;
     user.emailUpdates = row.emailupdates;
     user.notifications = row.notifications;
@@ -78,6 +80,7 @@ export class User {
       calculationMethodId: this.calculationMethodId,
       hanafi: this.hanafi,
       use24HourTime: this.use24HourTime,
+      showArabicEventText: this.showArabicEventText,
       emailUpdates: this.emailUpdates,
       notifications: this.notifications,
       lastLogin: this.lastLogin,
