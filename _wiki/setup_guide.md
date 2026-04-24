@@ -240,17 +240,70 @@ NODE_ENV=production
 
 ## Google Cloud Console
 
-For Google OAuth login:
+For Google OAuth login you need an OAuth 2.0 application in [Google Cloud Console](https://console.cloud.google.com/). Follow the steps below to create one and wire it to the application.
 
-1. Create an OAuth 2.0 Client ID (Web application).
-2. **Authorized redirect URIs:**  
-   - Dev: `http://localhost:5000/api/auth/google/redirect`  
-   - Prod: `https://yourdomain.com/api/auth/google/redirect`
-3. **Authorized JavaScript origins:**  
-   - Dev: `http://localhost:5000`  
+### 1. Create or select a project
+
+Go to [console.cloud.google.com](https://console.cloud.google.com/), click the project picker at the top, and either select an existing project or create a new one.
+
+### 2. Enable required APIs
+
+Navigate to **APIs & Services > Library** and enable the following APIs:
+
+| API | Required for |
+|-----|-------------|
+| **Google People API** | Profile and email access during sign-in |
+| **Google Calendar API** | Reading and writing user calendar events |
+
+### 3. Configure the OAuth consent screen
+
+1. Navigate to **APIs & Services > OAuth consent screen**.
+2. Choose **External** (allows any Google account) or **Internal** (Google Workspace users only).
+3. Fill in: app name, user support email, and developer contact email.
+4. Under **Scopes**, add:
+   - `openid`
+   - `profile`
+   - `email`
+   - `https://www.googleapis.com/auth/calendar`
+5. While the app is in **Testing** mode, add any Google accounts that need to log in as **Test users**. Only listed users can authenticate until the app is published.
+
+### 4. Create OAuth 2.0 credentials
+
+1. Navigate to **APIs & Services > Credentials**.
+2. Click **+ Create Credentials > OAuth 2.0 Client ID**.
+3. Set **Application type** to **Web application**.
+4. Under **Authorized JavaScript origins**, add:
+   - Dev: `http://localhost:5000`
    - Prod: `https://yourdomain.com`
+5. Under **Authorized redirect URIs**, add:
+   - Dev: `http://localhost:5000/api/auth/google/redirect`
+   - Prod: `https://yourdomain.com/api/auth/google/redirect`
+6. Click **Create**. Copy the **Client ID** and **Client Secret** that appear.
 
-See [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md) for full details.
+> **Important:** The redirect URI registered in Google Cloud Console must match `GOOGLE_CALLBACK_URL` in your `.env` **exactly** — including scheme, host, port, and path. Any mismatch produces `Error 400: redirect_uri_mismatch`.
+
+### 5. Set environment variables
+
+Add the credentials to your `.env`:
+
+```bash
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/redirect
+APP_BASE_URL=http://localhost:5000
+```
+
+For production, update both values to your domain (see [Configuration examples — Production](#production) above and the Production Deployment section in the main project report).
+
+### How the OAuth flow works
+
+The API uses `passport-google-oidc` with `accessType: "offline"` and `prompt: "consent"` so Google returns a **refresh token** on first login. This refresh token (along with the access token) is stored in the `PROVIDER` database table for future Google Calendar API calls.
+
+After the callback, the server does **not** use Google's token to authenticate ongoing API requests. Instead, it issues its own short-lived **application JWT** and redirects the browser to `{APP_BASE_URL}#token={jwt}`. The frontend reads the token from the URL hash, stores it, and sends `Authorization: Bearer <token>` on every subsequent API request. The httpOnly cookie variant means the JWT is never accessible to JavaScript on the client, which reduces XSS risk.
+
+Google tokens (stored in `PROVIDER`) are used exclusively when calling Google APIs (e.g. Calendar). The application JWT (signed with `JWT_SECRET`) is what the `passport-jwt` strategy validates on every protected route.
+
+See [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md) for the complete technical breakdown of all backend components, the end-to-end flow, and the token summary table.
 
 ---
 
