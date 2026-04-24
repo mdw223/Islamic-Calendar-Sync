@@ -579,9 +579,28 @@ The following steps describe deploying to a Linux VPS (e.g., Contabo).
 
 Register a domain name with a registrar of your choice (e.g., Namecheap, Google Domains). Point the domain's DNS A record to your VPS IP address.
 
-#### 2. Provision a VPS
+#### 2. Purchase and Provision a VPS
 
-Create a VPS running Ubuntu 22.04 LTS. Ensure Docker and Docker Compose are installed:
+A VPS (Virtual Private Server) gives you a dedicated Linux machine in the cloud to host the application. [Contabo](https://contabo.com) is a cost-effective option; alternatives include [Hetzner](https://www.hetzner.com/), [DigitalOcean](https://www.digitalocean.com/), [Vultr](https://www.vultr.com/), and [Linode (Akamai)](https://www.linode.com/).
+
+**Purchasing from Contabo:**
+
+1. Go to [contabo.com](https://contabo.com) and navigate to **VPS** plans.
+2. Select a plan. For a small production deployment the **VPS S** (4 vCPU, 8 GB RAM, 100 GB SSD) is a reasonable starting point.
+3. During checkout:
+   - **Region:** choose the datacenter closest to your intended users.
+   - **Operating System:** select **Ubuntu 22.04 LTS** (64-bit).
+   - **Access:** set a strong root password, or — preferred — paste in an **SSH public key** so you can log in without a password. Generate one locally if needed:
+     ```bash
+     ssh-keygen -t ed25519 -C "your-email@example.com"
+     cat ~/.ssh/id_ed25519.pub   # paste this value into Contabo's SSH key field
+     ```
+4. Complete the order. Contabo sends a confirmation email with your **VPS IP address** and access details within a few minutes.
+5. Point your domain's DNS **A record** to that IP address (do this now; DNS propagation can take up to 24 hours, though it usually resolves in under an hour).
+
+**Install Docker on the VPS:**
+
+Once you receive the IP address, SSH in and install Docker:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -590,10 +609,19 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker $USER  # allow running docker without sudo (re-login required)
 ```
 
+Log out and back in after the `usermod` step so the group change takes effect.
+
 #### 3. SSH Into the VPS
 
 ```bash
 ssh user@your-server-ip
+```
+
+If you added an SSH key during purchase, authentication happens automatically. If you used a root password, log in as `root` and then create a non-root user for day-to-day work:
+
+```bash
+adduser deploy
+usermod -aG sudo deploy
 ```
 
 #### 4. Clone the Repository and Configure
@@ -606,7 +634,44 @@ cp .env.prod.example .env.prod  # or create .env.prod manually
 
 Edit `.env.prod` with production values: your domain's OAuth callback URLs, a strong `JWT_SECRET`, production database credentials, and your Resend API key.
 
-#### 5. Configure Google Cloud Console for Production
+#### 5. Set Up Resend for Transactional Email
+
+The magic-link login feature sends one-time login emails via [Resend](https://resend.com). You need a Resend account and a verified sending domain before magic-link login will work in production.
+
+**Create a Resend account:**
+
+1. Go to [resend.com](https://resend.com) and sign up for a free account.
+2. The free tier allows up to **3,000 emails per month** and **100 emails per day** — sufficient for a small deployment.
+
+**Verify your sending domain:**
+
+Resend requires you to verify the domain you will send email from (e.g. `yourdomain.com`) so that emails are not marked as spam.
+
+1. In the Resend dashboard, navigate to **Domains** and click **Add Domain**.
+2. Enter your domain name (e.g. `yourdomain.com`).
+3. Resend provides a set of **DNS records** to add to your domain registrar:
+   - An **SPF** `TXT` record (authorizes Resend to send on your behalf).
+   - A **DKIM** `TXT` record (cryptographically signs outgoing mail).
+   - An optional **DMARC** `TXT` record (recommended; instructs receiving servers how to handle unauthenticated mail).
+4. Add these records in your registrar's DNS settings (e.g. Namecheap, Cloudflare). DNS changes can take up to 24 hours to propagate, but usually resolve within minutes.
+5. Click **Verify** in the Resend dashboard once the records are in place.
+
+**Create an API key:**
+
+1. In the Resend dashboard, navigate to **API Keys** and click **Create API Key**.
+2. Give it a descriptive name (e.g. `islamic-calendar-sync-prod`) and set the permission to **Sending access**.
+3. Copy the key — it is only shown once.
+
+**Update `.env.prod`:**
+
+```bash
+RESEND_API_KEY=re_your_api_key_here
+EMAIL_FROM=noreply@yourdomain.com
+```
+
+`EMAIL_FROM` must use the verified domain (or a subdomain of it, e.g. `noreply@yourdomain.com`). Resend will reject sends from unverified addresses.
+
+#### 6. Configure Google Cloud Console for Production
 
 Google OAuth will reject login attempts if the production domain is not registered in the Cloud Console. Update your OAuth 2.0 credentials **before** starting the containers.
 
@@ -633,7 +698,7 @@ Google OAuth will reject login attempts if the production domain is not register
 
 If your app is still in **Testing** mode on the OAuth consent screen, add each production Google account as a **Test user** under **APIs & Services > OAuth consent screen**, or publish the app to allow all Google accounts to authenticate.
 
-#### 6. Set Up SSL Certificates (HTTPS)
+#### 7. Set Up SSL Certificates (HTTPS)
 
 Install Certbot and obtain a certificate for your domain:
 
@@ -644,7 +709,7 @@ sudo certbot certonly --standalone -d yourdomain.com
 
 Certificates are stored in `/etc/letsencrypt/live/yourdomain.com/`. Update `proxy/nginx.conf` to add HTTPS configuration and mount the certificate volumes into the `proxy` service in `compose.prod.yml`.
 
-#### 7. Build and Start Production Services
+#### 8. Build and Start Production Services
 
 ```bash
 docker compose -f compose.prod.yml up --build -d
@@ -652,7 +717,7 @@ docker compose -f compose.prod.yml up --build -d
 
 The `-d` flag runs the containers in the background. The application will be accessible at `https://yourdomain.com`.
 
-#### 8. Run Schema Migrations
+#### 9. Run Schema Migrations
 
 For subsequent deployments, run any new migration scripts:
 
@@ -660,7 +725,7 @@ For subsequent deployments, run any new migration scripts:
 docker exec api_service_prod node scripts/runMigrations.js up
 ```
 
-#### 9. Manage Services
+#### 10. Manage Services
 
 ```bash
 docker compose -f compose.prod.yml logs -f         # tail logs
