@@ -1,4 +1,8 @@
 version: '3.8'
+# Production: API + data stores + Nginx. Frontend (app/) is deployed separately (e.g. GitHub Pages).
+# Local dev full stack still uses compose.yml + proxy/nginx.conf
+#
+# Set API_DOMAIN in .env.prod (e.g. api.yourdomain.com). TLS: host /etc/letsencrypt + ./certbot/www; see deployment-guide.md section 7.
 services:
   api:
     build:
@@ -10,33 +14,31 @@ services:
     restart: unless-stopped
     depends_on:
       - database
-
-  app:
-    build:
-      context: ./app
-      dockerfile: Dockerfile.prod
-    container_name: react_app_prod
-    restart: unless-stopped
-    depends_on:
-      - api
+      - redis
 
   proxy:
     image: nginx:latest
     container_name: nginx_proxy_prod
+    entrypoint: ["/bin/sh", "/entrypoint-prod.sh"]
     ports:
-      - "5000:80"
+      - "80:80"
       - "443:443"
+    env_file:
+      - .env.prod
     volumes:
-      - ./proxy/nginx.conf:/etc/nginx/templates/default.conf.template
+      - ./proxy/entrypoint-prod.sh:/entrypoint-prod.sh:ro
+      - ./proxy/nginx.prod.http.template:/templates/nginx.prod.http.template:ro
+      - ./proxy/nginx.prod.https.template:/templates/nginx.prod.https.template:ro
+      - ./certbot/www:/var/www/certbot:rw
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - api
-      - app
 
   redis:
     image: redis:latest
     container_name: ics_redis_prod
-    ports:
-      - "6379:6379"
+    # Not published: API reaches Redis on the internal Docker network only.
+    restart: unless-stopped
 
   database:
     image: postgres:15

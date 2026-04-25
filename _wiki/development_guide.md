@@ -29,7 +29,7 @@ This is a full-stack application with:
 ### Prerequisites
 
 - Ensure you have `compose.prod.yml` and `.env.prod` in the project root.
-- Production images should be built using `Dockerfile.prod` for the frontend and a production-ready `Dockerfile` for the backend.
+- Production images for the API use `api/Dockerfile` (see `compose.prod.yml`). The SPA is not built or served by this stack when you use split hosting (GitHub Pages + VPS); see **Production Deployment** below.
 
 ### Start Production Stack
 
@@ -43,11 +43,11 @@ docker compose -f compose.prod.yml up -d --build
 docker compose -f compose.prod.yml down
 ```
 
-### Accessing Production
+### Accessing Production (VPS / `compose.prod.yml`)
 
-- **Frontend**: http://localhost:5000
-- **Backend API**: http://localhost/api
-- **Database**: localhost:5432 (credentials from .env.prod)
+- **API (via Nginx)**: `http://localhost/api` when testing the stack on your machine (Nginx maps host port **80** to container 80; use `http://localhost/api/...` not port 5000).
+- **Database**: internal to Docker; from the host, use `localhost:5432` only if you add a `ports` mapping (not included by default—connect with `docker exec` or add a port if required).
+- **Redis**: not exposed on the host in production (API uses the `redis` service name on the internal network).
 
 ### Environment Variables
 
@@ -55,15 +55,107 @@ docker compose -f compose.prod.yml down
 
 ### Container Names (Production)
 
-- api_service_prod (port 3000)
-- react_app_prod (port 5000)
-- ics_postgres_db_prod (port 5432)
-- nginx_proxy_prod (port 8080)
+- `api_service_prod` (port 3000, internal; reached via Nginx)
+- `nginx_proxy_prod` (host **80** / **443** → container; TLS is configured in-container when Let’s Encrypt certs exist for `API_DOMAIN`; see `deployment-guide.md`)
+- `ics_postgres_db_prod`
+- `ics_redis_prod` (not published to the host)
 
 ### Notes
 
 - For production, hot reloading is typically disabled.
 - Make sure to use secure credentials and review `.env.prod` for sensitive values.
+- If you deploy more web apps over time, scale vertically by moving to a larger Contabo VPS plan before splitting workloads across multiple VPS instances.
+
+## Production Deployment (Contabo VPS + GitHub Pages + Namecheap)
+
+This project can run with a split deployment model:
+
+- **Backend** on Contabo VPS (`api`, `database`, `redis`, `proxy` using `proxy/entrypoint-prod.sh` and `proxy/nginx.prod.*.template`)
+- **Frontend** on GitHub Pages (built from `app/` via GitHub Actions)
+- **Domain/DNS** managed in Namecheap
+
+Recommended public URLs:
+
+- Frontend: `https://app.yourdomain.com`
+- Backend API: `https://api.yourdomain.com`
+
+### DNS Records in Namecheap
+
+Create these records in Namecheap Advanced DNS:
+
+1. `CNAME` -> Host: `app` -> Value: `<your-github-username>.github.io`
+2. `A` -> Host: `api` -> Value: `<your-contabo-vps-public-ip>`
+
+Optional root-domain setup:
+
+- Point `@` to GitHub Pages IPs if you want `https://yourdomain.com` to serve frontend.
+
+### GitHub Pages workflow (actions/deploy-pages)
+
+The workflow is committed at:
+
+- `.github/workflows/deploy-frontend-pages.yml`
+
+It:
+
+- Builds Vite frontend in `app/`
+- Uses `actions/upload-pages-artifact`
+- Deploys using `actions/deploy-pages`
+
+GitHub setup steps:
+
+1. Repository Settings -> Pages -> Source: **GitHub Actions**
+2. Add secret in repository settings (must include the `/api` path; it matches Nginx and `HttpClient`):
+   - `VITE_API_BASE_URL=https://api.yourdomain.com/api`
+3. In Pages custom domain, set:
+   - `app.yourdomain.com`
+4. Enable **Enforce HTTPS** after certificate is issued.
+
+### Backend deployment on Contabo VPS
+
+On VPS:
+
+1. Install Docker and Docker Compose plugin.
+2. Open firewall ports: `22`, `80`, `443`.
+3. Clone repo and create `.env.prod`.
+4. Start production stack:
+
+```bash
+docker compose -f compose.prod.yml up -d --build
+```
+
+5. Verify:
+
+```bash
+docker compose -f compose.prod.yml ps
+docker compose -f compose.prod.yml logs -f api
+```
+
+### Important backend adjustments for split hosting
+
+Because the SPA is on GitHub Pages, production uses **API-only** Nginx (`proxy/nginx.prod.http.template` / `proxy/nginx.prod.https.template` selected by `proxy/entrypoint-prod.sh`) and `compose.prod.yml` no longer includes the `app` service. Remaining work for a working split deploy:
+
+- Configure backend CORS to allow:
+  - `https://app.yourdomain.com`
+  - (optional) `https://yourdomain.com`
+
+If using cookies/sessions across domains, ensure secure cross-site cookie settings and matching CORS credentials configuration.
+
+### TLS/HTTPS recommendations
+
+- GitHub Pages provides TLS for `app.yourdomain.com` (custom domain + **Enforce HTTPS**).
+- API TLS: set `API_DOMAIN` in `.env.prod`, issue Let’s Encrypt certs on the VPS, mount `/etc/letsencrypt` and restart `proxy` (full steps in `deployment-guide.md` section 7).
+- Keep both frontend and backend strictly HTTPS in production.
+
+### Deployment validation checklist
+
+After rollout, verify:
+
+1. `https://app.yourdomain.com` loads successfully.
+2. Frontend API calls go to `https://api.yourdomain.com/api/...` (see `VITE_API_BASE_URL`).
+3. No CORS errors in browser console.
+4. API health endpoints return success.
+5. Certificates are valid on both subdomains.
 
 ---
 
@@ -321,7 +413,11 @@ project/
 │   ├── package.json
 │   └── src/
 ├── proxy/                         # Nginx reverse proxy
-│   └── nginx.conf
+│   ├── nginx.conf                 # Dev (`compose.yml`): /api + React
+│   ├── entrypoint-prod.sh         # Prod: picks HTTP vs HTTPS template from Let’s Encrypt presence
+│   ├── nginx.prod.http.template   # Prod: HTTP + ACME (until certs exist)
+│   └── nginx.prod.https.template  # Prod: HTTPS + HTTP→HTTPS redirect (after certs exist)
+├── certbot/www/                   # Prod: ACME webroot (mounted into `proxy`; keep in repo via .gitkeep)
 └── Sql.Migrations/                # Database initialization scripts
 
 ### Applying incremental DB migrations (existing databases)

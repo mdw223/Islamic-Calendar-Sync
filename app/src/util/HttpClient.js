@@ -8,7 +8,8 @@ function handleResponse(response) {
 }
 
 export default class HTTPClient {
-  static baseURL = '/api'; // OR so it works on page refresh
+  // Local dev: relative `/api` matches the dev proxy. Production (GitHub Pages): set at build time, e.g. `https://api.example.com/api`.
+  static baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
   // methods are static bec: no instance state/constructor
 
