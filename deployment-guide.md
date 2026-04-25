@@ -11,7 +11,7 @@ The examples below use:
 - Frontend source in `app/` (Vite build)
 - Backend source in `api/`
 - Domain: `yourdomain.com`
-- Frontend URL: `https://app.yourdomain.com`
+- Frontend URL: `https://www.yourdomain.com`
 - API URL: `https://api.yourdomain.com`
 
 ---
@@ -19,7 +19,7 @@ The examples below use:
 ## 1) Target architecture
 
 - `api.yourdomain.com` -> Contabo VPS public IP -> Nginx reverse proxy -> API container
-- `app.yourdomain.com` -> GitHub Pages
+- `www.yourdomain.com` -> GitHub Pages
 - Frontend calls backend at `https://api.yourdomain.com/api/...` (see `VITE_API_BASE_URL`)
 
 This separates static hosting (cheap and simple) from backend runtime (VPS control).
@@ -42,7 +42,7 @@ In Namecheap -> Domain List -> Manage -> Advanced DNS, create these records:
 
 1. **Frontend subdomain (GitHub Pages)**
    - Type: `CNAME`
-   - Host: `app`
+   - Host: `www`
    - Value: `<your-github-username>.github.io`
    - TTL: Automatic
 
@@ -58,7 +58,7 @@ If you also want root domain (`yourdomain.com`) to show frontend, add:
 - Host: `@`
 - Value: GitHub Pages IPs (from GitHub docs)
 
-Then point GitHub Pages custom domain to root domain instead of `app`.
+Then point GitHub Pages custom domain to root domain instead of `www`.
 
 ---
 
@@ -72,12 +72,20 @@ The repo is configured for split hosting:
 
 ### 4.1 CORS for GitHub Pages domain
 
-Your backend currently does not show CORS config. Add explicit CORS handling for:
+The API supports explicit CORS allowlisting via `CORS_ALLOWED_ORIGINS` and enables credentials (`Access-Control-Allow-Credentials: true`) for cookie-based auth.
 
-- `https://app.yourdomain.com`
+Set `CORS_ALLOWED_ORIGINS` in `.env.prod` as a comma-separated list:
+
+- `https://www.yourdomain.com`
 - optionally `https://yourdomain.com` (if root serves frontend)
 
-Also support credentials if using cookie-based sessions.
+Example:
+
+```env
+CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com
+```
+
+This is read by `api/src/config.js` and applied in `api/src/index.js` using the Express `cors` middleware.
 
 ---
 
@@ -93,10 +101,27 @@ Install system updates and tooling:
 
 ```bash
 apt update && apt upgrade -y
-apt install -y ca-certificates curl gnupg ufw
 ```
 
 Install Docker Engine + Docker Compose plugin (official Docker docs method).
+
+#### docker-compose-plugin isn't in Ubuntu's default repos — it comes from Docker's official repo.
+
+#### Add Docker's official repo first
+
+```bash
+apt-get install -y ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+```
+
+```bash
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu noble stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
 
 Create and secure firewall:
 
@@ -113,15 +138,34 @@ ufw --force enable
 
 ### 6.1 Clone repo and set production env
 
+If your repository is private, the VPS needs credentials for future `git pull` operations. A deploy key is the safest simple option (repo-scoped, revocable, no PAT stored on server):
+
+1. Generate a dedicated SSH key pair on the VPS:
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/IslamicCalendarSync_deploy -N ""
+   ```
+2. Copy the public key:
+   ```bash
+   cat ~/.ssh/IslamicCalendarSync_deploy.pub
+   ```
+3. In GitHub repo settings, add that public key under **Deploy keys** (read-only is usually enough).
+4. Configure SSH on the VPS to use that key for GitHub (`~/.ssh/config`):
+   ```sshconfig
+   Host github.com
+     IdentityFile ~/.ssh/IslamicCalendarSync_deploy
+     IdentitiesOnly yes
+   ```
+
+After this, `git pull` works on the VPS without logging into your GitHub account on the server.
+
 ```bash
-mkdir -p /opt/islamic-calendar-sync
-cd /opt/islamic-calendar-sync
-git clone <your-repo-url> .
+git clone git@github.com:<your-org-or-user>/<your-repo>.git .
 ```
 
 Create `.env.prod` with all production variables used by API and Postgres, plus:
 
 - `API_DOMAIN=api.yourdomain.com` (must match the public API hostname and the Namecheap `A` record for `api`; used by Nginx `server_name` and TLS paths).
+- `CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com` (second origin optional if you do not serve the frontend from root).
 
 Do not commit `.env.prod`.
 
@@ -148,11 +192,11 @@ TLS is terminated **inside the Nginx container** (`proxy` service). GitHub Pages
 
 ### 7.1 What each system does
 
-| System | Role for HTTPS |
-|--------|----------------|
-| **Namecheap** | DNS only: `api` → VPS IP. No API certificate here. |
+| System          | Role for HTTPS                                                                                                                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Namecheap**   | DNS only: `api` → VPS IP. No API certificate here.                                                                                                                                                    |
 | **Contabo VPS** | Hosts Docker; Nginx serves port **80** (ACME + HTTP or redirect) and **443** (API over TLS). Let’s Encrypt files live on the host at `/etc/letsencrypt` and are mounted read-only into the container. |
-| **GitHub** | Issues and renews TLS for `app.yourdomain.com` on Pages. |
+| **GitHub**      | Issues and renews TLS for `www.yourdomain.com` on Pages.                                                                                                                                              |
 
 ### 7.2 How the repo behaves
 
@@ -201,7 +245,7 @@ Certbot installs a **systemd** timer on Ubuntu (`certbot.timer`). With standalon
 After renewal, reload Nginx in the container so it picks up renewed files (same paths):
 
 ```bash
-cd /opt/islamic-calendar-sync
+cd IslamicCalendarSync
 docker compose -f compose.prod.yml exec proxy nginx -s reload
 ```
 
@@ -209,7 +253,7 @@ Optional: add a deploy hook that temporarily stops/starts the proxy around renew
 
 ### 7.7 Frontend (GitHub Pages) HTTPS
 
-No VPS change required for the SPA certificate. In GitHub: **Settings → Pages → Custom domain** set to `app.yourdomain.com`, wait for verification, then enable **Enforce HTTPS** (section 10).
+No VPS change required for the SPA certificate. In GitHub: **Settings → Pages → Custom domain** set to `www.yourdomain.com`, wait for verification, then enable **Enforce HTTPS** (section 10).
 
 ### 7.8 Build-time API URL
 
@@ -243,7 +287,7 @@ name: Deploy Frontend to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
       - "app/**"
       - ".github/workflows/deploy-frontend-pages.yml"
@@ -313,13 +357,13 @@ After workflow success, your site is live on GitHub Pages.
 In GitHub:
 
 1. Settings -> Pages -> Custom domain
-2. Enter: `app.yourdomain.com`
+2. Enter: `www.yourdomain.com`
 3. Save and wait for DNS verification
 4. Enable "Enforce HTTPS" once available
 
 Optional `CNAME` file in frontend build source:
 
-- Content: `app.yourdomain.com`
+- Content: `www.yourdomain.com`
 
 GitHub Pages may create/manage this automatically after custom domain is set.
 
@@ -329,7 +373,7 @@ GitHub Pages may create/manage this automatically after custom domain is set.
 
 Run these checks after deployment:
 
-1. `https://app.yourdomain.com` loads frontend
+1. `https://www.yourdomain.com` loads frontend
 2. Frontend API calls target `https://api.yourdomain.com/api/...` (build-time `VITE_API_BASE_URL` includes `/api`)
 3. API health endpoint responds
 4. Browser shows valid HTTPS cert for both subdomains

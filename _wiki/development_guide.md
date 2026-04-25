@@ -76,14 +76,14 @@ This project can run with a split deployment model:
 
 Recommended public URLs:
 
-- Frontend: `https://app.yourdomain.com`
+- Frontend: `https://www.yourdomain.com`
 - Backend API: `https://api.yourdomain.com`
 
 ### DNS Records in Namecheap
 
 Create these records in Namecheap Advanced DNS:
 
-1. `CNAME` -> Host: `app` -> Value: `<your-github-username>.github.io`
+1. `CNAME` -> Host: `www` -> Value: `<your-github-username>.github.io`
 2. `A` -> Host: `api` -> Value: `<your-contabo-vps-public-ip>`
 
 Optional root-domain setup:
@@ -108,7 +108,7 @@ GitHub setup steps:
 2. Add secret in repository settings (must include the `/api` path; it matches Nginx and `HttpClient`):
    - `VITE_API_BASE_URL=https://api.yourdomain.com/api`
 3. In Pages custom domain, set:
-   - `app.yourdomain.com`
+   - `www.yourdomain.com`
 4. Enable **Enforce HTTPS** after certificate is issued.
 
 ### Backend deployment on Contabo VPS
@@ -136,14 +136,14 @@ docker compose -f compose.prod.yml logs -f api
 Because the SPA is on GitHub Pages, production uses **API-only** Nginx (`proxy/nginx.prod.https.template` mounted directly by `compose.prod.yml`) and no longer includes the `app` service. Remaining work for a working split deploy:
 
 - Configure backend CORS to allow:
-  - `https://app.yourdomain.com`
+  - `https://www.yourdomain.com`
   - (optional) `https://yourdomain.com`
 
 If using cookies/sessions across domains, ensure secure cross-site cookie settings and matching CORS credentials configuration.
 
 ### TLS/HTTPS recommendations
 
-- GitHub Pages provides TLS for `app.yourdomain.com` (custom domain + **Enforce HTTPS**).
+- GitHub Pages provides TLS for `www.yourdomain.com` (custom domain + **Enforce HTTPS**).
 - API TLS: set `API_DOMAIN` in `.env.prod`, issue Let’s Encrypt certs on the VPS, mount `/etc/letsencrypt` and restart `proxy` (full steps in `deployment-guide.md` section 7).
 - Keep both frontend and backend strictly HTTPS in production.
 
@@ -151,7 +151,7 @@ If using cookies/sessions across domains, ensure secure cross-site cookie settin
 
 After rollout, verify:
 
-1. `https://app.yourdomain.com` loads successfully.
+1. `https://www.yourdomain.com` loads successfully.
 2. Frontend API calls go to `https://api.yourdomain.com/api/...` (see `VITE_API_BASE_URL`).
 3. No CORS errors in browser console.
 4. API health endpoints return success.
