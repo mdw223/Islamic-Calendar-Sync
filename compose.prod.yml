@@ -19,16 +19,13 @@ services:
   proxy:
     image: nginx:latest
     container_name: nginx_proxy_prod
-    entrypoint: ["/bin/sh", "/entrypoint-prod.sh"]
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - .env.prod
     volumes:
-      - ./proxy/entrypoint-prod.sh:/entrypoint-prod.sh:ro
-      - ./proxy/nginx.prod.http.template:/templates/nginx.prod.http.template:ro
-      - ./proxy/nginx.prod.https.template:/templates/nginx.prod.https.template:ro
+      - ./proxy/nginx.prod.https.template:/etc/nginx/templates/default.conf.template:ro
       - ./certbot/www:/var/www/certbot:rw
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:

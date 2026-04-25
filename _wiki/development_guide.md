@@ -70,7 +70,7 @@ docker compose -f compose.prod.yml down
 
 This project can run with a split deployment model:
 
-- **Backend** on Contabo VPS (`api`, `database`, `redis`, `proxy` using `proxy/entrypoint-prod.sh` and `proxy/nginx.prod.*.template`)
+- **Backend** on Contabo VPS (`api`, `database`, `redis`, `proxy` using `proxy/nginx.prod.https.template`)
 - **Frontend** on GitHub Pages (built from `app/` via GitHub Actions)
 - **Domain/DNS** managed in Namecheap
 
@@ -133,7 +133,7 @@ docker compose -f compose.prod.yml logs -f api
 
 ### Important backend adjustments for split hosting
 
-Because the SPA is on GitHub Pages, production uses **API-only** Nginx (`proxy/nginx.prod.http.template` / `proxy/nginx.prod.https.template` selected by `proxy/entrypoint-prod.sh`) and `compose.prod.yml` no longer includes the `app` service. Remaining work for a working split deploy:
+Because the SPA is on GitHub Pages, production uses **API-only** Nginx (`proxy/nginx.prod.https.template` mounted directly by `compose.prod.yml`) and no longer includes the `app` service. Remaining work for a working split deploy:
 
 - Configure backend CORS to allow:
   - `https://app.yourdomain.com`
@@ -414,9 +414,7 @@ project/
 │   └── src/
 ├── proxy/                         # Nginx reverse proxy
 │   ├── nginx.conf                 # Dev (`compose.yml`): /api + React
-│   ├── entrypoint-prod.sh         # Prod: picks HTTP vs HTTPS template from Let’s Encrypt presence
-│   ├── nginx.prod.http.template   # Prod: HTTP + ACME (until certs exist)
-│   └── nginx.prod.https.template  # Prod: HTTPS + HTTP→HTTPS redirect (after certs exist)
+│   └── nginx.prod.https.template  # Prod: HTTPS + HTTP→HTTPS redirect (requires existing Let’s Encrypt certs)
 ├── certbot/www/                   # Prod: ACME webroot (mounted into `proxy`; keep in repo via .gitkeep)
 └── Sql.Migrations/                # Database initialization scripts
 

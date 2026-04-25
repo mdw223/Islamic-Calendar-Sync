@@ -67,7 +67,7 @@ Then point GitHub Pages custom domain to root domain instead of `app`.
 The repo is configured for split hosting:
 
 - `compose.prod.yml` runs `api`, `database`, `redis`, and `proxy` only (no `app` container).
-- Production Nginx is API-only (strips the `/api` path prefix, same contract as `proxy/nginx.conf` in development). Config is built from `proxy/nginx.prod.http.template` or `proxy/nginx.prod.https.template` by `proxy/entrypoint-prod.sh`, depending on whether Let’s Encrypt files exist for `API_DOMAIN`.
+- Production Nginx is API-only (strips the `/api` path prefix, same contract as `proxy/nginx.conf` in development) and uses `proxy/nginx.prod.https.template` directly.
 - `proxy/nginx.conf` is still used by `compose.yml` for local full-stack dev (React + API behind one port).
 
 ### 4.1 CORS for GitHub Pages domain
@@ -156,25 +156,13 @@ TLS is terminated **inside the Nginx container** (`proxy` service). GitHub Pages
 
 ### 7.2 How the repo behaves
 
-1. `proxy/entrypoint-prod.sh` checks for `/etc/letsencrypt/live/${API_DOMAIN}/fullchain.pem` inside the container (same path on the host under `/etc/letsencrypt`).
-2. **If the cert is missing:** Nginx uses `proxy/nginx.prod.http.template` — HTTP on port 80 only, including `/.well-known/acme-challenge/` for Certbot **webroot** issuance.
-3. **If the cert exists:** Nginx uses `proxy/nginx.prod.https.template` — HTTP redirects to HTTPS (except ACME challenges on port 80), and HTTPS on 443 for `/api`.
-
-After you obtain certificates for the first time, **restart the proxy** so the entrypoint picks the HTTPS template:
-
-```bash
-docker compose -f compose.prod.yml restart proxy
-```
+`compose.prod.yml` mounts `proxy/nginx.prod.https.template` directly as Nginx's active config template. This means the proxy expects certificate files to already exist at `/etc/letsencrypt/live/${API_DOMAIN}/...` when it starts.
 
 ### 7.3 Prerequisites before requesting a cert
 
 1. Namecheap **A** record for `api` points to the VPS public IP (section 3).
 2. Firewall allows **80** and **443** (section 5).
-3. Production stack is up so Nginx answers on port 80:
-
-```bash
-docker compose -f compose.prod.yml up -d --build
-```
+3. Stop anything already using ports 80/443 on the host while issuing the first cert (for example, stop the proxy container or any host web server).
 
 4. `.env.prod` includes `API_DOMAIN=api.yourdomain.com` (same hostname you pass to Certbot).
 
@@ -184,21 +172,20 @@ docker compose -f compose.prod.yml up -d --build
 apt install -y certbot
 ```
 
-### 7.5 Issue a certificate (webroot, recommended)
+### 7.5 Issue a certificate (standalone, first-time setup)
 
-From the **project root on the VPS** (same directory as `compose.prod.yml`), the compose file bind-mounts `./certbot/www` to `/var/www/certbot` in the container. Use that path as Certbot’s webroot on the **host**:
+For first-time issuance, use standalone mode on the VPS host:
 
 ```bash
-cd /opt/islamic-calendar-sync   # or your clone path
-certbot certonly --webroot -w "$(pwd)/certbot/www" -d api.yourdomain.com
+certbot certonly --standalone -d api.yourdomain.com
 ```
 
 Follow the prompts (email, agree to terms). Certbot writes certificates under `/etc/letsencrypt` on the host (default).
 
-Then restart the proxy so HTTPS is enabled:
+Then start or restart the production stack:
 
 ```bash
-docker compose -f compose.prod.yml restart proxy
+docker compose -f compose.prod.yml up -d --build
 ```
 
 Verify:
@@ -209,7 +196,7 @@ curl -sI https://api.yourdomain.com/api/health   # or your health path
 
 ### 7.6 Renewal
 
-Certbot installs a **systemd** timer on Ubuntu (`certbot.timer`). Renewals must still reach `/.well-known/acme-challenge/` on port 80 while Nginx is running; the HTTPS template keeps that path on HTTP before the redirect.
+Certbot installs a **systemd** timer on Ubuntu (`certbot.timer`). With standalone renewals, port 80 must be free during challenge validation.
 
 After renewal, reload Nginx in the container so it picks up renewed files (same paths):
 
@@ -218,7 +205,7 @@ cd /opt/islamic-calendar-sync
 docker compose -f compose.prod.yml exec proxy nginx -s reload
 ```
 
-Optional: add a `--deploy-hook` to `certbot renew` that runs the `nginx -s reload` command above (see Certbot deploy-hook documentation).
+Optional: add a deploy hook that temporarily stops/starts the proxy around renewals and then runs `nginx -s reload` (see Certbot deploy-hook documentation).
 
 ### 7.7 Frontend (GitHub Pages) HTTPS
 
@@ -375,8 +362,8 @@ Run these checks after deployment:
 - **HTTPS not available on Pages custom domain**  
   Wait for DNS propagation and certificate provisioning; can take time.
 
-- **Nginx exits or proxy keeps using HTTP after Certbot**  
-  Ensure `API_DOMAIN` in `.env.prod` matches the Certbot `-d` name. Restart the `proxy` container after certs appear under `/etc/letsencrypt/live/<that-hostname>/`.
+- **Nginx exits on startup (certificate file not found)**  
+  Ensure `API_DOMAIN` in `.env.prod` matches the Certbot `-d` name and certificate files exist under `/etc/letsencrypt/live/<that-hostname>/` before starting `proxy`.
 
 - **Certbot fails with connection / timeout**  
   Confirm port 80 is open on the VPS, DNS for `api` resolves to this server, and `docker compose ... ps` shows `proxy` listening.
