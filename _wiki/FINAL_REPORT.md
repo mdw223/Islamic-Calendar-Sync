@@ -602,6 +602,75 @@ If you prefer to run the API and frontend directly on the host:
 5. Start the API: `cd api && npm start` (port 3000).
 6. Start the frontend: `cd app && npm run dev` (port 5173, Vite dev server).
 
+### Development Instructions (Docker Compose)
+
+Use this workflow for day-to-day development, debugging, and test-environment validation.
+
+#### Development Stack (`compose.yml`)
+
+Start the development stack:
+
+```bash
+docker compose up -d --build
+```
+
+Useful commands:
+
+```bash
+docker compose ps # to see the status of the services
+docker compose logs -f # tail logs
+docker compose logs api # tail logs of the api service
+docker compose stop # stop a single service
+docker compose down # stop all services
+docker compose down -v # stop all services and remove volumes
+```
+
+Default local endpoints:
+
+- Frontend: `http://localhost:5000`
+- API: `http://localhost:5000/api`
+- Development database: `localhost:5432`
+
+#### Debug Stack (`compose.debug.yml`)
+
+Start development with Node inspector enabled on port `9229`:
+
+```bash
+docker compose -f compose.debug.yml up -d --build
+```
+
+Stop debug stack:
+
+```bash
+docker compose -f compose.debug.yml down
+```
+
+You can then attach a debugger (for example from VS Code) to `localhost:9229`.
+
+#### Testing Stack (`compose.test.yml`)
+
+Start testing stack:
+
+```bash
+docker compose -f compose.test.yml up -d --build
+```
+
+Testing commands:
+
+```bash
+docker compose -f compose.test.yml logs -f
+docker compose -f compose.test.yml down
+docker compose -f compose.test.yml down -v
+```
+
+Connect to the test database container:
+
+```bash
+docker exec -it ics_postgres_db_test psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+```
+
+> Note: `compose.yml` and `compose.test.yml` both map PostgreSQL to host port `5432`, so do not run both stacks at the same time.
+
 ### Production Deployment
 
 The current production model is **split hosting** (backend and frontend deployed to different platforms), but the steps below are intentionally generic so they can be reused with other providers.
