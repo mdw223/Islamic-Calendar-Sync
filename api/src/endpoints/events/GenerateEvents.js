@@ -17,7 +17,7 @@
  *   500 — server error
  */
 import { generateForUser } from "../../services/IslamicEventService.js";
-import { defaultLogger } from "../../middleware/logger.js";
+import { defaultLogger } from "../../middleware/Logger.js";
 export default async function GenerateEvents(req, res) {
   try {
     const { years, timezone = null, includeAll = false } = req.body;
