@@ -8,7 +8,7 @@
  *   { success: true, definitions: Array<{ id, titleAr, titleEn, ..., isHidden }> }
  */
 import { getMergedDefinitions } from "../../services/IslamicEventService.js";
-import { defaultLogger } from "../../middleware/logger.js";
+import { defaultLogger } from "../../middleware/Logger.js";
 export default async function GetDefinitions(req, res) {
   try {
     const definitions = await getMergedDefinitions(req.user.userId);

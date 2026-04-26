@@ -17,7 +17,7 @@ jest.unstable_mockModule("../events/GetEventsIcs.js", () => ({
 }));
 
 const { default: GetSubscriptionEvents } = await import("./GetSubscriptionEvents.js");
-const { SubscriptionDefinitionId } = await import("../../constants.js");
+const { SubscriptionDefinitionId } = await import("../../Constants.js");
 
 describe("GetSubscriptionEvents", () => {
   beforeEach(() => {

@@ -18,7 +18,7 @@
  */
 import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinitionPreferenceDOA.js";
 import EventDOA from "../../model/db/doa/EventDOA.js";
-import { defaultLogger } from "../../middleware/logger.js";
+import { defaultLogger } from "../../middleware/Logger.js";
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 export default async function UpdateDefinitionPreference(req, res) {
