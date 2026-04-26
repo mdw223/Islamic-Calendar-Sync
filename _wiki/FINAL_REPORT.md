@@ -178,7 +178,7 @@ All five services are orchestrated together using Docker Compose.
 | rrule | 2.8 | RFC 5545 recurrence rule expansion |
 | sanitize-html | 2 | Server-side HTML sanitization |
 | Winston | 3 | Structured logging |
-| Resend | 6 | Transactional email delivery (magic links) |
+| Nodemailer | 7 | SMTP email delivery (magic links and contact form) |
 
 #### Infrastructure
 
@@ -391,7 +391,7 @@ IslamicCalendarSync/
 │
 ├── Sql.Migrations/
 │   ├── init.sql                 # Full database initialization script
-│   └── 001–005_*.sql            # Incremental schema migrations
+│   └── 001+_*.sql               # Incremental schema migrations (tracked in SchemaMigration)
 │
 ├── _wiki/                       # Internal developer documentation
 ├── compose.yml                  # Docker Compose — development
@@ -540,9 +540,14 @@ The fastest way to run the application locally is with Docker Compose, which han
    # API
    API_PORT=3000
 
-   # Email (for magic link login)
-   RESEND_API_KEY=your-resend-api-key
-   EMAIL_FROM=noreply@yourdomain.com
+   # Email (SMTP for magic link + contact)
+   SMTP_HOST=smtp.purelymail.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=your-smtp-username
+   SMTP_PASS=your-smtp-password
+   SMTP_FROM=noreply@yourdomain.com
+   CONTACT_TO_EMAIL=contact@yourdomain.com
    ```
 
 3. **Start all services:**
@@ -632,44 +637,27 @@ cd IslamicCalendarSync
 cp .env.prod.example .env.prod  # or create .env.prod manually
 ```
 
-Edit `.env.prod` with production values: your domain's OAuth callback URLs, a strong `JWT_SECRET`, production database credentials, and your Resend API key.
+Edit `.env.prod` with production values: your domain's OAuth callback URLs, a strong `JWT_SECRET`, production database credentials, and SMTP credentials.
 
-#### 5. Set Up Resend for Transactional Email
+#### 5. Configure SMTP for Transactional Email
 
-The magic-link login feature sends one-time login emails via [Resend](https://resend.com). You need a Resend account and a verified sending domain before magic-link login will work in production.
+The application sends magic-link login emails and Contact Us messages using SMTP (Nodemailer). The recommended default is Purelymail over implicit TLS.
 
-**Create a Resend account:**
-
-1. Go to [resend.com](https://resend.com) and sign up for a free account.
-2. The free tier allows up to **3,000 emails per month** and **100 emails per day** — sufficient for a small deployment.
-
-**Verify your sending domain:**
-
-Resend requires you to verify the domain you will send email from (e.g. `yourdomain.com`) so that emails are not marked as spam.
-
-1. In the Resend dashboard, navigate to **Domains** and click **Add Domain**.
-2. Enter your domain name (e.g. `yourdomain.com`).
-3. Resend provides a set of **DNS records** to add to your domain registrar:
-   - An **SPF** `TXT` record (authorizes Resend to send on your behalf).
-   - A **DKIM** `TXT` record (cryptographically signs outgoing mail).
-   - An optional **DMARC** `TXT` record (recommended; instructs receiving servers how to handle unauthenticated mail).
-4. Add these records in your registrar's DNS settings (e.g. Namecheap, Cloudflare). DNS changes can take up to 24 hours to propagate, but usually resolve within minutes.
-5. Click **Verify** in the Resend dashboard once the records are in place.
-
-**Create an API key:**
-
-1. In the Resend dashboard, navigate to **API Keys** and click **Create API Key**.
-2. Give it a descriptive name (e.g. `islamic-calendar-sync-prod`) and set the permission to **Sending access**.
-3. Copy the key — it is only shown once.
-
-**Update `.env.prod`:**
+**Set SMTP values in `.env.prod`:**
 
 ```bash
-RESEND_API_KEY=re_your_api_key_here
-EMAIL_FROM=noreply@yourdomain.com
+SMTP_HOST=smtp.purelymail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+SMTP_FROM=noreply@yourdomain.com
+CONTACT_TO_EMAIL=contact@yourdomain.com
+CONTACT_DAILY_LIMIT_PER_EMAIL=1
+CONTACT_IP_RATE_LIMIT_MAX=5
 ```
 
-`EMAIL_FROM` must use the verified domain (or a subdomain of it, e.g. `noreply@yourdomain.com`). Resend will reject sends from unverified addresses.
+If your SMTP provider requires STARTTLS instead of implicit TLS, use `SMTP_PORT=587` and `SMTP_SECURE=false`.
 
 #### 6. Configure Google Cloud Console for Production
 
@@ -719,11 +707,19 @@ The `-d` flag runs the containers in the background. The application will be acc
 
 #### 9. Run Schema Migrations
 
-For subsequent deployments, run any new migration scripts:
+For subsequent deployments, use the migration runner to apply only pending migrations and keep startup status checks accurate:
 
 ```bash
 docker exec api_service_prod node scripts/runMigrations.js up
 ```
+
+Check migration status (latest known vs latest applied, plus pending count):
+
+```bash
+docker exec api_service_prod node scripts/runMigrations.js status
+```
+
+The migration runner determines "head" dynamically from numbered SQL files in `Sql.Migrations/` (excluding `init.sql`) and compares against rows in `SchemaMigration`.
 
 #### 10. Manage Services
 
