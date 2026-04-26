@@ -123,7 +123,7 @@ Use this to verify your install or to understand what each part of the stack use
 | winston-transport     | ^4.9.0           | Winston transport |
 | **Dev:** jest         | ^29.7.0          | Tests |
 
-The API uses **JWT for authentication** (no `express-session`). Auth is documented in [jwt_implementation.md](jwt_implementation.md) and [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md).
+The API uses JWT for authentication. `express-session` is still used in the Google OAuth redirect handshake to persist OIDC state; it is not the application's login session mechanism.
 
 ### App (`app/package.json`)
 
@@ -225,11 +225,11 @@ DB_LOG_QUERIES=true
 
 ## Configuration examples
 
-### Production
+### Production (split-hosting example)
 
 ```bash
-APP_BASE_URL=https://yourdomain.com
-GOOGLE_CALLBACK_URL=https://yourdomain.com/api/auth/google/redirect
+APP_BASE_URL=https://www.yourdomain.com
+GOOGLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/google/redirect
 GOOGLE_CLIENT_ID=your-production-client-id
 GOOGLE_CLIENT_SECRET=your-production-client-secret
 JWT_SECRET=your-production-jwt-secret
@@ -253,7 +253,7 @@ Navigate to **APIs & Services > Library** and enable the following APIs:
 | API | Required for |
 |-----|-------------|
 | **Google People API** | Profile and email access during sign-in |
-| **Google Calendar API** | Reading and writing user calendar events |
+| **Google Calendar API** | Optional; only needed if you add Google Calendar API features |
 
 ### 3. Configure the OAuth consent screen
 
@@ -274,10 +274,10 @@ Navigate to **APIs & Services > Library** and enable the following APIs:
 3. Set **Application type** to **Web application**.
 4. Under **Authorized JavaScript origins**, add:
    - Dev: `http://localhost:5000`
-   - Prod: `https://yourdomain.com`
+   - Prod: `https://www.yourdomain.com`
 5. Under **Authorized redirect URIs**, add:
    - Dev: `http://localhost:5000/api/auth/google/redirect`
-   - Prod: `https://yourdomain.com/api/auth/google/redirect`
+   - Prod: `https://api.yourdomain.com/api/auth/google/redirect`
 6. Click **Create**. Copy the **Client ID** and **Client Secret** that appear.
 
 > **Important:** The redirect URI registered in Google Cloud Console must match `GOOGLE_CALLBACK_URL` in your `.env` **exactly** â€” including scheme, host, port, and path. Any mismatch produces `Error 400: redirect_uri_mismatch`.
@@ -297,11 +297,11 @@ For production, update both values to your domain (see [Configuration examples â
 
 ### How the OAuth flow works
 
-The API uses `passport-google-oidc` with `accessType: "offline"` and `prompt: "consent"` so Google returns a **refresh token** on first login. This refresh token (along with the access token) is stored in the `PROVIDER` database table for future Google Calendar API calls.
+The API uses `passport-google-oidc` with `accessType: "offline"` and `prompt: "consent"` for OAuth login flow robustness.
 
-After the callback, the server does **not** use Google's token to authenticate ongoing API requests. Instead, it issues its own short-lived **application JWT** and redirects the browser to `{APP_BASE_URL}#token={jwt}`. The frontend reads the token from the URL hash, stores it, and sends `Authorization: Bearer <token>` on every subsequent API request. The httpOnly cookie variant means the JWT is never accessible to JavaScript on the client, which reduces XSS risk.
+After the callback, the server does **not** use Google's token to authenticate API requests. It issues its own application JWT, stores it in a secure httpOnly cookie (`token` in production), and redirects to `APP_BASE_URL`.
 
-Google tokens (stored in `PROVIDER`) are used exclusively when calling Google APIs (e.g. Calendar). The application JWT (signed with `JWT_SECRET`) is what the `passport-jwt` strategy validates on every protected route.
+The application JWT (signed with `JWT_SECRET`) is what `passport-jwt` validates on protected routes.
 
 See [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md) for the complete technical breakdown of all backend components, the end-to-end flow, and the token summary table.
 

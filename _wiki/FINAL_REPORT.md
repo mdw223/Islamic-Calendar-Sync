@@ -28,7 +28,7 @@ Furthermore, with the digital age and our increasingly busy lives, it has become
 
 Popular calendar applications like Google Calendar do offer the ability for users to add Islamic holidays, but these features go largely unused by Muslims because they lack genuine benefit. The built-in options are not always accurate, are not customizable, do not include all significant Islamic calendar days, and crucially provide no insight into the meaning or significance of each day.
 
-**Islamic Calendar Sync** is a tool and platform designed to solve this problem. It is a web application for Muslims with busy lives to stay in sync with the Islamic calendar. Users can select which Islamic days and months matter most to them and either download events as an `.ics` file for a one-time import, or subscribe to a live calendar feed URL that automatically stays up to date in their calendar application of choice (Google Calendar, Apple Calendar, Outlook, etc.).
+**Islamic Calendar Sync** is a tool and platform designed to solve this problem. It is a web application for Muslims with busy lives to stay in sync with the Islamic calendar. Users can select which Islamic days and months matter most to them and either download events as a static `.ics` file for a one-time import, or subscribe to a live calendar feed URL that automatically populates events in their calendar application of choice (Google Calendar, Apple Calendar, Outlook, etc.).
 
 The real value lies in the description of each event. Rather than a simple label, each event description contains the significance behind it, how to attain maximum reward by practicing it correctly, relevant supplications, and more. This way Muslims will be reminded of what matters — not just that a day is significant, but why it is significant and what to do about it — thus strengthening their connection with God through staying in sync with the sacred days of the Islamic calendar.
 
@@ -49,63 +49,63 @@ The following use cases describe the functional requirements of the system. They
 
 ### Authentication and Accounts
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-01 | Register with Email | A user can register for an account using their email address. A magic-link email is sent to verify the address. |
-| UC-02 | Login with Google OAuth | A user can log in using their Google account via OAuth 2.0 (OIDC). |
-| UC-03 | Login with Microsoft OAuth | A user can log in using their Microsoft account via OAuth 2.0. |
-| UC-04 | Login with Apple OAuth | A user can log in using their Apple ID via OAuth 2.0. |
-| UC-05 | Login with Magic Link Email | A user can log in by entering their email and receiving a one-time login link. |
-| UC-06 | Logout | An authenticated user can log out, clearing their session. |
-| UC-07 | Delete Account | An authenticated user can permanently delete their account and all associated data. |
+| UC    | Use Case                    | Description                                                                                                     |
+| ----- | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| UC-01 | Register with Email         | A user can register for an account using their email address. A magic-link email is sent to verify the address. |
+| UC-02 | Login with Google OAuth     | A user can log in using their Google account via OAuth 2.0 (OIDC).                                              |
+| UC-03 | Login with Microsoft OAuth  | A user can log in using their Microsoft account via OAuth 2.0.                                                  |
+| UC-04 | Login with Apple OAuth      | A user can log in using their Apple ID via OAuth 2.0.                                                           |
+| UC-05 | Login with Magic Link Email | A user can log in by entering their email and receiving a one-time login link.                                  |
+| UC-06 | Logout                      | An authenticated user can log out, clearing their session.                                                      |
+| UC-07 | Delete Account              | An authenticated user can permanently delete their account and all associated data.                             |
 
 ### Event Definitions and Preferences
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-08 | View Islamic Event Definitions | A user can view all available Islamic event definitions (e.g., Ramadan, Ashura, Eid ul-Fitr, White Days) from the sidebar panel. |
-| UC-09 | Show/Hide Definitions | A user can toggle the visibility of individual Islamic event definitions, hiding events they do not want displayed. |
-| UC-10 | Set Default Color for Definition | A user can assign a custom color to an event definition, which is applied to all events generated from that definition. |
-| UC-11 | Persist Definition Preferences | Preference changes (show/hide, color) are saved and persisted for authenticated users. |
+| UC    | Use Case                         | Description                                                                                                                      |
+| ----- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| UC-08 | View Islamic Event Definitions   | A user can view all available Islamic event definitions (e.g., Ramadan, Ashura, Eid ul-Fitr, White Days) from the sidebar panel. |
+| UC-09 | Show/Hide Definitions            | A user can toggle the visibility of individual Islamic event definitions, hiding events they do not want displayed.              |
+| UC-10 | Set Default Color for Definition | A user can assign a custom color to an event definition, which is applied to all events generated from that definition.          |
+| UC-11 | Persist Definition Preferences   | Preference changes (show/hide, color) are saved and persisted for authenticated users.                                           |
 
 ### Event Management
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-12 | Generate Islamic Events for a Year | A user can generate all Islamic calendar events for a selected year or range of years. |
-| UC-13 | View Events on Calendar | A user can view generated events on a monthly, weekly, or day calendar view. |
-| UC-14 | View Event Details | A user can click on a calendar event to view its full details including name, date, and rich-text description. |
-| UC-15 | Create Custom Event | An authenticated user can create a custom calendar event with a name, date, and rich-text description. |
-| UC-16 | Edit Event | A user can edit the name, dates, color, and description of a calendar event. |
-| UC-17 | Delete Event | A user can delete a specific calendar event. |
-| UC-18 | Reset Islamic Events | A user can reset all auto-generated Islamic events back to their defaults. |
-| UC-19 | Search Events | A user can search for events by name using a global search field. |
+| UC    | Use Case                           | Description                                                                                                    |
+| ----- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| UC-12 | Generate Islamic Events for a Year | A user can generate all Islamic calendar events for a selected year or range of years.                         |
+| UC-13 | View Events on Calendar            | A user can view generated events on a monthly, weekly, or day calendar view.                                   |
+| UC-14 | View Event Details                 | A user can click on a calendar event to view its full details including name, date, and rich-text description. |
+| UC-15 | Create Custom Event                | An authenticated user can create a custom calendar event with a name, date, and rich-text description.         |
+| UC-16 | Edit Event                         | A user can edit the name, dates, color, and description of a calendar event.                                   |
+| UC-17 | Delete Event                       | A user can delete a specific calendar event.                                                                   |
+| UC-18 | Reset Islamic Events               | A user can reset all auto-generated Islamic events back to their defaults.                                     |
+| UC-19 | Search Events                      | A user can search for events by name using a global search field.                                              |
 
 ### Export and Subscription
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-20 | Download ICS File | A user can download a `.ics` file of their selected events to import into any calendar application. |
-| UC-21 | Create Subscription URL | An authenticated user can generate a live subscription URL (webcal feed) that calendar applications can subscribe to for automatic updates. |
-| UC-22 | Manage Subscription URLs | An authenticated user can view, rename, and revoke their subscription URLs. |
-| UC-23 | Configure Subscription Event Selection | When creating a subscription URL, a user can select which event definitions to include in that specific feed. |
+| UC    | Use Case                               | Description                                                                                                                                 |
+| ----- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| UC-20 | Download ICS File                      | A user can download a `.ics` file of their selected events to import into any calendar application.                                         |
+| UC-21 | Create Subscription URL                | An authenticated user can generate a live subscription URL (webcal feed) that calendar applications can subscribe to for automatic updates. |
+| UC-22 | Manage Subscription URLs               | An authenticated user can view, rename, and revoke their subscription URLs.                                                                 |
+| UC-23 | Configure Subscription Event Selection | When creating a subscription URL, a user can select which event definitions to include in that specific feed.                               |
 
 ### Settings and Personalization
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-24 | Update Profile | An authenticated user can update their display name and language preference. |
-| UC-25 | Manage Saved Locations | A user can save named locations (with latitude, longitude, and timezone) for use during event generation and export. |
-| UC-26 | Set Default Location | A user can designate one of their saved locations as the default. |
-| UC-27 | Toggle Arabic Event Text | A user can enable or disable the display of Arabic text alongside event names. |
+| UC    | Use Case                 | Description                                                                                                          |
+| ----- | ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| UC-24 | Update Profile           | An authenticated user can update their display name and language preference.                                         |
+| UC-25 | Manage Saved Locations   | A user can save named locations (with latitude, longitude, and timezone) for use during event generation and export. |
+| UC-26 | Set Default Location     | A user can designate one of their saved locations as the default.                                                    |
+| UC-27 | Toggle Arabic Event Text | A user can enable or disable the display of Arabic text alongside event names.                                       |
 
 ### Offline and PWA
 
-| UC | Use Case | Description |
-|----|----------|-------------|
-| UC-28 | Use App Offline | A user can use the application (view, generate, and customize events) without a network connection using local IndexedDB storage. |
+| UC    | Use Case                   | Description                                                                                                                       |
+| ----- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| UC-28 | Use App Offline            | A user can use the application (view, generate, and customize events) without a network connection using local IndexedDB storage. |
 | UC-29 | Sync Offline Data on Login | When an offline/unauthenticated user logs in, their locally cached events and preferences are automatically synced to the server. |
-| UC-30 | Install as PWA | A user can install the application to their home screen as a Progressive Web App for a native app-like experience. |
+| UC-30 | Install as PWA             | A user can install the application to their home screen as a Progressive Web App for a native app-like experience.                |
 
 ---
 
@@ -146,64 +146,86 @@ All five services are orchestrated together using Docker Compose.
 
 #### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19 | UI component library |
-| Vite | 7 | Build tool and development server |
-| React Router | 7 | Client-side routing |
-| MUI (Material UI) | 7 | Component library for consistent UI design |
-| Emotion | 11 | CSS-in-JS styling engine used by MUI |
-| Lexical | 0.41 | Rich text editor for event descriptions |
-| Dexie.js | 4 | IndexedDB wrapper for offline storage |
-| rrule | 2.8 | Recurrence rule parsing (RFC 5545) |
-| DOMPurify | 3 | HTML sanitization for rendered rich text |
-| Lucide React | 0.563 | Icon library |
-| vite-plugin-pwa | 1.2 | Workbox-powered PWA and service worker generation |
-| Day.js | 1.11 | Lightweight date manipulation library |
+| Technology        | Version | Purpose                                           |
+| ----------------- | ------- | ------------------------------------------------- |
+| React             | 19      | UI component library                              |
+| Vite              | 7       | Build tool and development server                 |
+| React Router      | 7       | Client-side routing                               |
+| MUI (Material UI) | 7       | Component library for consistent UI design        |
+| Emotion           | 11      | CSS-in-JS styling engine used by MUI              |
+| Lexical           | 0.41    | Rich text editor for event descriptions           |
+| Dexie.js          | 4       | IndexedDB wrapper for offline storage             |
+| rrule             | 2.8     | Recurrence rule parsing (RFC 5545)                |
+| DOMPurify         | 3       | HTML sanitization for rendered rich text          |
+| Lucide React      | 0.563   | Icon library                                      |
+| vite-plugin-pwa   | 1.2     | Workbox-powered PWA and service worker generation |
+| Day.js            | 1.11    | Lightweight date manipulation library             |
 
 #### Backend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Node.js | 22 | JavaScript runtime |
-| Express.js | 4 | Web framework for the REST API |
-| Passport.js | 0.7 | Authentication middleware |
-| passport-google-oidc | 0.1 | Google OAuth 2.0 strategy |
-| passport-microsoft | 2.1 | Microsoft OAuth 2.0 strategy *(implemented but routes currently inactive)* |
-| passport-apple | 2.0 | Apple Sign In strategy *(implemented but routes currently inactive)* |
-| passport-magic-link | 3.0 | Email magic-link strategy |
-| passport-jwt | 4.0 | JWT-based authentication strategy |
-| jsonwebtoken | 9.0 | JWT signing and verification |
-| pg | 8 | PostgreSQL client |
-| rrule | 2.8 | RFC 5545 recurrence rule expansion |
-| sanitize-html | 2 | Server-side HTML sanitization |
-| Winston | 3 | Structured logging |
-| Nodemailer | 7 | SMTP email delivery (magic links and contact form) |
+| Technology           | Version | Purpose                                                                    |
+| -------------------- | ------- | -------------------------------------------------------------------------- |
+| Node.js              | 22      | JavaScript runtime                                                         |
+| Express.js           | 4       | Web framework for the REST API                                             |
+| Passport.js          | 0.7     | Authentication middleware                                                  |
+| passport-google-oidc | 0.1     | Google OAuth 2.0 strategy                                                  |
+| passport-microsoft   | 2.1     | Microsoft OAuth 2.0 strategy _(implemented but routes currently inactive)_ |
+| passport-apple       | 2.0     | Apple Sign In strategy _(implemented but routes currently inactive)_       |
+| passport-magic-link  | 3.0     | Email magic-link strategy                                                  |
+| passport-jwt         | 4.0     | JWT-based authentication strategy                                          |
+| jsonwebtoken         | 9.0     | JWT signing and verification                                               |
+| pg                   | 8       | PostgreSQL client                                                          |
+| rrule                | 2.8     | RFC 5545 recurrence rule expansion                                         |
+| sanitize-html        | 2       | Server-side HTML sanitization                                              |
+| Winston              | 3       | Structured logging                                                         |
+| Nodemailer           | 7       | SMTP email delivery (magic links and contact form)                         |
 
 #### Infrastructure
 
-| Technology | Purpose |
-|------------|---------|
-| PostgreSQL 15 | Primary relational database |
-| Redis | Caching layer |
-| Nginx | Reverse proxy; routes `/api/*` to Express, all other paths to the React app |
-| Docker / Docker Compose | Container orchestration for all five services |
+| Technology              | Purpose                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
+| PostgreSQL 15           | Primary relational database                                                 |
+| Redis                   | Caching layer                                                               |
+| Nginx                   | Reverse proxy; routes `/api/*` to Express, all other paths to the React app |
+| Docker / Docker Compose | Container orchestration for all five services                               |
 
 ### Docker Services
 
-The application is fully containerized and defined in `compose.yml` (development) and `compose.prod.yml` (production). Five containers run together:
+Container topology differs by environment:
 
-| Container | Image / Build | Role |
-|-----------|--------------|------|
-| `api_service` | Custom Node.js build (`api/Dockerfile`) | Express REST API on port 3000 (internal) |
-| `react_app` | Custom Vite/Nginx build (`app/Dockerfile`) | Serves the compiled React SPA |
-| `nginx_proxy` | `nginx:latest` | Reverse proxy on port 5000 (HTTP) and 443 (HTTPS); routes traffic to `api` or `app` |
-| `ics_redis` | `redis:latest` | In-memory cache on port 6379 |
-| `ics_postgres_db` | `postgres:15` | PostgreSQL database on port 5432; initialized with `Sql.Migrations/init.sql` |
+- **Development (`compose.yml`)** runs the full stack in Docker: API + React app + Nginx + Postgres + Redis.
+- **Production (`compose.prod.yml`)** runs backend services only on the VPS: API + Nginx + Postgres + Redis. The frontend is deployed separately to GitHub Pages.
 
-Nginx routes requests as follows:
-- `location /api` → `http://api:3000` (strips the `/api` prefix via rewrite)
-- `location /` → `http://app/` (React SPA)
+| Environment | Services                                   | Notes                                                                                     |
+| ----------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Development | `api`, `app`, `proxy`, `database`, `redis` | Single local entry point (`http://localhost:5000`) via Nginx                              |
+| Production  | `api`, `proxy`, `database`, `redis`        | API served from `api.<domain>` over HTTPS; SPA served from `www.<domain>` on GitHub Pages |
+
+**Development containers (`compose.yml`)**
+
+| Container             | Image / Build                              | Role                                                                                |
+| --------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `api_service`         | Custom Node.js build (`api/Dockerfile`)    | Express REST API on port 3000 (internal)                                            |
+| `react_app`           | Custom Vite/Nginx build (`app/Dockerfile`) | Serves the React SPA in local Docker development                                    |
+| `nginx_proxy`         | `nginx:latest`                             | Reverse proxy on port 5000 (HTTP) and 443 (HTTPS); routes traffic to `api` or `app` |
+| `ics_redis_dev`       | `redis:latest`                             | In-memory cache on port 6379                                                        |
+| `ics_postgres_db_dev` | `postgres:15`                              | PostgreSQL database on port 5432; initialized with `Sql.Migrations/init.sql`        |
+
+**Production containers (`compose.prod.yml`)**
+
+| Container              | Image / Build                           | Role                                                                                                     |
+| ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `api_service_prod`     | Custom Node.js build (`api/Dockerfile`) | Express REST API on port 3000 (internal)                                                                 |
+| `nginx_proxy_prod`     | `nginx:latest`                          | API-only reverse proxy on ports 80/443 with TLS termination; routes `/api` to `api` and rejects root SPA |
+| `ics_redis_prod`       | `redis:latest`                          | In-memory cache on internal Docker network only                                                          |
+| `ics_postgres_db_prod` | `postgres:15`                           | PostgreSQL 15 with persistent Docker volume and init script mount                                        |
+
+> Note: there is no `react_app` container in production; the frontend is hosted separately on GitHub Pages.
+
+Nginx API routing in production:
+
+- `location /api` → `http://api:3000` (strips `/api` prefix via rewrite)
+- `location /` → returns API-only 404 JSON message (frontend is not served by production Nginx)
 
 ---
 
@@ -253,38 +275,38 @@ The frontend follows a layered architecture with contexts, layouts, pages, and c
 
 #### Contexts (Global State)
 
-| Context | File | Responsibility |
-|---------|------|----------------|
-| `UserContext` | `contexts/UserContext.jsx` | Manages authentication state, login/logout, and sync-on-login flow |
+| Context           | File                           | Responsibility                                                                                 |
+| ----------------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `UserContext`     | `contexts/UserContext.jsx`     | Manages authentication state, login/logout, and sync-on-login flow                             |
 | `CalendarContext` | `contexts/CalendarContext.jsx` | Manages events, definitions, and all CRUD operations with API-first / offline-fallback pattern |
-| `ThemeContext` | `contexts/ThemeContext.jsx` | MUI theme management with light, dark, and green modes |
+| `ThemeContext`    | `contexts/ThemeContext.jsx`    | MUI theme management with light, dark, and green modes                                         |
 
 #### Layouts
 
-| Layout | Route Scope | Purpose |
-|--------|-------------|---------|
-| `RootLayout` | All routes | Navbar, Footer, global providers |
-| `MainLayout` | App pages | Main content wrapper |
-| `CalendarLayout` | `/calendar` | Sidebar (Islamic Events Panel) + main calendar area |
-| `AuthLayout` | `/auth/login`, `/auth/register` | Centered auth pages |
+| Layout           | Route Scope                     | Purpose                                             |
+| ---------------- | ------------------------------- | --------------------------------------------------- |
+| `RootLayout`     | All routes                      | Navbar, Footer, global providers                    |
+| `MainLayout`     | App pages                       | Main content wrapper                                |
+| `CalendarLayout` | `/calendar`                     | Sidebar (Islamic Events Panel) + main calendar area |
+| `AuthLayout`     | `/auth/login`, `/auth/register` | Centered auth pages                                 |
 
 #### Core Pages
 
-| Page | Path | Description |
-|------|------|-------------|
-| Home | `/` | Landing page with upcoming Islamic days |
-| Calendar | `/calendar` | Main calendar view (month/week/day) with event management |
-| Export Events | `/export` | Download `.ics` file |
-| Manage Subscriptions | `/subscriptions` | Create and manage subscription URLs |
-| Settings | `/settings` | User profile, locations, preferences |
-| Login / Register | `/auth/login`, `/auth/register` | Authentication flows |
-| Guide | `/guide` | User guide for importing events |
-| Learn | `/learn` | Educational content on the Islamic calendar |
-| Features | `/features` | Overview of platform features |
-| Methods | `/methods` | Explanation of Hijri calculation methods |
-| Privacy | `/privacy` | Privacy policy |
-| Terms | `/terms` | Terms of service |
-| Data Policy | `/data-policy` | Data handling policy |
+| Page                 | Path                            | Description                                               |
+| -------------------- | ------------------------------- | --------------------------------------------------------- |
+| Home                 | `/`                             | Landing page with upcoming Islamic days                   |
+| Calendar             | `/calendar`                     | Main calendar view (month/week/day) with event management |
+| Export Events        | `/export`                       | Download `.ics` file                                      |
+| Manage Subscriptions | `/subscriptions`                | Create and manage subscription URLs                       |
+| Settings             | `/settings`                     | User profile, locations, preferences                      |
+| Login / Register     | `/auth/login`, `/auth/register` | Authentication flows                                      |
+| Guide                | `/guide`                        | User guide for importing events                           |
+| Learn                | `/learn`                        | Educational content on the Islamic calendar               |
+| Features             | `/features`                     | Overview of platform features                             |
+| Methods              | `/methods`                      | Explanation of Hijri calculation methods                  |
+| Privacy              | `/privacy`                      | Privacy policy                                            |
+| Terms                | `/terms`                        | Terms of service                                          |
+| Data Policy          | `/data-policy`                  | Data handling policy                                      |
 
 #### Offline Architecture
 
@@ -300,16 +322,16 @@ The app is also a full **Progressive Web App (PWA)** using `vite-plugin-pwa` (Wo
 
 The `components/` directory contains reusable components shared across pages. Several key components were added or significantly updated:
 
-| Component | Purpose |
-|-----------|---------|
-| `Navbar.jsx` | `AppBar` with navigation links, `GlobalSearch`, `UserBadge`, mobile drawer, three-mode theme cycle (light / dark / green), and Web Share API integration |
-| `Footer.jsx` | Multi-column footer (Product, Legal, Connect) with theme-aware styling via `data-lp-theme` |
-| `UserBadge.jsx` | Avatar and dropdown menu for authenticated users (Settings, Sign out) |
-| `GlobalSearch.jsx` | Popper-based event search with filter chips persisted to `localStorage`; input sanitized via DOMPurify |
-| `LoginPromptModal.jsx` | Modal prompting unauthenticated users to continue with Google or email login |
-| `SearchField.jsx` | Reusable search input that passes all values through DOMPurify before use |
-| `RichTextEditor.jsx` | Lexical-based rich text editor with bold/italic/underline/strikethrough, lists, speech-to-text, markdown import/export, and read-only mode |
-| `GoogleTranslateWidget.jsx` | Loads the Google Translate script for multilingual support; respects `user.language` when set |
+| Component                   | Purpose                                                                                                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Navbar.jsx`                | `AppBar` with navigation links, `GlobalSearch`, `UserBadge`, mobile drawer, three-mode theme cycle (light / dark / green), and Web Share API integration |
+| `Footer.jsx`                | Multi-column footer (Product, Legal, Connect) with theme-aware styling via `data-lp-theme`                                                               |
+| `UserBadge.jsx`             | Avatar and dropdown menu for authenticated users (Settings, Sign out)                                                                                    |
+| `GlobalSearch.jsx`          | Popper-based event search with filter chips persisted to `localStorage`; input sanitized via DOMPurify                                                   |
+| `LoginPromptModal.jsx`      | Modal prompting unauthenticated users to continue with Google or email login                                                                             |
+| `SearchField.jsx`           | Reusable search input that passes all values through DOMPurify before use                                                                                |
+| `RichTextEditor.jsx`        | Lexical-based rich text editor with bold/italic/underline/strikethrough, lists, speech-to-text, markdown import/export, and read-only mode               |
+| `GoogleTranslateWidget.jsx` | Loads the Google Translate script for multilingual support; respects `user.language` when set                                                            |
 
 ---
 
@@ -423,7 +445,7 @@ IslamicCalendarSync/
 
 **Subscription Feed** — `GetSubscriptionEvents.js` accepts a hashed token from the URL, validates it against the database, fetches the associated user's events (filtered to selected definitions), and returns a live `.ics` response. This endpoint is unauthenticated — the token itself is the credential.
 
-**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `passport.js` but their routes are inactive. On successful authentication, the server issues a signed JWT stored in an **httpOnly cookie** (`token`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The httpOnly cookie approach means the token is never accessible to JavaScript, reducing XSS risk.
+**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `passport.js` but their routes are inactive. On successful authentication, the server issues a signed JWT stored in a **secure httpOnly cookie** (`token` in production; `secure: true` when `NODE_ENV=production`, with `sameSite: "lax"`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The secure httpOnly cookie approach means the token is never accessible to JavaScript and is only sent over HTTPS in production, reducing XSS and transport-level exposure risk.
 
 **Response Sanitizer** — `ResponseSanitizer.js` middleware automatically removes sensitive fields (tokens, salts, passwords) from all API responses before they are sent to the client.
 
@@ -441,17 +463,17 @@ IslamicCalendarSync/
 
 The API has a comprehensive unit test suite written with **Jest**. Tests live alongside their source files under `api/src/`, following the `*.test.js` naming convention. The following areas are covered:
 
-| Area | Test Files |
-|------|-----------|
-| Middleware | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js` |
-| Event Endpoints | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js` |
-| Definition Endpoints | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js` |
-| Subscription Endpoints | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js` |
-| User Endpoints | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js` |
+| Area                    | Test Files                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`             |
+| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                                         |
+| Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                         |
+| Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`                                                                                           |
+| User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                       |
 | User Location Endpoints | `GetUserLocations.test.js`, `CreateUserLocation.test.js`, `UpdateUserLocation.test.js`, `DeleteUserLocation.test.js`, `SyncOfflineUserLocations.test.js` |
-| Services | `IslamicEventService.test.js`, `EventExpansionService.test.js`, `IcsBuilder.test.js` |
-| Utilities | `HijriUtils.test.js`, `SanitizeHtml.test.js` |
-| Health | `Health.test.js` |
+| Services                | `IslamicEventService.test.js`, `EventExpansionService.test.js`, `IcsBuilder.test.js`                                                                     |
+| Utilities               | `HijriUtils.test.js`, `SanitizeHtml.test.js`                                                                                                             |
+| Health                  | `Health.test.js`                                                                                                                                         |
 
 Tests are run with coverage reporting:
 
@@ -467,12 +489,12 @@ npm run test:coverage
 
 **Coverage Summary**
 
-| Area | Statements | Branches | Functions | Lines |
-|------|-----------|----------|-----------|-------|
+| Area          | Statements | Branches   | Functions  | Lines      |
+| ------------- | ---------- | ---------- | ---------- | ---------- |
 | **All files** | **87.70%** | **72.97%** | **88.37%** | **87.70%** |
-| Middleware | 66.31% | 73.84% | 68.75% | 66.31% |
-| Services | 95.49% | 72.26% | 100% | 95.49% |
-| Utilities | 100% | 73.33% | 100% | 100% |
+| Middleware    | 66.31%     | 73.84%     | 68.75%     | 66.31%     |
+| Services      | 95.49%     | 72.26%     | 100%       | 95.49%     |
+| Utilities     | 100%       | 73.33%     | 100%       | 100%       |
 
 **Highlights:**
 
@@ -490,6 +512,7 @@ Overall, **113 passing tests across 29 suites** is a solid result for a backend 
 Backend tests are automated via a **GitHub Actions** workflow defined in `.github/workflows/backend-tests.yml`. The workflow triggers on every push or pull request that modifies files under `api/` or the workflow file itself.
 
 **Workflow steps:**
+
 1. Check out the repository.
 2. Set up Node.js 22 with npm caching.
 3. Install dependencies with `npm ci`.
@@ -511,12 +534,14 @@ The fastest way to run the application locally is with Docker Compose, which han
 **Steps:**
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd IslamicCalendarSync
    ```
 
 2. **Create the environment file.** Copy the template below to a file named `.env` in the project root:
+
    ```bash
    # Application
    APP_BASE_URL=http://localhost:5000
@@ -551,6 +576,7 @@ The fastest way to run the application locally is with Docker Compose, which han
    ```
 
 3. **Start all services:**
+
    ```bash
    docker compose up --build
    ```
@@ -578,34 +604,47 @@ If you prefer to run the API and frontend directly on the host:
 
 ### Production Deployment
 
-The following steps describe deploying to a Linux VPS (e.g., Contabo).
+The current production model is **split hosting** (backend and frontend deployed to different platforms), but the steps below are intentionally generic so they can be reused with other providers.
 
-#### 1. Reserve a Domain
+> **What I used for this project:** Backend on a Contabo VPS, frontend on GitHub Pages, and DNS via Namecheap.
 
-Register a domain name with a registrar of your choice (e.g., Namecheap, Google Domains). Point the domain's DNS A record to your VPS IP address.
+#### 1. Choose Hosting Topology and Providers
 
-#### 2. Purchase and Provision a VPS
+Pick where each part of the system will live:
 
-A VPS (Virtual Private Server) gives you a dedicated Linux machine in the cloud to host the application. [Contabo](https://contabo.com) is a cost-effective option; alternatives include [Hetzner](https://www.hetzner.com/), [DigitalOcean](https://www.digitalocean.com/), [Vultr](https://www.vultr.com/), and [Linode (Akamai)](https://www.linode.com/).
+- **Backend runtime:** a VPS or container host (e.g., Contabo, DigitalOcean, Hetzner, Linode)
+- **Frontend static hosting:** any static host/CDN (e.g., GitHub Pages, Netlify, Vercel, S3 + CloudFront)
+- **DNS/domain provider:** any registrar/DNS service (e.g., Namecheap, Cloudflare, Route 53)
 
-**Purchasing from Contabo:**
+Recommended split pattern:
 
-1. Go to [contabo.com](https://contabo.com) and navigate to **VPS** plans.
-2. Select a plan. For a small production deployment the **VPS S** (4 vCPU, 8 GB RAM, 100 GB SSD) is a reasonable starting point.
-3. During checkout:
-   - **Region:** choose the datacenter closest to your intended users.
-   - **Operating System:** select **Ubuntu 22.04 LTS** (64-bit).
-   - **Access:** set a strong root password, or — preferred — paste in an **SSH public key** so you can log in without a password. Generate one locally if needed:
-     ```bash
-     ssh-keygen -t ed25519 -C "your-email@example.com"
-     cat ~/.ssh/id_ed25519.pub   # paste this value into Contabo's SSH key field
-     ```
-4. Complete the order. Contabo sends a confirmation email with your **VPS IP address** and access details within a few minutes.
-5. Point your domain's DNS **A record** to that IP address (do this now; DNS propagation can take up to 24 hours, though it usually resolves in under an hour).
+- `api.yourdomain.com` -> backend host
+- `www.yourdomain.com` (and optionally root domain) -> frontend host
 
-**Install Docker on the VPS:**
+#### 2. Configure DNS
 
-Once you receive the IP address, SSH in and install Docker:
+Create DNS records that match your topology:
+
+- CNAME for frontend subdomain (`www`) to your frontend provider target
+- A/AAAA record for API subdomain (`api`) to your backend server IP
+
+Optional:
+
+- Route root domain (`@`) to frontend if desired
+- Add staging subdomains (`staging-api`, `staging-www`) for pre-production testing
+
+> **What I used:** `www` CNAME to GitHub Pages and `api` A record to Contabo VPS IP in Namecheap Advanced DNS.
+
+#### 3. Provision and Harden Backend Host
+
+On your backend machine:
+
+1. Install security updates.
+2. Install Docker Engine and Docker Compose plugin (or your chosen runtime).
+3. Enable a firewall and allow only required ports (typically 22, 80, 443).
+4. Prefer SSH key authentication and disable password auth where possible.
+
+Example Docker install on Ubuntu/Debian:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -614,120 +653,211 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker $USER  # allow running docker without sudo (re-login required)
 ```
 
-Log out and back in after the `usermod` step so the group change takes effect.
-
-#### 3. SSH Into the VPS
+Example baseline:
 
 ```bash
-ssh user@your-server-ip
+apt update && apt upgrade -y
+ufw allow OpenSSH
+ufw allow 80
+ufw allow 443
+ufw --force enable
 ```
 
-If you added an SSH key during purchase, authentication happens automatically. If you used a root password, log in as `root` and then create a non-root user for day-to-day work:
-
-```bash
-adduser deploy
-usermod -aG sudo deploy
-```
-
-#### 4. Clone the Repository and Configure
+#### 4. Clone the Repository and Configure Production Environment
 
 ```bash
 git clone <repository-url>
 cd IslamicCalendarSync
-cp .env.prod.example .env.prod  # or create .env.prod manually
+cp .env.prod.example .env.prod   # or create manually
 ```
 
-Edit `.env.prod` with production values: your domain's OAuth callback URLs, a strong `JWT_SECRET`, production database credentials, and SMTP credentials.
+Set all production variables (secrets, domains, DB, SMTP, OAuth):
 
-#### 5. Configure SMTP for Transactional Email
+- `API_DOMAIN=api.yourdomain.com`
+- `CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com`
+- `APP_BASE_URL=https://www.yourdomain.com`
+- `GOOGLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/google/redirect`
+- `JWT_SECRET`, `API_SECRET`, `SESSION_SECRET` (strong random values)
+- `POSTGRES_PASSWORD` and database variables
+- SMTP/contact values (`SMTP_*`, `CONTACT_*`)
 
-The application sends magic-link login emails and Contact Us messages using SMTP (Nodemailer). The recommended default is Purelymail over implicit TLS.
-
-**Set SMTP values in `.env.prod`:**
+Secret generation examples:
 
 ```bash
-SMTP_HOST=smtp.purelymail.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=your-smtp-username
-SMTP_PASS=your-smtp-password
-SMTP_FROM=noreply@yourdomain.com
-CONTACT_TO_EMAIL=contact@yourdomain.com
-CONTACT_DAILY_LIMIT_PER_EMAIL=1
-CONTACT_IP_RATE_LIMIT_MAX=5
+echo "API_SECRET=$(openssl rand -hex 32)"
+echo "JWT_SECRET=$(openssl rand -hex 32)"
+echo "SESSION_SECRET=$(openssl rand -hex 32)"
+echo "POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
 ```
 
-If your SMTP provider requires STARTTLS instead of implicit TLS, use `SMTP_PORT=587` and `SMTP_SECURE=false`.
+#### 4.1 Configure Google OAuth for Production
 
-#### 6. Configure Google Cloud Console for Production
+Configure your Google OAuth app before first production login:
 
-Google OAuth will reject login attempts if the production domain is not registered in the Cloud Console. Update your OAuth 2.0 credentials **before** starting the containers.
-
-1. Open [Google Cloud Console](https://console.cloud.google.com/) and navigate to **APIs & Services > Credentials**.
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and go to **APIs & Services > Credentials**.
 2. Select the OAuth 2.0 Client ID used by the application.
-3. Under **Authorized JavaScript origins**, add your production domain:
+3. Under **Authorized JavaScript origins**, add your production frontend origin:
    ```
-   https://yourdomain.com
+   https://www.yourdomain.com
    ```
-4. Under **Authorized redirect URIs**, add the production callback URL:
+4. Under **Authorized redirect URIs**, add the backend callback URI:
    ```
-   https://yourdomain.com/api/auth/google/redirect
+   https://api.yourdomain.com/api/auth/google/redirect
    ```
 5. Click **Save**.
-6. Update `.env.prod` with the production OAuth values and callback URL:
+6. Update `.env.prod` with production OAuth values:
    ```bash
    GOOGLE_CLIENT_ID=your-production-client-id.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=your-production-client-secret
-   GOOGLE_CALLBACK_URL=https://yourdomain.com/api/auth/google/redirect
-   APP_BASE_URL=https://yourdomain.com
+   GOOGLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/google/redirect
+   APP_BASE_URL=https://www.yourdomain.com
    ```
 
-> **Note:** The value of `GOOGLE_CALLBACK_URL` in `.env.prod` must match the registered redirect URI in Google Cloud Console **exactly** — including scheme (`https://`), host, and path. A mismatch will produce `Error 400: redirect_uri_mismatch` when users attempt to log in.
+If the OAuth consent screen is still in **Testing** mode, add each production Google account as a **Test user** under **APIs & Services > OAuth consent screen**, or publish the app to allow all Google accounts.
 
-If your app is still in **Testing** mode on the OAuth consent screen, add each production Google account as a **Test user** under **APIs & Services > OAuth consent screen**, or publish the app to allow all Google accounts to authenticate.
+#### 4.2 Configure Microsoft and Apple OAuth for Production
 
-#### 7. Set Up SSL Certificates (HTTPS)
+Microsoft and Apple strategies are implemented in the backend and can be configured for production similarly to Google.
 
-Install Certbot and obtain a certificate for your domain:
+> Current codebase note: Microsoft/Apple auth routes are currently commented out in `api/src/endpoints/Routes.js`. After configuring credentials, enable those routes before expecting sign-in to work.
+
+**Microsoft (Azure Entra ID / Azure AD)**
+
+1. Open the Azure portal and go to **Microsoft Entra ID > App registrations**.
+2. Create/select the app registration used by this backend.
+3. Under **Authentication**, add the redirect URI for your production API callback:
+   ```
+   https://api.yourdomain.com/api/auth/microsoft/redirect
+   ```
+4. Configure supported account types and API permissions as required.
+5. Create a client secret and copy it securely.
+6. Update `.env.prod`:
+   ```bash
+   MICROSOFT_CLIENT_ID=your-microsoft-client-id
+   MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
+   MICROSOFT_CALLBACK_URL=https://api.yourdomain.com/api/auth/microsoft/redirect
+   MICROSOFT_TENANT=common
+   MICROSOFT_SCOPE=openid profile email
+   ```
+
+**Apple Sign In**
+
+1. Open [Apple Developer](https://developer.apple.com/) and configure **Sign in with Apple** for your Services ID/App ID.
+2. Add your production return URL (callback) for this backend:
+   ```
+   https://api.yourdomain.com/api/auth/apple/redirect
+   ```
+3. Create/download the Apple private key (`.p8`) and collect `TEAM_ID`, `KEY_ID`, and Services ID (`CLIENT_ID`).
+4. Store the private key securely (file path or env value, based on your deployment approach).
+5. Update `.env.prod`:
+   ```bash
+   APPLE_CLIENT_ID=your-apple-services-id
+   APPLE_TEAM_ID=your-apple-team-id
+   APPLE_KEY_ID=your-apple-key-id
+   APPLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/apple/redirect
+   APPLE_PRIVATE_KEY_LOCATION=/run/secrets/apple_private_key.p8
+   APPLE_SCOPE=name email
+   ```
+
+For both providers, verify that callback URLs match provider console settings exactly (scheme, host, and path), otherwise authentication will fail.
+
+#### 5. Configure CORS and Frontend API Base URL
+
+For cookie-based auth across subdomains, frontend and backend must be configured together:
+
+- Backend allowlist must include deployed frontend origins (`CORS_ALLOWED_ORIGINS`)
+- Frontend build must target API base URL including `/api`
+
+Example frontend build-time variable:
 
 ```bash
-sudo apt install certbot -y
-sudo certbot certonly --standalone -d yourdomain.com
+VITE_API_BASE_URL=https://api.yourdomain.com/api
 ```
 
-Certificates are stored in `/etc/letsencrypt/live/yourdomain.com/`. Update `proxy/nginx.conf` to add HTTPS configuration and mount the certificate volumes into the `proxy` service in `compose.prod.yml`.
+#### 6. Enable HTTPS
 
-#### 8. Build and Start Production Services
+Enable TLS for both frontend and backend:
+
+- Backend: issue certificate for API host (`api.yourdomain.com`) using Certbot or your provider's TLS integration.
+- Frontend: enable host-managed TLS on your static host/custom domain.
+
+Example backend certificate issuance:
 
 ```bash
-docker compose -f compose.prod.yml up --build -d
+certbot certonly --standalone -d api.yourdomain.com
 ```
 
-The `-d` flag runs the containers in the background. The application will be accessible at `https://yourdomain.com`.
+In this repository, production Nginx expects certificates at:
 
-#### 9. Run Schema Migrations
+- `/etc/letsencrypt/live/${API_DOMAIN}/fullchain.pem`
+- `/etc/letsencrypt/live/${API_DOMAIN}/privkey.pem`
 
-For subsequent deployments, use the migration runner to apply only pending migrations and keep startup status checks accurate:
+#### 7. Start Backend Services
+
+Deploy backend containers:
 
 ```bash
-docker exec api_service_prod node scripts/runMigrations.js up
+docker compose -f compose.prod.yml up -d --build # to start the services
+docker compose -f compose.prod.yml ps # to see the status of the services
+docker compose -f compose.prod.yml logs -f api # to see the logs of the api service
 ```
 
-Check migration status (latest known vs latest applied, plus pending count):
+Apply schema migrations (for incremental deployments):
 
 ```bash
 docker exec api_service_prod node scripts/runMigrations.js status
+docker exec api_service_prod node scripts/runMigrations.js up
 ```
 
-The migration runner determines "head" dynamically from numbered SQL files in `Sql.Migrations/` (excluding `init.sql`) and compares against rows in `SchemaMigration`.
+How migrations work in this project:
 
-#### 10. Manage Services
+- `Sql.Migrations/init.sql` is the **bootstrap script** used for first-time database initialization (new environment / empty Postgres volume).
+- Incremental changes are stored as numbered SQL files in `Sql.Migrations/` (excluding `init.sql`) and are applied by `api/scripts/runMigrations.js`.
+- The runner creates/uses the `SchemaMigration` table to track each applied migration ID, checksum, apply timestamp, and DB user.
+- `status` compares latest known migration files vs latest applied migration and reports pending count.
+- `up` applies only pending migrations in order, wrapping each migration in a DB transaction (`BEGIN`/`COMMIT`; rollback on failure).
+- If a migration ID already exists, the runner validates checksums to detect drift and prevent silent schema mismatch.
+
+#### 8. Deploy Frontend
+
+Deploy the SPA using your chosen static hosting workflow (CI/CD recommended).  
+For this project, `.github/workflows/deploy-frontend-pages.yml` deploys `app/` to GitHub Pages and injects `VITE_API_BASE_URL` from repository secrets.
+
+After first successful deploy:
+
+1. Set custom domain in hosting settings (`www.yourdomain.com`)
+2. Wait for DNS verification
+3. Enable HTTPS enforcement
+
+#### 9. Production Validation Checklist
+
+After deployment, verify:
+
+1. Frontend loads from public URL (`https://www.yourdomain.com`)
+2. API is reachable over HTTPS (`https://api.yourdomain.com/api/...`)
+3. API health endpoint returns success
+4. OAuth login redirects and callbacks work with production URLs
+5. No CORS errors in browser console
+6. Auth cookie is sent as secure httpOnly in production
+7. Backend logs show healthy traffic and no crash loops
+
+#### 10. Ongoing Operations
+
+Routine operations:
 
 ```bash
 docker compose -f compose.prod.yml logs -f         # tail logs
 docker compose -f compose.prod.yml restart api     # restart a single service
 docker compose -f compose.prod.yml down            # stop all services
 ```
+
+Operational best practices:
+
+- Keep host packages updated
+- Back up Postgres and test restore procedures
+- Rotate secrets and API credentials
+- Keep `.env.prod` out of source control
+- Monitor resource usage, error rates, and certificate expiration
 
 ---
 
@@ -739,7 +869,7 @@ Working on Islamic Calendar Sync over the course of this semester was one of the
 
 I learned an enormous amount about Docker and containerization — not just how to write a `Dockerfile`, but how to orchestrate multiple services together, manage inter-container networking, handle persistent volumes, and think through the difference between a development and production environment. Before this project, Docker was something I had used minimally; by the end, I could debug container issues, manage logs, and deploy a multi-service application to a VPS confidently.
 
-I also deepened my understanding of middleware, structured logging, and what it means to build a project with a solid architecture. Implementing proper authentication — with JWT stored in httpOnly cookies, magic-link emails, and multiple OAuth provider strategies — taught me that security is not something you bolt on at the end. Each security layer added value independently: the `ResponseSanitizer` scrubs sensitive fields from every API response; the `RequestSanitizer` blocks prototype-pollution attacks before any route handler runs; the rate limiter using Redis throttles abuse at the edge; the `MagicLinkUsedToken` table makes one-time login links truly one-time; and salted PBKDF2 hashing secures the subscription feed tokens. Seeing these pieces fit together as a coherent defense-in-depth strategy — rather than a checklist of bolt-ons — was one of the most instructive parts of the project. On the frontend, the same discipline applied: DOMPurify sanitizes all user-supplied HTML on the client before it is rendered, and the httpOnly cookie approach keeps the JWT entirely out of reach of JavaScript, reducing XSS risk.
+I also deepened my understanding of middleware, structured logging, and what it means to build a project with a solid architecture. Implementing proper authentication — with JWT stored in secure httpOnly cookies, magic-link emails, and multiple OAuth provider strategies — taught me that security is not something you bolt on at the end. Each security layer added value independently: the `ResponseSanitizer` scrubs sensitive fields from every API response; the `RequestSanitizer` blocks prototype-pollution attacks before any route handler runs; the rate limiter using Redis throttles abuse at the edge; the `MagicLinkUsedToken` table makes one-time login links truly one-time; and salted PBKDF2 hashing secures the subscription feed tokens. Seeing these pieces fit together as a coherent defense-in-depth strategy — rather than a checklist of bolt-ons — was one of the most instructive parts of the project. On the frontend, the same discipline applied: DOMPurify sanitizes all user-supplied HTML on the client before it is rendered, and the secure httpOnly cookie approach keeps the JWT entirely out of reach of JavaScript (and HTTPS-only in production), reducing XSS and transport exposure risk.
 
 Another significant technical achievement was the offline-first PWA architecture. Learning about IndexedDB, Dexie.js, service workers, Workbox, and how to design a seamless API-first-with-offline-fallback pattern — and then seeing it actually work, where a user can generate and edit events while offline and have them sync when they log back in — was particularly satisfying.
 
@@ -755,4 +885,4 @@ These scope decisions reflect a core lesson of the semester: **when building a p
 
 ---
 
-*Islamic Calendar Sync — Spring 2026*
+_Islamic Calendar Sync — Spring 2026_

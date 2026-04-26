@@ -7,15 +7,15 @@ This document describes how Google OAuth2 is integrated with Passport.js and how
 ## Overview
 
 - The API uses **passport-google-oidc** for the Google OAuth2 authorization code flow.
-- After a successful callback, the server does **not** create a session. It issues an **application JWT** and redirects the browser to the frontend with the token in the URL **hash** (`#token=<jwt>`).
-- The frontend reads the token from the hash, stores it, and sends `Authorization: Bearer <token>` on all authenticated API requests.
-- Google OAuth **access and refresh tokens** are stored in the database (PROVIDER table) and used only for calling Google APIs (e.g. Calendar). They are separate from the application JWT used for API authentication.
+- After a successful callback, the server does **not** create a persistent login session. It issues an **application JWT**, sets it as the auth cookie (`token`), and redirects to the frontend base URL.
+- Browser auth then proceeds via secure httpOnly cookie; bearer token remains a supported fallback in backend JWT extractor.
+- In the current codebase, Google OAuth tokens are not persisted for Calendar API usage; Google is used for identity/login.
 
 ---
 
 ## Backend components
 
-### Passport configuration (`api/src/passport.js`)
+### Passport configuration (`api/src/Passport.js`)
 
 - **Google strategy** (`passport-google-oidc`):
   - Configured with `clientID`, `clientSecret`, `callbackURL` from `googleAuthConfig` (env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`).
@@ -24,39 +24,35 @@ This document describes how Google OAuth2 is integrated with Passport.js and how
 
 - **Redirect handler** (after `passport.authenticate("google", { session: false })`):
   1. Reads `req.user`, `req.googleTokens`, `req.googleProvider`.
-  2. Updates the provider row with Google tokens (access, refresh, expiry, scopes) via `ProviderDOA.updateTokens`.
-  3. Calls `signToken(user)` to create a JWT (payload `{ sub: user.userId }`, 7-day expiry).
-  4. Redirects to `{APP_BASE_URL}#token={jwt}` so the frontend can read the token from the hash.
+  2. Calls `signToken(user)` to create a JWT (payload `{ sub: user.userId }`, configured expiry).
+  3. Sets cookie `token` using shared auth cookie options.
+  4. Redirects to `{APP_BASE_URL}`.
 
 - **Routes**:
   - `GET /auth/google/login` — starts the flow (redirects to Google).
-  - `GET /auth/google/redirect` — OAuth callback; stores Google tokens, issues JWT, redirects with `#token=...`.
+  - `GET /auth/google/redirect` — OAuth callback; issues JWT cookie and redirects to frontend.
 
-### User and provider persistence
+### User persistence
 
-- **findOrCreateUserFromGoogleProfile** (`api/src/endpoints/users/GetUser.js`): Finds or creates the USERS row by email, finds or creates the PROVIDER row for Google, updates tokens and last login. Used only from the Passport verify callback.
-- **ProviderDOA**: Manages the PROVIDER table (create provider, find by user and type, update tokens).
-- **UserDOA**: User lookup by email or id, user creation, last login update.
+- **findOrCreateUserFromGoogleProfile** (`api/src/Passport.js`): finds or creates user by email and updates last login metadata.
+- **UserDOA** handles user lookup/create/update.
 
 ---
 
 ## Frontend responsibilities
 
 - **Start login**: Redirect the user to `GET /api/auth/google/login` (or your API base + `/auth/google/login`).
-- **After redirect**: The browser lands on `{BASE_URL}#token=eyJ...`. The frontend must:
-  1. Read the token from `window.location.hash` (e.g. parse `#token=...`).
-  2. Store the token (e.g. in memory or localStorage).
-  3. Remove the hash from the URL so the user does not see or share it.
-- **Authenticated requests**: Send `Authorization: Bearer <token>` on every request to protected endpoints (e.g. `GET /users/me`).
-- **Logout**: Call `POST /users/logout` and then discard the stored token locally.
+- **After redirect**: Browser lands on `{APP_BASE_URL}` already authenticated via cookie.
+- **Authenticated requests**: Browser sends cookie automatically to same-site API endpoints; backend also supports bearer header for non-browser clients.
+- **Logout**: call `POST /users/logout`; server clears auth cookie.
 
 ---
 
 ## Google Cloud Console setup
 
 1. **OAuth 2.0 Client ID** (Web application).
-2. **Authorized redirect URIs**: Must match the callback URL exactly (e.g. `http://localhost:5000/api/auth/google/redirect` for dev, or your production API URL + `/auth/google/redirect`).
-3. **Authorized JavaScript origins**: Your frontend origin (e.g. `http://localhost:5000` or your production app URL).
+2. **Authorized redirect URIs**: Must match callback exactly (e.g. `http://localhost:5000/api/auth/google/redirect` for dev; `https://api.yourdomain.com/api/auth/google/redirect` for split production).
+3. **Authorized JavaScript origins**: frontend origin (e.g. `http://localhost:5000`, `https://www.yourdomain.com`).
 
 Environment variables used by the API:
 
@@ -76,29 +72,29 @@ APP_BASE_URL=http://localhost:5000
 3. User signs in and consents → Google redirects to `GET /auth/google/redirect?code=...`.
 4. Passport exchanges the code for access and refresh tokens.
 5. Verify callback: `findOrCreateUserFromGoogleProfile`; user and provider are attached to `req`.
-6. Redirect handler: save Google tokens to DB, `signToken(user)`, redirect to `{APP_BASE_URL}#token={jwt}`.
-7. Frontend reads token from hash, stores it, calls `GET /users/me` with `Authorization: Bearer <token>`.
+6. Redirect handler: `signToken(user)`, set auth cookie, redirect to `{APP_BASE_URL}`.
+7. Frontend calls authenticated endpoints (for example `GET /users/me`) with cookie auth.
 
 ---
 
 ## Why the app issues its own JWT
 
-Google’s access token is for calling Google APIs (Calendar, etc.), not for identifying the user to this application. The API therefore issues its own JWT with a short payload (`sub: userId`) and controlled expiry (e.g. 7 days). That JWT is what the client sends on each request; the backend validates it with passport-jwt and loads `req.user`. See [jwt_implementation.md](jwt_implementation.md).
+Google identity proves who the user is during OAuth callback, but ongoing app authorization is handled by the app's own JWT (`sub: userId`) validated by `passport-jwt`. See [jwt_implementation.md](jwt_implementation.md).
 
 ---
 
 ## Token summary
 
-| Token / storage        | Where                | Purpose                                      |
-|------------------------|----------------------|----------------------------------------------|
-| Google access/refresh  | PROVIDER table       | Call Google Calendar API (and other Google APIs). |
-| Application JWT        | Redirect hash → client | Authenticate requests to this API (`Authorization: Bearer`). |
+| Token / storage        | Where                         | Purpose                                      |
+|------------------------|-------------------------------|----------------------------------------------|
+| Google OAuth tokens    | OAuth callback context        | Identity handshake during login flow.        |
+| Application JWT        | `token` secure httpOnly cookie | Authenticate requests to this API.           |
 
 ---
 
 ## Key implementation details
 
 - **accessType: "offline"** and **prompt: "consent"** are used so Google returns a refresh token when possible.
-- If Google does not return a new refresh token on a later login, the existing refresh token in the provider row is kept (see `findOrCreateUserFromGoogleProfile` / token update logic).
+- OAuth or verify failures redirect to login with an error query parameter.
 - OAuth or verify failures redirect to the login URL with an error query parameter (e.g. `?error=oauth_failed`).
 - The callback URL in Google Cloud must match `GOOGLE_CALLBACK_URL` exactly (including path and, in production, scheme and host).

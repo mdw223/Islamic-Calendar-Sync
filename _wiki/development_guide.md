@@ -4,7 +4,7 @@
 
 This is a full-stack application with:
 
-- **Frontend**: React/Vite app running on port 5000
+- **Frontend**: React/Vite app served via Nginx at port 5000 in Docker dev
 - **Backend**: Node.js/Express API running on port 3000
 - **Database**: PostgreSQL with separate development and testing environments
 - **Proxy**: Nginx reverse proxy on ports 80/443
@@ -56,7 +56,7 @@ docker compose -f compose.prod.yml down
 ### Container Names (Production)
 
 - `api_service_prod` (port 3000, internal; reached via Nginx)
-- `nginx_proxy_prod` (host **80** / **443** → container; TLS is configured in-container when Let’s Encrypt certs exist for `API_DOMAIN`; see `deployment-guide.md`)
+- `nginx_proxy_prod` (host **80** / **443** → container; TLS is configured in-container when Let’s Encrypt certs exist for `API_DOMAIN`; see `_wiki/deployment_guide.md`)
 - `ics_postgres_db_prod`
 - `ics_redis_prod` (not published to the host)
 
@@ -144,7 +144,7 @@ If using cookies/sessions across domains, ensure secure cross-site cookie settin
 ### TLS/HTTPS recommendations
 
 - GitHub Pages provides TLS for `www.yourdomain.com` (custom domain + **Enforce HTTPS**).
-- API TLS: set `API_DOMAIN` in `.env.prod`, issue Let’s Encrypt certs on the VPS, mount `/etc/letsencrypt` and restart `proxy` (full steps in `deployment-guide.md` section 7).
+- API TLS: set `API_DOMAIN` in `.env.prod`, issue Let’s Encrypt certs on the VPS, mount `/etc/letsencrypt` and restart `proxy` (full steps in `_wiki/deployment_guide.md` section 7).
 - Keep both frontend and backend strictly HTTPS in production.
 
 ### Deployment validation checklist
@@ -191,12 +191,13 @@ docker compose ps
 docker exec -it ics_postgres_db_dev env | grep POSTGRES
 ```
 
-You should see 4 containers running:
+You should see 5 containers running:
 
-- api_service (port 3000)
-- react_app (port 5000)
+- api_service (port 3000 internal)
+- react_app (served behind Nginx)
 - ics_postgres_db_dev (port 5432)
-- nginx_proxy (port 8080)
+- ics_redis_dev (port 6379)
+- nginx_proxy (port 5000 mapped to container port 80)
 
 #### Rebuilding and Recreating Containers
 
@@ -231,7 +232,7 @@ docker compose down -v
 ### Development Environment
 
 - **Frontend**: http://localhost:5000
-- **Backend API**: http://localhost/api
+- **Backend API**: http://localhost:5000/api
 - **Database**: localhost:5432 (credentials from .env)
 
 ## Database Management
@@ -240,7 +241,7 @@ docker compose down -v
 
 ```bash
 # Connect to development database
-docker exec -it ics_postgres_db_dev psql -U ${DB_USER} -d ${DB_NAME}
+docker exec -it ics_postgres_db_dev psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
 
 # View database tables
 \dt
@@ -253,7 +254,7 @@ docker exec -it ics_postgres_db_dev psql -U ${DB_USER} -d ${DB_NAME}
 
 ```bash
 # Connect to testing database
-docker exec -it ics_postgres_db_test psql -U ${DB_USER} -d ${DB_NAME}
+docker exec -it ics_postgres_db_test psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
 
 # View database tables
 \dt

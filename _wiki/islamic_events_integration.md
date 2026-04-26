@@ -30,7 +30,7 @@
 
 Islamic events (Ramadan, Eid al-Fitr, Hajj, White Days, etc.) are generated **server-side** from a static JSON catalogue of 27 definitions. The backend converts Gregorian dates to Hijri using the Node.js `Intl.DateTimeFormat` API with the `islamic-umalqura` calendar and produces one database row per event occurrence per user.
 
-Users can show/hide individual event types via per-user preferences stored in the `UserIslamicDefinitionPreference` table. The frontend no longer performs any event generation — it calls the API and displays results.
+Users can show/hide individual event types via per-user preferences stored in the `UserIslamicDefinitionPreference` table. In normal online mode, generation is API-driven; in offline fallback mode, the frontend can generate events locally via `OfflineClient` + frontend Islamic event service.
 
 ---
 
@@ -156,7 +156,7 @@ Calling `POST /events/generate` for the same year twice results in zero duplicat
 
 ### Auto-Generation on User Creation
 
-`passport.js` (Google OAuth callback) fires a call to `IslamicEventService.generateForNewUser(userId)` after user creation. This ensures a new user sees Islamic events on first load without an extra client round-trip.
+Auto-generation on user creation is currently not executed by the OAuth callback path (the prior call is commented out). Events are generated through explicit generation flows (`POST /events/generate` or offline fallback generation) and sync.
 
 ---
 
@@ -280,14 +280,14 @@ Toggling a checkbox calls `toggleIslamicEvent(definitionId)` from the context.
 
 ### hijriUtils.js (Frontend)
 
-The frontend `hijriUtils.js` retains only display-oriented helpers:
+The frontend `hijriUtils.js` provides display-oriented helpers:
 
 - `getHijriParts(date)` — Hijri day/month/year with long month name.
 - `getHijriNumericParts(date)` — numeric Hijri components.
 - `getHijriMonthRangeLabel(year, month)` — label for calendar headers.
 - `HIJRI_FORMATTER` — the reusable `Intl.DateTimeFormat` instance.
 
-The `generateIslamicEventsForYear()` function has been removed from the frontend — all generation is server-side.
+Offline mode still relies on frontend generation logic through `app/src/services/IslamicEventService.js` and `OfflineClient.generateEvents(...)` when API fallback is required.
 
 ---
 
