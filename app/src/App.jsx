@@ -21,6 +21,7 @@ import ExportEvents from "./pages/app/export/ExportEvents";
 import SubscriptionsHelp from "./pages/app/help/SubscriptionsHelp";
 import CalendarPage from "./pages/app/calendar/Calendar";
 import DataPolicy from "./pages/app/data-policy/DataPolicy";
+import Contact from "./pages/app/contact/Contact";
 import Features from "./pages/app/features/Features";
 import Guide from "./pages/app/guide/Guide";
 import Methods from "./pages/app/methods/Methods";
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
           { path: "calendar/:year/:month", element: <CalendarPage /> },
           { path: "learn", element: <Learn /> },
           { path: "features", element: <Features /> },
+          { path: "contact", element: <Contact /> },
           { path: "guide", element: <Guide /> },
           { path: "methods", element: <Methods /> },
           { path: "privacy", element: <Privacy /> },

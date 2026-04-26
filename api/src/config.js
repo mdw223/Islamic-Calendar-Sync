@@ -84,8 +84,18 @@ export const subscriptionConfig = {
 };
 
 export const smtpConfig = {
-  SMTP_PROVIDER_API_KEY: process.env.SMTP_PROVIDER_API_KEY,
-  SMTP_EMAIL: process.env.SMTP_EMAIL
+  HOST: process.env.SMTP_HOST,
+  PORT: Number(process.env.SMTP_PORT) || 465,
+  SECURE: String(process.env.SMTP_SECURE ?? "true").toLowerCase() === "true",
+  USER: process.env.SMTP_USER,
+  PASS: process.env.SMTP_PASS,
+  FROM: process.env.SMTP_FROM,
+};
+
+export const contactConfig = {
+  TO_EMAIL: process.env.CONTACT_TO_EMAIL || process.env.SMTP_FROM,
+  DAILY_LIMIT_PER_EMAIL: Number(process.env.CONTACT_DAILY_LIMIT_PER_EMAIL) || 1,
+  IP_RATE_LIMIT_MAX: Number(process.env.CONTACT_IP_RATE_LIMIT_MAX) || 5,
 };
 
 export const redisConfig = {

@@ -3,7 +3,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { defaultLogger, extractUserId } from "./middleware/Logger.js";
 import UserDOA from "./model/db/doa/UserDOA.js";
 import { Strategy as GoogleStrategy } from "passport-google-oidc";
-import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig, smtpConfig, microsoftAuthConfig, appleAuthConfig } from "./Config.js";
+import { appConfig, authCookieConfig, googleAuthConfig, jwtConfig, microsoftAuthConfig, appleAuthConfig } from "./Config.js";
 // import { Strategy as MicrosoftStrategy } from "passport-microsoft";
 // import AppleStrategy from "passport-apple";
 import CalendarProviderDOA from "./model/db/doa/CalendarProviderDOA.js";
@@ -11,8 +11,8 @@ import jwt from "jsonwebtoken";
 import { AuthProviderKey, AuthProviderTypeId, CalendarProviderTypeId } from "./Constants.js";
 import { generateForNewUser } from "./services/IslamicEventService.js";
 import { Strategy as MagicLinkStrategy } from "passport-magic-link";
-import { Resend } from "resend";
 import MagicLinkTokenDOA from "./model/db/doa/MagicLinkTokenDOA.js";
+import { sendMagicLinkEmail } from "./services/SmtpMailer.js";
 
 /**
  * Issue a signed JWT for the given user. Used after email code verify and Google OAuth.
@@ -301,11 +301,6 @@ export const googleRedirect = [
 // ];
 
 /**
- * Initialize Resend client for sending magic-link emails
- */
-const resend = new Resend(smtpConfig.SMTP_PROVIDER_API_KEY);
-
-/**
  * Persist token usage in DB so token one-time checks survive restarts and multi-instance deployments.
  */
 class DbMagicLinkStorage {
@@ -323,7 +318,7 @@ class DbMagicLinkStorage {
 }
 
 /**
- * Magic-link strategy with Resend email integration.
+ * Magic-link strategy with SMTP email integration.
  * When user requests a magic link:
  *   1. sendToken callback: generate token and email to user
  *   2. verify callback: user clicks link, token validated, user authenticated
@@ -350,26 +345,10 @@ passport.use(
         // Construct full magic-link URL
         const magicLink = `${appConfig.BASE_URL}/api/auth/magiclink/verify?token=${encodeURIComponent(token)}`;
 
-        // Send email via Resend
-        const { error } = await resend.emails.send({
-          from: smtpConfig.SMTP_EMAIL,
-          to: user.email,
-          subject: "Sign in to Islamic Calendar Sync",
-          html: `
-            <h3>Hello!</h3>
-            <p>Click the link below to sign in to Islamic Calendar Sync:</p>
-            <p><a href="${magicLink}">Sign In</a></p>
-            <p>This link expires in 10 minutes.</p>
-          `,
+        await sendMagicLinkEmail({
+          toEmail: user.email,
+          magicLink,
         });
-
-        if (error) {
-          defaultLogger.error("Failed to send magic link email", {
-            email: user.email,
-            error,
-          });
-          throw error;
-        }
 
         defaultLogger.info("Magic link email sent", { email: user.email });
         return true;

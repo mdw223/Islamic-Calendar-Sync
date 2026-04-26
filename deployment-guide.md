@@ -164,10 +164,33 @@ git clone git@github.com:<your-org-or-user>/<your-repo>.git .
 
 Create `.env.prod` with all production variables used by API and Postgres, plus:
 
+### Generate all production variables:
+
+```bash
+echo "API_SECRET=$(openssl rand -hex 32)"
+echo "JWT_SECRET=$(openssl rand -hex 32)"
+echo "SESSION_SECRET=$(openssl rand -hex 32)"
+echo "POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+```
+
 - `API_DOMAIN=api.yourdomain.com` (must match the public API hostname and the Namecheap `A` record for `api`; used by Nginx `server_name` and TLS paths).
 - `CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com` (second origin optional if you do not serve the frontend from root).
+- SMTP for authentication and contact emails (Purelymail example):
+  - `SMTP_HOST=smtp.purelymail.com`
+  - `SMTP_PORT=465`
+  - `SMTP_SECURE=true`
+  - `SMTP_USER=<your-smtp-username>`
+  - `SMTP_PASS=<your-smtp-password>`
+  - `SMTP_FROM=contact@yourdomain.com`
+- Contact form settings:
+  - `CONTACT_TO_EMAIL=contact@yourdomain.com`
+  - `CONTACT_DAILY_LIMIT_PER_EMAIL=1`
+  - `CONTACT_IP_RATE_LIMIT_MAX=5`
 
-Do not commit `.env.prod`.
+If your provider requires STARTTLS instead of implicit TLS, set `SMTP_PORT=587` and `SMTP_SECURE=false`.
+
+Do not commit `.env.prod`. Ensure `.env*` is in `.gitignore` (except `.env.example`).
+If `.env.example` was already ignored previously, force-add once: `git add -f .env.example`
 
 ### 6.2 Use production compose
 

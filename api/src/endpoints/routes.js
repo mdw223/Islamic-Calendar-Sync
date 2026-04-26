@@ -45,6 +45,7 @@ import GetSubscriptionUrls from './subscription/GetSubscriptionUrls.js';
 import CreateSubscriptionUrl from './subscription/CreateSubscriptionUrl.js';
 import RevokeSubscription from './subscription/RevokeSubscription.js';
 import UpdateSubscriptionUrl from './subscription/UpdateSubscriptionUrl.js';
+import { submitContact } from "./contact/SubmitContact.js";
 
 const router = express.Router();
 
@@ -81,6 +82,7 @@ router.get("/auth/google/redirect", googleSession, ...googleRedirect);
 router.post("/auth/magiclink/send", ...magicLinkSend);
 router.get("/login/check-email", checkEmailPage);
 router.get("/auth/magiclink/verify", ...magicLinkVerify);
+router.post("/contact", ...submitContact);
 
 // Subscription management (Bearer JWT)
 router.get("/subscription/urls", Auth(AuthUser.VALID_USER), GetSubscriptionUrls);

@@ -1,6 +1,11 @@
-.env*
+.env
+.env.*
+*.env
 node_modules
 dist
 build
 logs/
 api/coverage/*
+
+# ...but keep template
+!.env.example
