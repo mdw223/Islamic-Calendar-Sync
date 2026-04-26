@@ -1,7 +1,7 @@
 import EventDOA from '../../model/db/doa/EventDOA.js';
 import { Event } from '../../model/models/Event.js';
 import { validateStoredUserRRule } from '../../services/EventExpansionService.js';
-import { sanitizeDescription } from '../../util/sanitizeHtml.js';
+import { sanitizeDescription } from '../../util/SanitizeHtml.js';
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 

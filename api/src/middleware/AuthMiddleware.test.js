@@ -20,7 +20,7 @@ const {
   AuthMiddleware,
   Auth,
 } = await import("./AuthMiddleware.js");
-const { AuthUser } = await import("../constants.js");
+const { AuthUser } = await import("../Constants.js");
 
 describe("AuthMiddleware core behavior", () => {
   beforeEach(() => {

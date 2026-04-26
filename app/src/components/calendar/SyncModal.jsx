@@ -29,7 +29,7 @@ import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import APIClient from "../../util/ApiClient";
 import ics from "../../util/Ics";
-import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
+import { buildLocationTimezoneOptions } from "../../util/LocationTimezoneOptions";
 
 const YEAR_RANGE_OFFSET = 5;
 
@@ -104,10 +104,7 @@ export default function SyncModal({ open, onClose, user }) {
   const isLoggedIn = user?.isLoggedIn;
 
   const enabledIslamicDefinitionIds = useMemo(
-    () =>
-      islamicEventDefs
-        .filter((def) => !def.isHidden)
-        .map((def) => def.id),
+    () => islamicEventDefs.filter((def) => !def.isHidden).map((def) => def.id),
     [islamicEventDefs],
   );
 
@@ -190,7 +187,8 @@ export default function SyncModal({ open, onClose, user }) {
       );
 
       for (const ev of filtered) {
-        ev.description = ev.description + `\n\nLearn more: ${window.location.origin}/learn`;
+        ev.description =
+          ev.description + `\n\nLearn more: ${window.location.origin}/learn`;
         cal.addEvent(
           ev.name ?? "",
           ev.description ?? "",
@@ -242,7 +240,9 @@ export default function SyncModal({ open, onClose, user }) {
           </Typography>
 
           <FormControl size="small" sx={{ minWidth: 240, mb: 1, mt: 1 }}>
-            <InputLabel id="sync-islamic-scope-label">Islamic events</InputLabel>
+            <InputLabel id="sync-islamic-scope-label">
+              Islamic events
+            </InputLabel>
             <Select
               labelId="sync-islamic-scope-label"
               value={downloadScope}
@@ -366,9 +366,7 @@ export default function SyncModal({ open, onClose, user }) {
             startIcon={<LinkIcon size={16} />}
             onClick={() => {
               onClose();
-              navigate(
-                isLoggedIn ? "/subscriptions" : "/settings",
-              );
+              navigate(isLoggedIn ? "/subscriptions" : "/settings");
             }}
           >
             {isLoggedIn ? "Open Manage Subscriptions" : "Go to Settings"}

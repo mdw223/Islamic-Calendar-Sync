@@ -22,7 +22,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
-import { buildLocationTimezoneOptions } from "../../util/locationTimezoneOptions";
+import { buildLocationTimezoneOptions } from "../../util/LocationTimezoneOptions";
 import SyncModal from "./SyncModal";
 import GenerateYearsModal from "./GenerateYearsModal";
 
@@ -32,10 +32,7 @@ import GenerateYearsModal from "./GenerateYearsModal";
  * Renders the Add Event, Sync, Generate, Reset, and Refresh action buttons
  * below the calendar.
  */
-export default function CalendarActionBar({
-  onAddEvent,
-  user,
-}) {
+export default function CalendarActionBar({ onAddEvent, user }) {
   const {
     resetCalendar,
     ensureIslamicEventsForYears,

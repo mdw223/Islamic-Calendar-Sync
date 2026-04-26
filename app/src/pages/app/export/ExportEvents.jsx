@@ -34,7 +34,7 @@ import { useUser } from "../../../contexts/UserContext";
 import APIClient from "../../../util/ApiClient";
 import OfflineClient from "../../../util/OfflineClient";
 import ics from "../../../util/Ics";
-import { buildLocationTimezoneOptions } from "../../../util/locationTimezoneOptions";
+import { buildLocationTimezoneOptions } from "../../../util/LocationTimezoneOptions";
 import { SubscriptionDefinitionId } from "../../../Constants";
 import { shouldFallbackToOffline } from "../../../util/ApiErrorHelper";
 
@@ -82,7 +82,11 @@ function sanitizeFileBaseName(value) {
 
 export default function ExportEvents() {
   const navigate = useNavigate();
-  const { ensureIslamicEventsForYears, generatedYearsRange, fetchExpandedEventsForRange } = useCalendar();
+  const {
+    ensureIslamicEventsForYears,
+    generatedYearsRange,
+    fetchExpandedEventsForRange,
+  } = useCalendar();
   const { userLocations } = useUser();
 
   const [loading, setLoading] = useState(false);
@@ -91,8 +95,12 @@ export default function ExportEvents() {
   const [search, setSearch] = useState("");
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [selectedDefinitionIds, setSelectedDefinitionIds] = useState(() => new Set());
-  const [selectedYears, setSelectedYears] = useState(() => new Set([new Date().getFullYear()]));
+  const [selectedDefinitionIds, setSelectedDefinitionIds] = useState(
+    () => new Set(),
+  );
+  const [selectedYears, setSelectedYears] = useState(
+    () => new Set([new Date().getFullYear()]),
+  );
   const [yearAnchor, setYearAnchor] = useState(null);
   const [selectedTimezone, setSelectedTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
@@ -100,7 +108,8 @@ export default function ExportEvents() {
   const [isExporting, setIsExporting] = useState(false);
   const didInitDefaultsRef = useRef(false);
 
-  const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+  const browserTimezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
   const yearChoices = useMemo(buildYearChoices, []);
 
   const locationOptions = useMemo(
@@ -112,7 +121,12 @@ export default function ExportEvents() {
     const q = search.trim().toLowerCase();
     if (!q) return definitions;
     return definitions.filter((definition) => {
-      const text = [definition.titleEn, definition.titleAr, definition.description, definition.category]
+      const text = [
+        definition.titleEn,
+        definition.titleAr,
+        definition.description,
+        definition.category,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -149,7 +163,8 @@ export default function ExportEvents() {
     selectedYearsList.length === 1
       ? String(selectedYearsList[0])
       : `${selectedYearsList.length} years`;
-  const exportFileBaseName = sanitizeFileBaseName(name) || "IslamicCalendarSync";
+  const exportFileBaseName =
+    sanitizeFileBaseName(name) || "IslamicCalendarSync";
   const exportFileName = `${exportFileBaseName}.ics`;
 
   const canContinue =
@@ -206,7 +221,9 @@ export default function ExportEvents() {
         }
       } catch (error) {
         if (!cancelled) {
-          setActionError(error?.message ?? "Failed to load export definitions.");
+          setActionError(
+            error?.message ?? "Failed to load export definitions.",
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -221,7 +238,9 @@ export default function ExportEvents() {
   }, []);
 
   useEffect(() => {
-    if (!locationOptions.some((option) => option.timezone === selectedTimezone)) {
+    if (
+      !locationOptions.some((option) => option.timezone === selectedTimezone)
+    ) {
       setSelectedTimezone(locationOptions[0]?.timezone ?? browserTimezone);
     }
   }, [browserTimezone, locationOptions, selectedTimezone]);
@@ -353,7 +372,8 @@ export default function ExportEvents() {
       <Stack spacing={0.5}>
         <Typography variant="h4">Export Events as .ics File</Typography>
         <Typography variant="body2" color="text.secondary">
-          Choose which event definitions to include, name the download, then pick the years and timezone for your export.
+          Choose which event definitions to include, name the download, then
+          pick the years and timezone for your export.
         </Typography>
       </Stack>
 
@@ -362,11 +382,23 @@ export default function ExportEvents() {
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={2}>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            flexWrap="wrap"
+            useFlexGap
+          >
             {WIZARD_STEPS.map((label, index) => (
               <Chip
                 key={label}
-                color={index === step ? "primary" : index < step ? "success" : "default"}
+                color={
+                  index === step
+                    ? "primary"
+                    : index < step
+                      ? "success"
+                      : "default"
+                }
                 icon={index < step ? <CheckCircle2 size={14} /> : undefined}
                 label={`${index + 1}. ${label}`}
               />
@@ -403,10 +435,16 @@ export default function ExportEvents() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
-                <Button onClick={selectAllFiltered} disabled={filteredDefinitions.length === 0}>
+                <Button
+                  onClick={selectAllFiltered}
+                  disabled={filteredDefinitions.length === 0}
+                >
                   Select All
                 </Button>
-                <Button onClick={clearAllFiltered} disabled={filteredDefinitions.length === 0}>
+                <Button
+                  onClick={clearAllFiltered}
+                  disabled={filteredDefinitions.length === 0}
+                >
                   Clear
                 </Button>
               </Stack>
@@ -428,7 +466,9 @@ export default function ExportEvents() {
                     </Typography>
                     <Grid container spacing={1}>
                       {list.map((definition) => {
-                        const checked = selectedDefinitionIds.has(definition.id);
+                        const checked = selectedDefinitionIds.has(
+                          definition.id,
+                        );
                         return (
                           <Grid item xs={12} md={6} lg={4} key={definition.id}>
                             <Card
@@ -436,19 +476,41 @@ export default function ExportEvents() {
                               onClick={() => toggleDefinition(definition.id)}
                               sx={{
                                 cursor: "pointer",
-                                borderColor: checked ? "primary.main" : "divider",
-                                backgroundColor: checked ? "action.selected" : "background.paper",
+                                borderColor: checked
+                                  ? "primary.main"
+                                  : "divider",
+                                backgroundColor: checked
+                                  ? "action.selected"
+                                  : "background.paper",
                               }}
                             >
                               <CardContent sx={{ display: "grid", gap: 1 }}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="start" gap={1}>
-                                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                  alignItems="start"
+                                  gap={1}
+                                >
+                                  <Typography
+                                    variant="subtitle2"
+                                    sx={{ fontWeight: 700 }}
+                                  >
                                     {getDefinitionLabel(definition)}
                                   </Typography>
-                                  {checked && <Chip size="small" color="primary" label="Selected" />}
+                                  {checked && (
+                                    <Chip
+                                      size="small"
+                                      color="primary"
+                                      label="Selected"
+                                    />
+                                  )}
                                 </Stack>
-                                <Typography variant="caption" color="text.secondary">
-                                  {getDefinitionSubtitle(definition) || "No details"}
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {getDefinitionSubtitle(definition) ||
+                                    "No details"}
                                 </Typography>
                               </CardContent>
                             </Card>
@@ -468,14 +530,26 @@ export default function ExportEvents() {
 
               {(!userLocations || userLocations.length === 0) && (
                 <Alert severity="info">
-                  No saved locations yet. The current device timezone is available for export.
-                  <Button sx={{ ml: 1 }} size="small" onClick={() => navigate("/settings")}>
+                  No saved locations yet. The current device timezone is
+                  available for export.
+                  <Button
+                    sx={{ ml: 1 }}
+                    size="small"
+                    onClick={() => navigate("/settings")}
+                  >
                     Go to Settings
                   </Button>
                 </Alert>
               )}
 
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
                 <Button
                   size="small"
                   variant="outlined"
@@ -491,7 +565,9 @@ export default function ExportEvents() {
                     labelId="export-location-label"
                     value={selectedTimezone}
                     label="Location"
-                    onChange={(event) => setSelectedTimezone(event.target.value)}
+                    onChange={(event) =>
+                      setSelectedTimezone(event.target.value)
+                    }
                   >
                     {locationOptions.map((option) => (
                       <MenuItem key={option.timezone} value={option.timezone}>
@@ -532,7 +608,8 @@ export default function ExportEvents() {
             <Stack spacing={1.5}>
               <Typography variant="h6">Confirm</Typography>
               <Typography variant="body2" color="text.secondary">
-                Review the export file name, included definitions, years, and timezone before downloading the .ics file.
+                Review the export file name, included definitions, years, and
+                timezone before downloading the .ics file.
               </Typography>
 
               <Stack spacing={1}>
@@ -546,13 +623,22 @@ export default function ExportEvents() {
                   Selected years: <strong>{selectedYearsLabel}</strong>
                 </Typography>
                 <Typography variant="body2">
-                  Location: <strong>{locationOptions.find((option) => option.timezone === selectedTimezone)?.label ?? selectedTimezone}</strong>
+                  Location:{" "}
+                  <strong>
+                    {locationOptions.find(
+                      (option) => option.timezone === selectedTimezone,
+                    )?.label ?? selectedTimezone}
+                  </strong>
                 </Typography>
               </Stack>
             </Stack>
           )}
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Button
               onClick={() => setStep((current) => Math.max(0, current - 1))}
               disabled={step === 0 || isExporting}
