@@ -34,8 +34,8 @@ import {
 import { useCalendar } from "../../contexts/CalendarContext";
 import { useUser } from "../../contexts/UserContext";
 import RichTextEditor from "../RichTextEditor";
-import { buildRecurrenceRRule } from "../../util/recurrenceBuilder";
-import { parseUserRRuleToRecurrenceForm } from "../../util/parseUserRRule";
+import { buildRecurrenceRRule } from "../../util/RecurrenceBuilder";
+import { parseUserRRuleToRecurrenceForm } from "../../util/ParseUserRRule";
 
 const SWATCH_COLORS = [
   "#2E7D32",
@@ -90,7 +90,8 @@ function formatFormDateTime(value) {
 }
 
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent, refreshEventData } = useCalendar();
+  const { addEvent, updateEvent, removeEvent, refreshEventData } =
+    useCalendar();
   const { userLocations, user } = useUser();
   const navigate = useNavigate();
   const isEdit = Boolean(event);
@@ -317,9 +318,13 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           )}
 
           <TextField
-            key={isEdit ? `event-name-${event?.eventId ?? "edit"}` : "new-event-name"}
+            key={
+              isEdit
+                ? `event-name-${event?.eventId ?? "edit"}`
+                : "new-event-name"
+            }
             label="Name"
-            defaultValue={isEdit ? event?.name ?? "" : ""}
+            defaultValue={isEdit ? (event?.name ?? "") : ""}
             inputRef={(node) => {
               if (node) nameRef.current = node.value;
             }}
@@ -333,9 +338,13 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           />
 
           <TextField
-            key={isEdit ? `event-location-${event?.eventId ?? "edit"}` : "new-event-location"}
+            key={
+              isEdit
+                ? `event-location-${event?.eventId ?? "edit"}`
+                : "new-event-location"
+            }
             label="Location"
-            defaultValue={isEdit ? event?.location ?? "" : ""}
+            defaultValue={isEdit ? (event?.location ?? "") : ""}
             inputRef={(node) => {
               if (node) locationRef.current = node.value;
             }}
@@ -345,8 +354,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             fullWidth
             inputProps={{ maxLength: 1024 }}
           />
-
-          
 
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
             <FormControlLabel
@@ -381,85 +388,87 @@ export default function EventModal({ open, onClose, initialDate, event }) {
           </Box>
 
           <Popover
-              open={pickerOpen}
-              anchorEl={anchorEl}
-              onClose={closeColorPicker}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <Box sx={{ p: 1.5, width: 220 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                  Event color
-                </Typography>
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}
-                >
-                  {SWATCH_COLORS.map((color) => (
-                    <IconButton
-                      key={color}
-                      size="small"
-                      onClick={() => setDraftColor(color)}
-                      aria-label={`Use color ${color}`}
-                    >
-                      <Box
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: "50%",
-                          bgcolor: color,
-                          border: draftColor.toUpperCase() === color ? 2 : 1,
-                          borderColor:
-                            draftColor.toUpperCase() === color
-                              ? "text.primary"
-                              : "divider",
-                        }}
-                      />
-                    </IconButton>
-                  ))}
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <input
-                    type="color"
-                    value={
-                      HEX_COLOR_RE.test(draftColor)
-                        ? draftColor
-                        : DEFAULT_EVENT_COLOR
-                    }
-                    onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
-                    aria-label="Pick custom color"
-                  />
-                  <TextField
+            open={pickerOpen}
+            anchorEl={anchorEl}
+            onClose={closeColorPicker}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <Box sx={{ p: 1.5, width: 220 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Event color
+              </Typography>
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{ mt: 1, mb: 1.25, flexWrap: "wrap" }}
+              >
+                {SWATCH_COLORS.map((color) => (
+                  <IconButton
+                    key={color}
                     size="small"
-                    value={draftColor}
-                    onChange={(e) => setDraftColor(e.target.value)}
-                    error={!HEX_COLOR_RE.test(draftColor)}
-                    helperText={!HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "}
-                  />
-                </Stack>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  justifyContent="flex-end"
-                  sx={{ mt: 1 }}
-                >
-                  <Button size="small" onClick={closeColorPicker}>
-                    Cancel
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={applyColor}
-                    disabled={!HEX_COLOR_RE.test(draftColor)}
+                    onClick={() => setDraftColor(color)}
+                    aria-label={`Use color ${color}`}
                   >
-                    Apply
-                  </Button>
-                </Stack>
-              </Box>
-            </Popover>
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: "50%",
+                        bgcolor: color,
+                        border: draftColor.toUpperCase() === color ? 2 : 1,
+                        borderColor:
+                          draftColor.toUpperCase() === color
+                            ? "text.primary"
+                            : "divider",
+                      }}
+                    />
+                  </IconButton>
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <input
+                  type="color"
+                  value={
+                    HEX_COLOR_RE.test(draftColor)
+                      ? draftColor
+                      : DEFAULT_EVENT_COLOR
+                  }
+                  onChange={(e) => setDraftColor(e.target.value.toUpperCase())}
+                  aria-label="Pick custom color"
+                />
+                <TextField
+                  size="small"
+                  value={draftColor}
+                  onChange={(e) => setDraftColor(e.target.value)}
+                  error={!HEX_COLOR_RE.test(draftColor)}
+                  helperText={
+                    !HEX_COLOR_RE.test(draftColor) ? "Use #RRGGBB" : " "
+                  }
+                />
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="flex-end"
+                sx={{ mt: 1 }}
+              >
+                <Button size="small" onClick={closeColorPicker}>
+                  Cancel
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={applyColor}
+                  disabled={!HEX_COLOR_RE.test(draftColor)}
+                >
+                  Apply
+                </Button>
+              </Stack>
+            </Box>
+          </Popover>
 
-            <FormControlLabel
+          <FormControlLabel
             control={
               <Checkbox
                 checked={form.useLocalTimezone}
@@ -621,115 +630,113 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             Recurrence
           </Typography>
           <FormControl fullWidth>
-                <InputLabel id="recurrence-freq-label">Repeat</InputLabel>
+            <InputLabel id="recurrence-freq-label">Repeat</InputLabel>
+            <Select
+              labelId="recurrence-freq-label"
+              label="Repeat"
+              value={form.recurrenceFreq}
+              onChange={(e) => handleChange("recurrenceFreq", e.target.value)}
+            >
+              <MenuItem value="none">Does not repeat</MenuItem>
+              <MenuItem value="daily">Daily</MenuItem>
+              <MenuItem value="weekly">Weekly</MenuItem>
+              <MenuItem value="monthly">Monthly</MenuItem>
+              <MenuItem value="yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+
+          {form.recurrenceFreq !== "none" && (
+            <TextField
+              label="Repeat every (interval)"
+              type="number"
+              inputProps={{ min: 1, max: 999 }}
+              value={form.recurrenceInterval}
+              onChange={(e) =>
+                handleChange(
+                  "recurrenceInterval",
+                  Math.max(1, parseInt(e.target.value, 10) || 1),
+                )
+              }
+              fullWidth
+            />
+          )}
+
+          {form.recurrenceFreq === "weekly" && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {WEEKDAY_LABELS.map((label, dayIndex) => (
+                <FormControlLabel
+                  key={label}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={form.recurrenceWeekdays.includes(dayIndex)}
+                      onChange={() => {
+                        setForm((prev) => {
+                          const set = new Set(prev.recurrenceWeekdays);
+                          if (set.has(dayIndex)) set.delete(dayIndex);
+                          else set.add(dayIndex);
+                          let next = [...set].sort((a, b) => a - b);
+                          if (next.length === 0) next = [dayIndex];
+                          return {
+                            ...prev,
+                            recurrenceWeekdays: next,
+                          };
+                        });
+                      }}
+                    />
+                  }
+                  label={label}
+                />
+              ))}
+            </Box>
+          )}
+
+          {form.recurrenceFreq !== "none" && (
+            <>
+              <FormControl fullWidth>
+                <InputLabel id="recurrence-end-label">Ends</InputLabel>
                 <Select
-                  labelId="recurrence-freq-label"
-                  label="Repeat"
-                  value={form.recurrenceFreq}
+                  labelId="recurrence-end-label"
+                  label="Ends"
+                  value={form.recurrenceEndType}
                   onChange={(e) =>
-                    handleChange("recurrenceFreq", e.target.value)
+                    handleChange("recurrenceEndType", e.target.value)
                   }
                 >
-                  <MenuItem value="none">Does not repeat</MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="yearly">Yearly</MenuItem>
+                  <MenuItem value="never">Never</MenuItem>
+                  <MenuItem value="until">On date</MenuItem>
+                  <MenuItem value="count">After N occurrences</MenuItem>
                 </Select>
               </FormControl>
-
-              {form.recurrenceFreq !== "none" && (
+              {form.recurrenceEndType === "until" && (
                 <TextField
-                  label="Repeat every (interval)"
+                  label="End repeat on"
+                  type="date"
+                  value={form.recurrenceUntil}
+                  onChange={(e) =>
+                    handleChange("recurrenceUntil", e.target.value)
+                  }
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+              {form.recurrenceEndType === "count" && (
+                <TextField
+                  label="Number of occurrences"
                   type="number"
                   inputProps={{ min: 1, max: 999 }}
-                  value={form.recurrenceInterval}
+                  value={form.recurrenceCount}
                   onChange={(e) =>
                     handleChange(
-                      "recurrenceInterval",
+                      "recurrenceCount",
                       Math.max(1, parseInt(e.target.value, 10) || 1),
                     )
                   }
                   fullWidth
                 />
               )}
-
-              {form.recurrenceFreq === "weekly" && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {WEEKDAY_LABELS.map((label, dayIndex) => (
-                    <FormControlLabel
-                      key={label}
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={form.recurrenceWeekdays.includes(dayIndex)}
-                          onChange={() => {
-                            setForm((prev) => {
-                              const set = new Set(prev.recurrenceWeekdays);
-                              if (set.has(dayIndex)) set.delete(dayIndex);
-                              else set.add(dayIndex);
-                              let next = [...set].sort((a, b) => a - b);
-                              if (next.length === 0) next = [dayIndex];
-                              return {
-                                ...prev,
-                                recurrenceWeekdays: next,
-                              };
-                            });
-                          }}
-                        />
-                      }
-                      label={label}
-                    />
-                  ))}
-                </Box>
-              )}
-
-              {form.recurrenceFreq !== "none" && (
-                <>
-                  <FormControl fullWidth>
-                    <InputLabel id="recurrence-end-label">Ends</InputLabel>
-                    <Select
-                      labelId="recurrence-end-label"
-                      label="Ends"
-                      value={form.recurrenceEndType}
-                      onChange={(e) =>
-                        handleChange("recurrenceEndType", e.target.value)
-                      }
-                    >
-                      <MenuItem value="never">Never</MenuItem>
-                      <MenuItem value="until">On date</MenuItem>
-                      <MenuItem value="count">After N occurrences</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {form.recurrenceEndType === "until" && (
-                    <TextField
-                      label="End repeat on"
-                      type="date"
-                      value={form.recurrenceUntil}
-                      onChange={(e) =>
-                        handleChange("recurrenceUntil", e.target.value)
-                      }
-                      fullWidth
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                  {form.recurrenceEndType === "count" && (
-                    <TextField
-                      label="Number of occurrences"
-                      type="number"
-                      inputProps={{ min: 1, max: 999 }}
-                      value={form.recurrenceCount}
-                      onChange={(e) =>
-                        handleChange(
-                          "recurrenceCount",
-                          Math.max(1, parseInt(e.target.value, 10) || 1),
-                        )
-                      }
-                      fullWidth
-                    />
-                  )}
-                </>
-              )}
+            </>
+          )}
 
           <Box>
             <Typography
@@ -749,7 +756,6 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               minHeight={120}
             />
           </Box>
-
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>

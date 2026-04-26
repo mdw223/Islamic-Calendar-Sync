@@ -11,17 +11,12 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import {
-  ArrowLeft,
-  ExternalLink,
-  HelpCircle,
-  Link2,
-} from "lucide-react";
+import { ArrowLeft, ExternalLink, HelpCircle, Link2 } from "lucide-react";
 import appleLogo from "../../../assets/apple.svg";
 import calComLogo from "../../../assets/cal-com.svg";
 import googleCalendarLogo from "../../../assets/google-calendar.svg";
 import outlookLogo from "../../../assets/outlook.svg";
-import { SUBSCRIPTION_HELP_PROVIDERS } from "../../../data/subscriptionHelpProviders";
+import { SUBSCRIPTION_HELP_PROVIDERS } from "../../../data/SubscriptionHelpProviders";
 
 function openLinkButtonProps() {
   return {
@@ -72,21 +67,27 @@ export default function SubscriptionsHelp() {
               label="Subscription Help"
               sx={{ alignSelf: "flex-start" }}
             />
-            <Box sx={{width: "100%", textAlign: "center"}}>
-                <Typography variant="h3" sx={{ fontWeight: 800 }}>
-                    Add your subscription URL to a calendar app
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ marginTop: 2, maxWidth: 820,  mx: "auto" }}>
+            <Box sx={{ width: "100%", textAlign: "center" }}>
+              <Typography variant="h3" sx={{ fontWeight: 800 }}>
+                Add your subscription URL to a calendar app
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ marginTop: 2, maxWidth: 820, mx: "auto" }}
+              >
                 Copy the URL generated in Manage Subscriptions, then follow the
-                platform-specific steps below. Official support links are included
-                because calendar apps change their menu paths over time.
-                </Typography>
+                platform-specific steps below. Official support links are
+                included because calendar apps change their menu paths over
+                time.
+              </Typography>
             </Box>
           </Stack>
 
           <Alert severity="info">
-            Subscription feeds are read-only. Your calendar app will pull updates
-            from the URL automatically, but the refresh timing depends on the provider.
+            Subscription feeds are read-only. Your calendar app will pull
+            updates from the URL automatically, but the refresh timing depends
+            on the provider.
           </Alert>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
@@ -131,7 +132,12 @@ export default function SubscriptionsHelp() {
                       <Chip
                         label={provider.audience}
                         variant="outlined"
-                        sx={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)" }}
+                        sx={{
+                          position: "absolute",
+                          right: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                        }}
                       />
                     </Box>
 
@@ -141,11 +147,20 @@ export default function SubscriptionsHelp() {
 
                     <Box
                       component="ol"
-                      sx={{ width: "fit-content", mx: "auto", pl: 3, my: 0, textAlign: "left" }}
+                      sx={{
+                        width: "fit-content",
+                        mx: "auto",
+                        pl: 3,
+                        my: 0,
+                        textAlign: "left",
+                      }}
                     >
                       {provider.steps.map((step) => (
                         <Box component="li" key={step}>
-                          <Typography variant="body2" sx={{ textAlign: "left" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ textAlign: "left" }}
+                          >
                             {step}
                           </Typography>
                         </Box>

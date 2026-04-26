@@ -41,7 +41,7 @@ async function loadEnvFromFile(envPath) {
 }
 
 await loadEnvFromFile(path.join(repoRoot, ".env"));
-const { dbConfig } = await import("../src/config.js");
+const { dbConfig } = await import("../src/Config.js");
 
 function createPool(host) {
   return new Pool({

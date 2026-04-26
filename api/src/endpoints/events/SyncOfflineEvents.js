@@ -20,7 +20,7 @@
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
 import { defaultLogger } from "../../middleware/logger.js";
-import { sanitizeDescription } from "../../util/sanitizeHtml.js";
+import { sanitizeDescription } from "../../util/SanitizeHtml.js";
 export default async function SyncOfflineEvents(req, res) {
   try {
     const { events } = req.body;

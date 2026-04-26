@@ -8,6 +8,6 @@ module.exports = {
     "src/util/**/*.js",
     "src/middleware/**/*.js",
     "!src/index.js",
-    "!src/middleware/logger.js",
+    "!src/middleware/Logger.js",
   ],
 };
