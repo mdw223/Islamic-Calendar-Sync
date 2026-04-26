@@ -393,7 +393,7 @@ docker network inspect app-network
 
 ## Project Structure
 
-```
+````
 project/
 ├── _wiki                          # Wiki pages
 ├── compose.yml                    # Development configuration
@@ -420,14 +420,26 @@ project/
 
 ### Applying incremental DB migrations (existing databases)
 
-For databases that were already initialized earlier, run migration files manually instead of relying on container init scripts.
+For existing databases, use the migration runner instead of manually piping SQL files. The runner tracks applied migrations in `SchemaMigration` and applies only pending files from `Sql.Migrations/` (excluding `init.sql`).
 
-Example:
+Status check:
 
 ```bash
-docker exec -i ics_postgres_db_dev psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} < Sql.Migrations/001_subscription_definition_selection.sql
+cd api
+npm run migrate:status
+````
+
+Apply pending migrations:
+
+```bash
+cd api
+npm run migrate:up
 ```
-```
+
+Notes:
+
+- Migration "head" is discovered dynamically from numbered SQL files, so there is no hardcoded latest migration ID in startup checks.
+- Startup logs now compare latest known migration vs latest applied migration and report pending count.
 
 ## Architecture
 

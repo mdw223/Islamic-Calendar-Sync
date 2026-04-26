@@ -44,6 +44,10 @@ export default class APIClient {
     return HTTPClient.post("/auth/magiclink/send", { email });
   }
 
+  static async submitContactForm(payload) {
+    return HTTPClient.post("/contact", payload);
+  }
+
   /**
    * Backward-compatible wrapper; magic-link flow does not require name.
    */

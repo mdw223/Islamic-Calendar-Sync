@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS CalendarProviderType CASCADE;
 DROP TABLE IF EXISTS Log CASCADE;
 DROP TABLE IF EXISTS UserIslamicDefinitionPreference CASCADE;
 DROP TABLE IF EXISTS MagicLinkUsedToken CASCADE;
+DROP TABLE IF EXISTS ContactSubmission CASCADE;
 DROP TABLE IF EXISTS SubscriptionDefinitionSelection CASCADE;
 DROP TABLE IF EXISTS SubscriptionToken CASCADE;
 DROP TABLE IF EXISTS "User" CASCADE;
@@ -92,6 +93,15 @@ CREATE TABLE MagicLinkUsedToken (
 
 CREATE INDEX idx_magiclinkusedtoken_useruid ON MagicLinkUsedToken(UserUid);
 CREATE INDEX idx_magiclinkusedtoken_expiresat ON MagicLinkUsedToken(ExpiresAt);
+
+CREATE TABLE ContactSubmission (
+    ContactSubmissionId BIGSERIAL PRIMARY KEY,
+    NormalizedEmail VARCHAR(255) NOT NULL,
+    SubmittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_contactsubmission_email_submittedat
+    ON ContactSubmission (NormalizedEmail, SubmittedAt DESC);
 
 -- Selected definitions for each subscription URL (includes pseudo definitions).
 CREATE TABLE SubscriptionDefinitionSelection (
@@ -296,7 +306,8 @@ INSERT INTO SchemaMigration (MigrationId, Checksum) VALUES
     ('002_add_show_arabic_event_text_to_user', 'init-baseline'),
     ('003_add_attributed_definition_id_to_event', 'init-baseline'),
     ('004_add_schema_migrations_table', 'init-baseline'),
-    ('005_remove_event_type', 'init-baseline')
+    ('005_remove_event_type', 'init-baseline'),
+    ('006_add_contact_submission', 'init-baseline')
 ON CONFLICT (MigrationId) DO NOTHING;
 
 -- Insert default calendar provider types (calendar integration providers)

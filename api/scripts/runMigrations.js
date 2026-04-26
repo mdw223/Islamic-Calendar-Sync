@@ -1,14 +1,13 @@
-import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import pkg from "pg";
+import { getMigrationStatus, readMigrationFiles } from "../src/model/db/MigrationStatus.js";
 
 const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..");
-const migrationDir = path.join(repoRoot, "Sql.Migrations");
 
 function parseEnvLine(line) {
   const trimmed = line.trim();
@@ -104,48 +103,6 @@ async function ensureSchemaMigrationTable(client) {
   `);
 }
 
-function getChecksum(sqlText) {
-  const digest = crypto.createHash("sha256").update(sqlText, "utf8").digest("hex");
-  return digest;
-}
-
-function toMigrationId(filename) {
-  return filename.replace(/\.sql$/i, "");
-}
-
-function parseSortKey(filename) {
-  const match = filename.match(/^(\d+)/);
-  if (!match) return Number.MAX_SAFE_INTEGER;
-  return Number.parseInt(match[1], 10);
-}
-
-async function readMigrationFiles() {
-  const files = await fs.readdir(migrationDir);
-  const sorted = files
-    .filter((name) => name.toLowerCase().endsWith(".sql") && name.toLowerCase() !== "init.sql")
-    .sort((a, b) => {
-      const aNum = parseSortKey(a);
-      const bNum = parseSortKey(b);
-      if (aNum !== bNum) return aNum - bNum;
-      return a.localeCompare(b);
-    });
-
-  const migrations = [];
-  for (const filename of sorted) {
-    const fullPath = path.join(migrationDir, filename);
-    const sql = await fs.readFile(fullPath, "utf8");
-    migrations.push({
-      id: toMigrationId(filename),
-      filename,
-      fullPath,
-      sql,
-      checksum: getChecksum(sql),
-    });
-  }
-
-  return migrations;
-}
-
 async function applyMigrations() {
   await withClient(async (client) => {
     await ensureSchemaMigrationTable(client);
@@ -202,26 +159,16 @@ async function applyMigrations() {
 async function showStatus() {
   await withClient(async (client) => {
     await ensureSchemaMigrationTable(client);
-    const migrations = await readMigrationFiles();
+    const status = await getMigrationStatus(client);
 
-    const appliedRows = await client.query(
-      "SELECT MigrationId, Checksum, AppliedAt FROM SchemaMigration ORDER BY AppliedAt DESC, MigrationId DESC",
-    );
+    console.log("Latest known migration:", status.latestKnownMigrationId ?? "none");
+    console.log("Latest applied migration:", status.latestAppliedMigrationId ?? "none");
+    console.log("Pending count:", status.pendingCount);
 
-    const appliedIds = new Set(appliedRows.rows.map((row) => row.migrationid));
-    const pending = migrations.filter((migration) => !appliedIds.has(migration.id));
-
-    const latestApplied = appliedRows.rows[0]?.migrationid ?? null;
-    const latestKnown = migrations[migrations.length - 1]?.id ?? null;
-
-    console.log("Latest known migration:", latestKnown ?? "none");
-    console.log("Latest applied migration:", latestApplied ?? "none");
-    console.log("Pending count:", pending.length);
-
-    if (pending.length > 0) {
+    if (status.pendingCount > 0) {
       console.log("Pending migrations:");
-      for (const item of pending) {
-        console.log(`- ${item.id}`);
+      for (const id of status.pendingMigrationIds) {
+        console.log(`- ${id}`);
       }
     }
   });
