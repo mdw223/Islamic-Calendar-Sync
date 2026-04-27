@@ -5,6 +5,8 @@ on:
   push:
     branches: [main] # Runs on any push to main (includes merges)
 
+permissions: {} # No GITHUB_TOKEN permissions needed; SSH key used for deployment
+
 jobs:
   deploy:
     name: Deploy

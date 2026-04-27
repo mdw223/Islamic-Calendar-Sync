@@ -17,6 +17,10 @@ on:
       - "app/**"
       - ".github/workflows/tests.yml"
 
+permissions:
+  contents: read # For checkout
+  actions: write # For artifact upload
+
 jobs:
   test-backend:
     name: Backend Tests
@@ -41,6 +45,8 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
+        env:
+          DB_LOG_QUERIES: false
         run: npm run test:ci
 
       - name: Upload coverage artifact
