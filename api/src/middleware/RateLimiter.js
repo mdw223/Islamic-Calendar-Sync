@@ -2,7 +2,7 @@ import { rateLimit, ipKeyGenerator } from 'express-rate-limit'
 import { RedisStore } from 'rate-limit-redis'
 import { createClient } from 'redis'
 import { appConfig, redisConfig } from '../Config.js'
-import { defaultLogger } from './logger.js'
+import { defaultLogger } from './Logger.js'
 
 // Create a Redis client of docker container
 const client = createClient({

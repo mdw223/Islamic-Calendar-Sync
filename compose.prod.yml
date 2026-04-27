@@ -1,4 +1,3 @@
-version: '3.8'
 # Production: API + data stores + Nginx. Frontend (app/) is deployed separately (e.g. GitHub Pages).
 # Local dev full stack still uses compose.yml + proxy/nginx.conf
 #

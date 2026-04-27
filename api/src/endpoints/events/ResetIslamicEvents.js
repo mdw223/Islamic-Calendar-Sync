@@ -6,7 +6,7 @@
  */
 import EventDOA from "../../model/db/doa/EventDOA.js";
 import UserDOA from "../../model/db/doa/UserDOA.js";
-import { defaultLogger } from "../../middleware/logger.js";
+import { defaultLogger } from "../../middleware/Logger.js";
 const MAX_DEFINITION_IDS = 200;
 
 export default async function ResetIslamicEvents(req, res) {

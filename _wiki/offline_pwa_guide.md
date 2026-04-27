@@ -275,7 +275,7 @@ syncOfflineData()
 
 This function is called in two places:
 
-1. **On mount** — After `getCurrentUser()` returns a valid user (covers the OAuth redirect flow where the user returns with a `#token=...` hash).
+1. **On mount** — After `getCurrentUser()` returns a valid user (covers OAuth/magic-link login return flows with cookie-based auth).
 2. **On `login()` callback** — Called by the email login flow after receiving valid user data.
 
 ### Error Handling

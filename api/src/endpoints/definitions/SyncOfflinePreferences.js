@@ -22,7 +22,7 @@ import IslamicDefinitionPreferenceDOA from "../../model/db/doa/IslamicDefinition
 import EventDOA from "../../model/db/doa/EventDOA.js";
 
 const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
-import { defaultLogger } from "../../middleware/logger.js";
+import { defaultLogger } from "../../middleware/Logger.js";
 export default async function SyncOfflinePreferences(req, res) {
   try {
     const { preferences } = req.body;

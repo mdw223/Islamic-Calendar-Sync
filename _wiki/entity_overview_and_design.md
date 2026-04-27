@@ -1,5 +1,88 @@
 # Entity Overview and Design
 
+## 1. General Overview
+
+Islamic Calendar Sync centers on user-specific Islamic events, preferences, and subscription feeds.
+
+The current active model is event-focused (not prayer-time focused).
+
+---
+
+## 2. Core Entities
+
+### User
+
+- Authenticated account profile
+- Owns events, preferences, locations, subscription URLs, and logs
+
+### Event
+
+- Stores Islamic generated events and user-created custom events
+- Includes recurrence and definition-link fields used by generation/upsert workflows
+
+### UserIslamicDefinitionPreference
+
+- Per-user visibility/color preference overrides for Islamic definition IDs
+
+### UserLocation
+
+- Saved location records (name, coordinates, timezone)
+- Used in generation/export flows
+
+### SubscriptionToken
+
+- Represents a live ICS feed URL credential
+- Token secret is stored as a salted hash (not plaintext)
+
+### SubscriptionDefinitionSelection
+
+- Per-subscription filter of which Islamic definitions are included
+
+### Log
+
+- Structured request/error logs persisted to Postgres
+
+### MagicLinkUsedToken
+
+- Tracks consumed magic-link tokens to prevent replay
+
+### SchemaMigration
+
+- Tracks applied incremental DB migrations and checksums
+
+---
+
+## 3. Entity Relationship Diagram (Active Model)
+
+```mermaid
+erDiagram
+    User ||--o{ Event : owns
+    User ||--o{ UserIslamicDefinitionPreference : sets
+    User ||--o{ UserLocation : saves
+    User ||--o{ SubscriptionToken : creates
+    SubscriptionToken ||--o{ SubscriptionDefinitionSelection : filters
+    User ||--o{ Log : produces
+    User ||--o{ MagicLinkUsedToken : secures
+```
+
+---
+
+## 4. Interaction Flow
+
+1. User authenticates (Google OAuth or magic-link).
+2. User generates events by year and customizes definition preferences.
+3. User optionally creates subscription URLs with per-definition selection.
+4. Subscription endpoint validates token and returns ICS feed.
+5. Offline-created data syncs back to server after login.
+
+---
+
+## 5. Notes on Scope
+
+- Microsoft and Apple auth strategies exist in code but routes are currently disabled.
+- Prayer-related legacy schema references may still exist in historical docs/code comments, but active product features are centered on Islamic events, preferences, exports, and subscriptions.
+# Entity Overview and Design
+
 ## Table of Contents
 
 - [[1. General Overview](https://claude.ai/chat/156e7e6c-7595-490b-948e-9463f83a26f1#1-general-overview)](#1-general-overview)
