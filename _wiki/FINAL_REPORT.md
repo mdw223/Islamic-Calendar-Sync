@@ -36,7 +36,7 @@ The real value lies in the description of each event. Rather than a simple label
 
 - Provide accurate, Hijri-to-Gregorian date conversion for Islamic events.
 - Allow users to select which event definitions they want and generate calendar events for any year range.
-- Deliver events with rich, meaningful descriptions, not just names.
+- Deliver events with rich, meaningful descriptions, not just names (planned but not yet implemented in this semester build).
 - Support export via `.ics` file download and via live subscription URL (webcal/iCal feed).
 - Support both authenticated users (with server-persisted preferences) and unauthenticated guests (with full offline/local-storage functionality).
 - Build a Progressive Web App (PWA) that is installable and works offline.
@@ -301,7 +301,7 @@ The frontend follows a layered architecture with contexts, layouts, pages, and c
 | Settings             | `/settings`                     | User profile, locations, preferences                      |
 | Login / Register     | `/auth/login`, `/auth/register` | Authentication flows                                      |
 | Guide                | `/guide`                        | User guide for importing events                           |
-| Learn                | `/learn`                        | Educational content on the Islamic calendar               |
+| Learn                | `/learn`                        | Planned educational content page (route reserved; content not yet implemented) |
 | Features             | `/features`                     | Overview of platform features                             |
 | Methods              | `/methods`                      | Explanation of Hijri calculation methods                  |
 | Privacy              | `/privacy`                      | Privacy policy                                            |
@@ -356,8 +356,8 @@ IslamicCalendarSync/
 ├── api/                         # Express.js REST API
 │   ├── src/
 │   │   ├── index.js             # App entry point; registers middleware and routes
-│   │   ├── config.js            # Environment-based configuration
-│   │   ├── passport.js          # Passport strategy configuration (Google, Microsoft, Apple, Magic Link, JWT)
+│   │   ├── Config.js            # Environment-based configuration
+│   │   ├── Passport.js          # Passport strategy configuration (Google, Microsoft, Apple, Magic Link, JWT)
 │   │   ├── endpoints/           # Route handlers organized by resource
 │   │   │   ├── events/          # CRUD for calendar events + ICS generation + offline sync
 │   │   │   ├── definitions/     # Islamic definition preferences + offline sync
@@ -366,7 +366,7 @@ IslamicCalendarSync/
 │   │   │   ├── user-locations/  # Saved location CRUD
 │   │   │   ├── calendar-providers/  # Calendar provider management
 │   │   │   ├── health/          # Health check endpoint
-│   │   │   └── routes.js        # Central route registration
+│   │   │   └── Routes.js        # Central route registration
 │   │   ├── middleware/
 │   │   │   ├── AuthMiddleware.js        # JWT validation; attaches user to request; subscription token validation
 │   │   │   ├── ErrorHandlerMiddleware.js # Global error handler
@@ -374,7 +374,7 @@ IslamicCalendarSync/
 │   │   │   ├── RateLimiter.js          # express-rate-limit + Redis; keyed by userId or IP
 │   │   │   ├── RequestSanitizer.js     # Strips __proto__, constructor, prototype keys (prototype pollution defense)
 │   │   │   ├── ResponseSanitizer.js    # Strips sensitive fields from responses
-│   │   │   └── logger.js               # Winston-based structured logger
+│   │   │   └── Logger.js               # Winston-based structured logger
 │   │   ├── model/
 │   │   │   ├── db/DBConnection.js      # pg Pool connection
 │   │   │   └── db/doa/                 # Data Object Access (DOA) layer — one file per table
@@ -383,11 +383,11 @@ IslamicCalendarSync/
 │   │   │   ├── IcsBuilder.js           # Builds RFC 5545 iCalendar files
 │   │   │   └── IslamicEventService.js  # Generates Islamic events from definitions + Hijri conversion
 │   │   ├── util/
-│   │   │   ├── hijriUtils.js           # Hijri ↔ Gregorian date conversion utilities
+│   │   │   ├── HijriUtils.js           # Hijri ↔ Gregorian date conversion utilities
 │   │   │   └── SanitizeHtml.js         # sanitize-html wrapper
 │   │   ├── data/
 │   │   │   └── islamicEvents.json      # Source-of-truth definitions for all Islamic events
-│   │   └── constants.js
+│   │   └── Constants.js
 │   ├── jest.config.cjs
 │   └── package.json
 │
@@ -395,7 +395,7 @@ IslamicCalendarSync/
 │   ├── src/
 │   │   ├── main.jsx             # React entry point; service worker registration
 │   │   ├── App.jsx              # Root component; router setup
-│   │   ├── theme.js             # MUI theme definition
+│   │   ├── Theme.js             # MUI theme definition
 │   │   ├── components/          # Reusable UI components (Navbar, Footer, Calendar, Modals, etc.)
 │   │   ├── contexts/            # React contexts (User, Calendar, Theme)
 │   │   ├── layouts/             # Page layout wrappers
@@ -427,31 +427,33 @@ IslamicCalendarSync/
 
 2. **Calendar View** — The user navigates to the calendar. The Islamic Events Panel sidebar lists all available Islamic event definitions (Ramadan, Ashura, White Days of each month, Eid ul-Fitr, etc.). Each definition shows its name, a brief description, and a visibility toggle.
 
-3. **Generate Events** — The user selects a year (or range of years) and clicks "Generate." The app calls the backend, which uses `IslamicEventService` and `hijriUtils` to convert Hijri dates to Gregorian dates and creates `Event` records in the database. The resulting events appear on the calendar.
+3. **Wizard Pages (Guided Setup)** — For export and subscription workflows, the user is guided through step-based wizard pages (`ExportEvents.jsx` and `ManageSubscriptions.jsx`) to choose provider/options, configure included definitions, and confirm actions with less chance of misconfiguration.
 
-4. **Event Details** — Clicking any event opens a modal showing the event's full rich-text description, including its Islamic significance, recommended practices, and any relevant supplications.
+4. **Generate Events** — The user selects a year (or range of years) and clicks "Generate." The app calls the backend, which uses `IslamicEventService` and `HijriUtils.js` to convert Hijri dates to Gregorian dates and creates `Event` records in the database. The resulting events appear on the calendar.
 
-5. **Customization** — The user can edit an event's name, color, dates, or description. They can also hide definitions they do not want included in their calendar.
+5. **Event Details** — Clicking any event opens a modal showing the event's full rich-text description, including its Islamic significance, recommended practices, and any relevant supplications.
 
-6. **Export** — On the Export page, the user chooses their calendar provider (Google Calendar, Apple Calendar, Outlook, Cal.com) and either downloads a `.ics` file to import once, or generates a subscription URL that they can add to their calendar application for live, automatically-updating events.
+6. **Customization** — The user can edit an event's name, color, dates, or description. They can also hide definitions they do not want included in their calendar.
 
-7. **Offline Mode** — All of the above works without an internet connection or without being logged in. Events and preferences are stored in IndexedDB. On the next login, data is automatically synced to the server.
+7. **Export** — On the Export page, the user chooses their calendar provider (Google Calendar, Apple Calendar, Outlook, Cal.com) and either downloads a `.ics` file to import once, or generates a subscription URL that they can add to their calendar application for live, automatically-updating events. Exported events also include links back to the web app so users can open the platform and learn more about an event in depth.
+
+8. **Offline Mode** — All of the above works without an internet connection or without being logged in. Events and preferences are stored in IndexedDB. On the next login, data is automatically synced to the server.
 
 ### Key Backend Features
 
-**Islamic Event Generation** — `IslamicEventService.js` reads event definitions from `islamicEvents.json`. Each definition specifies a Hijri month, Hijri day, duration, and recurrence type. `hijriUtils.js` performs the Hijri-to-Gregorian conversion using `Intl.DateTimeFormat` with the `islamic-umalqura` calendar, iterating each day of the requested Gregorian year to build a lookup map.
+**Islamic Event Generation** — `IslamicEventService.js` reads event definitions from `islamicEvents.json`. Each definition specifies a Hijri month, Hijri day, duration, and recurrence type. `HijriUtils.js` performs the Hijri-to-Gregorian conversion using `Intl.DateTimeFormat` with the `islamic-umalqura` calendar, iterating each day of the requested Gregorian year to build a lookup map.
 
-**ICS Builder** — `IcsBuilder.js` constructs a valid RFC 5545 iCalendar file from a set of event records. It handles all-day events, duration, timezone, and rich-text descriptions (HTML stripped to plain text for maximum compatibility).
+**ICS Builder** — `IcsBuilder.js` constructs a valid RFC 5545 iCalendar file from a set of event records. It handles all-day events, duration, timezone, links back to the application for deeper event context, and rich-text descriptions (HTML stripped to plain text for maximum compatibility).
 
 **Subscription Feed** — `GetSubscriptionEvents.js` accepts a hashed token from the URL, validates it against the database, fetches the associated user's events (filtered to selected definitions), and returns a live `.ics` response. This endpoint is unauthenticated — the token itself is the credential.
 
-**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `passport.js` but their routes are inactive. On successful authentication, the server issues a signed JWT stored in a **secure httpOnly cookie** (`token` in production; `secure: true` when `NODE_ENV=production`, with `sameSite: "lax"`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The secure httpOnly cookie approach means the token is never accessible to JavaScript and is only sent over HTTPS in production, reducing XSS and transport-level exposure risk.
+**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `Passport.js` but their routes are inactive. On successful authentication, the server issues a signed JWT stored in a **secure httpOnly cookie** (`token` in production; `secure: true` when `NODE_ENV=production`, with `sameSite: "lax"`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The secure httpOnly cookie approach means the token is never accessible to JavaScript and is only sent over HTTPS in production, reducing XSS and transport-level exposure risk.
 
 **Response Sanitizer** — `ResponseSanitizer.js` middleware automatically removes sensitive fields (tokens, salts, passwords) from all API responses before they are sent to the client.
 
 **Request Sanitizer** — `RequestSanitizer.js` middleware runs before route handlers and recursively removes prototype-pollution keys (`__proto__`, `constructor`, `prototype`) from `req.body`, `req.query`, and `req.params`. This prevents attackers from injecting properties into the JavaScript object prototype via incoming request data.
 
-**Rate Limiter** — `RateLimiter.js` applies `express-rate-limit` backed by a **Redis** store to every API request. Authenticated requests are keyed by `userId`; unauthenticated requests are keyed by client IP. This limits the blast radius of brute-force and abuse attempts without requiring per-route configuration.
+**Rate Limiter** — `RateLimiter.js` applies `express-rate-limit` backed by a **Redis** store to every API request. It enforces a rolling 15-minute window (`windowMs = 15 * 60 * 1000`) with a configurable maximum request count (`appConfig.RATE_LIMIT_MAX`). Authenticated requests are keyed by `userId`; unauthenticated requests are keyed by normalized client IP (`ipKeyGenerator`) so guests are still limited consistently. Redis centralizes counters across API instances/containers, and standard `RateLimit` response headers are enabled (legacy `X-RateLimit-*` headers disabled). This limits brute-force and abuse attempts at the edge without requiring per-route limiter definitions. In production, the contact form has an additional endpoint-specific limiter: `POST /api/contact` is capped per IP over a 24-hour window (`CONTACT_IP_RATE_LIMIT_MAX`, default `5`) and is also protected by a per-email daily submission cap in the database (`CONTACT_DAILY_LIMIT_PER_EMAIL`, default `1`), providing layered anti-spam protection even if one control is bypassed.
 
 **Client-Side Input Sanitization** — On the frontend, all user-supplied HTML (event descriptions in `EventModal.jsx`) and search input (`SearchField.jsx`, `GlobalSearch.jsx`) is sanitized with **DOMPurify** before being rendered or used, preventing XSS in the browser.
 
@@ -499,13 +501,65 @@ npm run test:coverage
 **Highlights:**
 
 - `SanitizeHtml.js`, `NotFoundMiddleware.js`, and `RateLimiter.js` — **100% statement/line coverage**
-- `IcsBuilder.js` and `hijriUtils.js` — **100% statement/line coverage**
+- `IcsBuilder.js` and `HijriUtils.js` — **100% statement/line coverage**
 - `RateLimiter.js` — **100% statements and branches**; 50% function coverage (the Redis-store factory path is not exercised in unit tests)
 - `RequestSanitizer.js` — **0% coverage**; no test file exists yet — the clearest gap to address next
 - The main gaps in `AuthMiddleware.js` (lines 61–163, the Google OAuth redirect and subscription-token verification paths) are harder to unit test in isolation without live Passport sessions
-- Branch coverage at **72.97%** is the weakest metric overall — mostly untested edge-case branches in `hijriUtils.js`, `IcsBuilder.js`, and the services
+- Branch coverage at **72.97%** is the weakest metric overall — mostly untested edge-case branches in `HijriUtils.js`, `IcsBuilder.js`, and the services
 
 Overall, **113 passing tests across 29 suites** is a solid result for a backend of this size. The most actionable improvement would be adding a test file for `RequestSanitizer.js` and a few branch-level tests in `ErrorHandlerMiddleware.js`.
+
+### Frontend Test Status
+
+At this stage, there are **no automated frontend tests implemented yet** (no component/unit/integration test suite under `app/`). Frontend quality has been validated through manual verification and end-to-end usage checks during development. Adding a frontend test stack (for example, Vitest + React Testing Library for component behavior and Playwright/Cypress for critical user flows) is planned as a next-step improvement.
+
+### System Tests (Manual End-to-End)
+
+The following system tests were executed manually against the integrated stack to validate full user workflows across frontend, API, database, and export/subscription behavior.
+
+#### ST-01: Generate and View Islamic Events
+
+1. Open the app and sign in.
+2. Navigate to `Calendar`.
+3. Select a target year and click `Generate`.
+4. Open several generated events from different months.
+
+**Expected Result:** Events are created successfully, displayed on the calendar, and event details open without errors.
+
+#### ST-02: Export Events as ICS File
+
+1. Ensure events exist in the selected year.
+2. Navigate to `Export`.
+3. Choose `.ics` download and save the file.
+4. Import the file into a calendar client (e.g., Google/Apple/Outlook test calendar).
+
+**Expected Result:** Imported entries appear on correct dates, with expected titles and metadata (including app links for deeper context).
+
+#### ST-03: Live Subscription Feed Updates
+
+1. Create a subscription URL from `Manage Subscriptions`.
+2. Add the URL to a calendar client as a subscribed calendar.
+3. Modify an included event in Islamic Calendar Sync.
+4. Refresh/sync the subscribed calendar client.
+
+**Expected Result:** Updated event data propagates through the subscription feed and appears in the external calendar after provider refresh.
+
+#### ST-04: Offline-First Behavior and Sync
+
+1. Open the app in browser, then disable network.
+2. Create/edit events while offline.
+3. Re-enable network and sign in (if needed).
+4. Trigger/observe sync flow.
+
+**Expected Result:** Offline changes persist locally during disconnect and are successfully synchronized to the backend when connectivity returns.
+
+#### ST-05: Contact Form Abuse Controls
+
+1. Submit the contact form with valid input.
+2. Repeat submissions from the same IP beyond configured threshold within 24 hours.
+3. Repeat submissions with the same email beyond daily per-email cap.
+
+**Expected Result:** Initial valid submission succeeds; excessive requests return rate-limit responses (`429`) according to configured IP and per-email limits.
 
 ### Automated CI with GitHub Actions
 
@@ -540,40 +594,33 @@ The fastest way to run the application locally is with Docker Compose, which han
    cd IslamicCalendarSync
    ```
 
-2. **Create the environment file.** Copy the template below to a file named `.env` in the project root:
+2. **Create the environment file from the template, then edit only required values:**
 
    ```bash
-   # Application
-   APP_BASE_URL=http://localhost:5000
-   NODE_ENV=development
-
-   # Google OAuth
-   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-client-secret
-   GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/redirect
-
-   # JWT
-   JWT_SECRET=your-long-random-secret   # generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-   # Database
-   DB_HOST=database
-   POSTGRES_USER=postgres_user
-   POSTGRES_PASSWORD=your-db-password
-   POSTGRES_DB=ics_development
-   DB_PORT=5432
-
-   # API
-   API_PORT=3000
-
-   # Email (SMTP for magic link + contact)
-   SMTP_HOST=smtp.purelymail.com
-   SMTP_PORT=465
-   SMTP_SECURE=true
-   SMTP_USER=your-smtp-username
-   SMTP_PASS=your-smtp-password
-   SMTP_FROM=noreply@yourdomain.com
-   CONTACT_TO_EMAIL=contact@yourdomain.com
+   cp .env.example .env
    ```
+
+   Minimum values to set before first run:
+   - `API_SECRET`
+   - `JWT_SECRET`
+   - `SESSION_SECRET`
+   - `POSTGRES_PASSWORD`
+
+   Required for login/email features:
+   - `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+   - `CONTACT_TO_EMAIL`
+   - You need domain email hosting for these SMTP settings (transactional mail provider or mailbox service). For this project, I used **Purelymail**.
+
+   Required only if using Google OAuth:
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/redirect`
+
+   Google OAuth local setup notes:
+   - In Google Cloud Console, create an **OAuth 2.0 Client ID** of type **Web application**.
+   - Add `http://localhost:5000` to **Authorized JavaScript origins**.
+   - Add `http://localhost:5000/api/auth/google/redirect` to **Authorized redirect URIs**.
+   - If the consent screen is in **Testing** mode, add your development Google account(s) as test users.
 
 3. **Start all services:**
 
@@ -749,6 +796,7 @@ Set all production variables (secrets, domains, DB, SMTP, OAuth):
 - `JWT_SECRET`, `API_SECRET`, `SESSION_SECRET` (strong random values)
 - `POSTGRES_PASSWORD` and database variables
 - SMTP/contact values (`SMTP_*`, `CONTACT_*`)
+- SMTP requires domain email hosting in production. For this deployment, I used **Purelymail** for SMTP delivery.
 
 Secret generation examples:
 
@@ -923,6 +971,7 @@ docker compose -f compose.prod.yml down            # stop all services
 Operational best practices:
 
 - Keep host packages updated
+- Use Dependabot alerts/PRs to track and apply dependency security updates on a regular cadence
 - Back up Postgres and test restore procedures
 - Rotate secrets and API credentials
 - Keep `.env.prod` out of source control
@@ -946,7 +995,7 @@ Another significant technical achievement was the offline-first PWA architecture
 
 The original project proposal included the ability for users to configure and export their daily prayer times (Fajr, Dhuhr, Asr, etc.) into their calendar. This was a significant part of the initial vision. However, as development progressed, I made the deliberate decision to remove prayer time configuration from the scope for this semester. The database schema and models still contain the commented-out scaffolding (`Prayer`, `PrayerType`, `PrayerConfiguration`), but the feature was not implemented.
 
-The reason was focus: with a fixed deadline, implementing the most important and distinctive part of the project — the Islamic calendar event sync with rich, meaningful descriptions — was the right priority. Prayer time calculation is a well-solved problem with existing apps; the core value of Islamic Calendar Sync is the event descriptions and the sync mechanism. By cutting prayers, I was able to deliver a complete, working, and well-tested version of the core feature set.
+With a fixed semester deadline, I prioritized the project's most distinctive and essential capability: the Islamic calendar event sync mechanism. Prayer time calculation is already well-covered by existing apps, so I deferred that feature and two additional planned items — `Event` description content and the website's Learn section — to future work. To write truly rich and meaningful event descriptions, I began studying a book on the significance of these events. I have not completed that study yet, and because this content must be accurate for users, I chose not to publish partial or potentially inaccurate explanations in this release. This scope decision allowed me to deliver a complete, stable, and well-tested core product.
 
 Another significant change from the initial proposal was the **calendar integration strategy**. The original plan was to use each calendar provider's API (e.g., the Google Calendar API) to directly add events to the user's calendar on their behalf. After research and feedback, I realized this approach would require pushing potentially hundreds of events per user, would involve complex token management for each provider, and would create ongoing API cost and rate-limit concerns. The simpler and more robust solution — generating a standard `.ics` file or a live subscription URL that the user's calendar app consumes natively — achieves the same end result with far less complexity and no ongoing API dependency. This was one of the most important "consult others and consider simpler approaches" moments of the project.
 
