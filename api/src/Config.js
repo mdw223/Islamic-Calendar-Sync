@@ -32,7 +32,7 @@ export const dbConfig = {
 
 export const logConfig = {
   LEVEL: process.env.LOG_LEVEL,
-  LOG_QUERIES: process.env.DB_LOG_QUERIES || true
+  LOG_QUERIES: process.env.DB_LOG_QUERIES?.toLowerCase?.() === "true"
 };
 
 export const googleAuthConfig = {
