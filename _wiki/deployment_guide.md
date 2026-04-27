@@ -413,11 +413,12 @@ In GitHub:
 3. Save and wait for DNS verification
 4. Enable "Enforce HTTPS" once available
 
-Optional `CNAME` file in frontend build source:
+Optional `CNAME` file in frontend build source (app/public/CNAME):
 
 - Content: `www.yourdomain.com`
 
-GitHub Pages may create/manage this automatically after custom domain is set.
+GitHub Pages may create/manage this automatically after custom domain is set.  
+After this, you can access the frontend at `https://www.yourdomain.com` and the API at `https://api.yourdomain.com/api/...`.
 
 ---
 

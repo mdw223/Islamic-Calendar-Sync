@@ -1,4 +1,4 @@
-import { CalculationMethods } from "./caclulation-methods";
+import { CalculationMethods } from "./CalculationMethods";
 export const defaultPrayerConfiguration = {
   prayerConfigurationStart: Date.now(),
   prayerConfigurationEnd: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
