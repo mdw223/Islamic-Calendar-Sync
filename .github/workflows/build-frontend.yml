@@ -1,11 +1,12 @@
-name: Deploy Frontend to GitHub Pages
+name: Build Frontend
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
     paths:
       - "app/**"
-      - ".github/workflows/deploy-frontend-pages.yml"
+      - ".github/workflows/build-frontend.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,7 +43,6 @@ jobs:
 
       - name: Build frontend
         env:
-          # Example: https://api.yourdomain.com/api (must include /api; see proxy/nginx.prod.https.template)
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: npm run build
 
@@ -54,6 +55,7 @@ jobs:
           path: app/dist
 
   deploy:
+    name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
