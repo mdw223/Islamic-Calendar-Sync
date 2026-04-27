@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // listens on any ip
 export default defineConfig({
+  base: '/',
   plugins: [
     react(),
     VitePWA({
