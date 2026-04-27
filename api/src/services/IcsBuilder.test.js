@@ -34,7 +34,7 @@ describe("IcsBuilder", () => {
     ]);
 
     expect(ics).toContain("DTSTART;VALUE=DATE:20260710");
-    expect(ics).toContain("DTEND;VALUE=DATE:20260710");
+    expect(ics).toContain("DTEND;VALUE=DATE:20260711");
   });
 
   test("skips invalid rows and still returns a valid calendar", () => {

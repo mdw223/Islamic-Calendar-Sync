@@ -108,7 +108,8 @@ function buildVeventBlock(ev, index, uidDomain, defaultTimezone) {
 
   if (allDay) {
     start = `${startParts.year}${startParts.month}${startParts.day}`;
-    const exclusiveEndDate = new Date(end_date);
+    // Create exclusive end date (day after) using timezone-aware parts
+    const exclusiveEndDate = new Date(`${endParts.year}-${endParts.month}-${endParts.day}T00:00:00`);
     exclusiveEndDate.setDate(exclusiveEndDate.getDate() + 1);
     const ey = (`0000${exclusiveEndDate.getFullYear()}`).slice(-4);
     const em = (`00${exclusiveEndDate.getMonth() + 1}`).slice(-2);
