@@ -140,23 +140,52 @@ ufw --force enable
 
 If your repository is private, the VPS needs credentials for future `git pull` operations. A deploy key is the safest simple option (repo-scoped, revocable, no PAT stored on server):
 
-1. Generate a dedicated SSH key pair on the VPS:
+1. Remove any old deploy key files (if migrating from a different repo):
+
    ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/IslamicCalendarSync_deploy -N ""
-   ```
-2. Copy the public key:
-   ```bash
-   cat ~/.ssh/IslamicCalendarSync_deploy.pub
-   ```
-3. In GitHub repo settings, add that public key under **Deploy keys** (read-only is usually enough).
-4. Configure SSH on the VPS to use that key for GitHub (`~/.ssh/config`):
-   ```sshconfig
-   Host github.com
-     IdentityFile ~/.ssh/IslamicCalendarSync_deploy
-     IdentitiesOnly yes
+   rm -f ~/.ssh/IslamicCalendarSync_deploy ~/.ssh/IslamicCalendarSync_deploy.pub
    ```
 
-After this, `git pull` works on the VPS without logging into your GitHub account on the server.
+2. Generate a new dedicated SSH key pair on the VPS:
+
+   ```bash
+   ssh-keygen -t ed25519 -C "vps-deploy" -f ~/.ssh/id_ed25519_vps_deploy
+   # Press Enter twice (no passphrase)
+   ```
+
+3. Copy the public key:
+
+   ```bash
+   cat ~/.ssh/id_ed25519_vps_deploy.pub
+   ```
+
+4. In your GitHub repo settings (Settings → Deploy keys), add that public key:
+   - Title: `VPS Deploy`
+   - Check "Allow write access" if the VPS needs to push
+
+5. Configure SSH on the VPS to use that key (`~/.ssh/config`):
+
+   ```sshconfig
+   Host github-vps
+       HostName github.com
+       User git
+       IdentityFile ~/.ssh/id_ed25519_vps_deploy
+       IdentitiesOnly yes
+   ```
+
+6. Update your Git remote to use the SSH host alias:
+
+   ```bash
+   git remote set-url origin git@github-vps:<your-org-or-user>/<your-repo>.git
+   ```
+
+7. Test the connection:
+   ```bash
+   ssh -T git@github-vps
+   git fetch origin
+   ```
+
+After this, `git pull` and `git push` work on the VPS without logging into your GitHub account on the server.
 
 ```bash
 git clone git@github.com:<your-org-or-user>/<your-repo>.git .
