@@ -1,11 +1,10 @@
 name: Tests
 
-# Trigger on every push to main/development AND on any pull request targeting those branches.
-# This means a PR branch is tested before it can be merged.
+# Trigger on pull requests to main/development, and on all pushes.
+# Merge commits from PRs are detected and skipped to avoid duplicate runs.
 on:
   workflow_dispatch:
   push:
-    branches: [main, development]
     paths:
       - "api/**"
       - "app/**"
@@ -22,8 +21,40 @@ permissions:
   actions: write # For artifact upload
 
 jobs:
+  # Check if this is a duplicate run (PR merge commit on push event)
+  check-skip:
+    name: Check for Duplicate
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.check.outputs.should_skip }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if merge commit
+        id: check
+        run: |
+          # For push events, check if this is a merge commit (2+ parents = PR merge)
+          if [ "${{ github.event_name }}" = "push" ]; then
+            PARENT_COUNT=$(git cat-file -p $GITHUB_SHA | grep -c "^parent " || true)
+            if [ "$PARENT_COUNT" -gt 1 ]; then
+              echo "Merge commit detected - skipping to avoid duplicate with PR run"
+              echo "should_skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "Not a merge commit - running tests"
+              echo "should_skip=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Pull request event - running tests"
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+          fi
+
   test-backend:
     name: Backend Tests
+    needs: check-skip
+    if: needs.check-skip.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
