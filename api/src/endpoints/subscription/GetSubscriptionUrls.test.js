@@ -7,7 +7,7 @@ const sign = jest.fn();
 
 jest.unstable_mockModule("../../Config.js", () => ({
   appConfig: {
-    SUBSCRIPTION_URL: "http://localhost:5000",
+    API_PUBLIC_URL: "http://localhost:5000",
     API_SECRET: "secret",
   },
   subscriptionConfig: {
