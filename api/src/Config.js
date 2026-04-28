@@ -75,6 +75,7 @@ export const authCookieConfig = {
     sameSite: "lax",
     path: "/",
     secure: (process.env.NODE_ENV || "development") === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches JWT expiry)
   },
 };
 

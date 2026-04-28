@@ -440,14 +440,12 @@ export const magicLinkVerify = [
   }),
   (req, res, next) => {
     try {
-      // User is authenticated; issue JWT
+      // User is authenticated; issue JWT and set httpOnly cookie (same as Google OAuth)
       const token = signToken(req.user);
       const frontendBase = appConfig.BASE_URL;
 
-      // Redirect to frontend with token in hash
-      res.redirect(
-        `${frontendBase}#token=${encodeURIComponent(token)}`
-      );
+      res.cookie(authCookieConfig.NAME, token, authCookieConfig.OPTIONS);
+      res.redirect(`${frontendBase}`);
     } catch (err) {
       defaultLogger.error("Error in magic link verify handler", {
         error: err,

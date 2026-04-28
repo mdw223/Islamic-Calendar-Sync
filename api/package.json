@@ -13,6 +13,7 @@
         "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand"
     },
     "dependencies": {
+        "connect-redis": "^8.0.2",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
         "express": "^4.22.1",

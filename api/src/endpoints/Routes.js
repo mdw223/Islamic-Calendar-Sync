@@ -1,5 +1,7 @@
 import express from 'express';
 import session from "express-session";
+import { RedisStore } from "connect-redis";
+import { createClient } from "redis";
 import healthRoutes from "./health/Health.js";
 import { Logout } from "./users/LoginUser.js";
 import Auth from "../middleware/AuthMiddleware.js";
@@ -15,7 +17,7 @@ import {
 	magicLinkVerify,
 } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
-import { appConfig, sessionConfig } from "../Config.js";
+import { appConfig, sessionConfig, redisConfig } from "../Config.js";
 import GetCurrentUser from './users/GetCurrentUser.js';
 import GetUserById from './users/GetUserById.js';
 import DeleteCurrentUser from './users/DeleteCurrentUser.js';
@@ -49,9 +51,16 @@ import { submitContact } from "./contact/SubmitContact.js";
 
 const router = express.Router();
 
+// Redis client for session store
+const redisClient = createClient({
+  socket: { host: redisConfig.HOST, port: redisConfig.PORT },
+});
+redisClient.connect().catch(console.error);
+
 // Session middleware scoped only to Google OAuth routes — holds OIDC state across the redirect.
 // Not used for app auth (JWT cookie handles that).
 const googleSession = session({
+  store: new RedisStore({ client: redisClient, prefix: "session:" }),
   secret: sessionConfig.SECRET,
   resave: false,
   saveUninitialized: false,

@@ -471,7 +471,35 @@ Run these checks after deployment:
 
 ---
 
-## 14) Optional improvement: backend CI/CD
+## 14) Debugging: Managing local changes on VPS
+
+When debugging production issues, you may edit files directly on the VPS. To sync back with origin/main after debugging:
+
+```bash
+cd /root/IslamicCalendarSync
+
+# Stash any local changes (debug code, temporary fixes)
+git stash
+
+# Pull the latest from origin/main
+git pull origin main
+
+# If there are conflicts, reset to match origin exactly:
+git reset --hard origin/main
+
+# Rebuild and restart the API (force no-cache to ensure fresh build)
+docker compose -f compose.prod.yml build --no-cache api
+docker compose -f compose.prod.yml up -d api
+
+# Verify it's running
+docker logs api_service_prod --tail 10
+```
+
+**Note:** Direct edits on the VPS are for debugging only. Always commit final fixes to the repository and push to origin/main.
+
+---
+
+## 15) Optional improvement: backend CI/CD
 
 After this is stable, add a backend deployment workflow that:
 

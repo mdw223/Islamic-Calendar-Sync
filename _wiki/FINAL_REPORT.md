@@ -185,7 +185,7 @@ All five services are orchestrated together using Docker Compose.
 | Technology              | Purpose                                                                     |
 | ----------------------- | --------------------------------------------------------------------------- |
 | PostgreSQL 15           | Primary relational database                                                 |
-| Redis                   | Caching layer                                                               |
+| Redis                   | Caching layer and session store (for OAuth state)                           |
 | Nginx                   | Reverse proxy; routes `/api/*` to Express, all other paths to the React app |
 | Docker / Docker Compose | Container orchestration for all five services                               |
 
@@ -447,7 +447,7 @@ IslamicCalendarSync/
 
 **Subscription Feed** — `GetSubscriptionEvents.js` accepts a hashed token from the URL, validates it against the database, fetches the associated user's events (filtered to selected definitions), and returns a live `.ics` response. This endpoint is unauthenticated — the token itself is the credential.
 
-**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `Passport.js` but their routes are inactive. On successful authentication, the server issues a signed JWT stored in a **secure httpOnly cookie** (`token` in production; `secure: true` when `NODE_ENV=production`, with `sameSite: "lax"`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The secure httpOnly cookie approach means the token is never accessible to JavaScript and is only sent over HTTPS in production, reducing XSS and transport-level exposure risk.
+**Authentication** — Two authentication strategies are currently active: **Google OAuth 2.0** (`passport-google-oidc`) and **Magic Link email** (`passport-magic-link`). Microsoft and Apple strategies are implemented in `Passport.js` but their routes are inactive. On successful authentication (both Google OAuth and Magic Link), the server issues a signed JWT stored in a **secure httpOnly cookie** (`token` in production; `secure: true` when `NODE_ENV=production`, with `sameSite: "lax"`, 7-day `maxAge`). The global `authenticateJwt` middleware (applied before all routes in `index.js`) decodes the cookie on every request and attaches `req.user` when a valid JWT is present; protected routes then use `Auth(role)` from `AuthMiddleware.js` to enforce authorization. The secure httpOnly cookie approach means the token is never accessible to JavaScript and is only sent over HTTPS in production, reducing XSS and transport-level exposure risk.
 
 **Response Sanitizer** — `ResponseSanitizer.js` middleware automatically removes sensitive fields (tokens, salts, passwords) from all API responses before they are sent to the client.
 
@@ -468,7 +468,7 @@ The API has a comprehensive unit test suite written with **Jest**. Tests live al
 | Area                    | Test Files                                                                                                                                               |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`             |
-| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                |
+| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                 |
 | Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                         |
 | Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`                                                                                           |
 | User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                       |
@@ -838,6 +838,13 @@ The following system tests were executed manually against the integrated stack t
 - Email contains: "Click the link below to sign in to Islamic Calendar Sync"
 - Link format: `https://api.islamiccalendarsync.com/api/auth/magic-link/verify?token=eyJhbG...`
 - First click: Successful login, redirected to `/calendar`
+- **Cookie attributes verified in DevTools (same as Google OAuth):**
+  - Name: `token`
+  - httpOnly: true
+  - secure: true
+  - sameSite: lax
+  - Max-Age: 604800 (7 days)
+- Token not accessible via `document.cookie` (httpOnly protection working)
 - Second click: HTTP 400, `"error": "Magic link has already been used or is invalid"`
 - Database entry created in `MagicLinkUsedToken` table to prevent reuse
 - Link expired after 15 minutes (verified by waiting)
@@ -1009,7 +1016,6 @@ The following system tests were executed manually against the integrated stack t
 - Google Calendar: Import wizard accepted file, 289 events created
 - Apple Calendar: File opened directly, all events imported
 - Outlook 365: Import successful via "Open Calendar" > "From File"
-- Ramadan (all-day, 30 days): Correctly displayed as month-long block in all clients
 - Eid ul-Fitr (single all-day): Correctly displayed as all-day event
 - White Days (recurring monthly): Expanded to 12 occurrences per year in all clients
 - Event descriptions included rich text links (converted to plain text as expected)
