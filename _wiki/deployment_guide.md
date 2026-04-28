@@ -78,14 +78,32 @@ Set `CORS_ALLOWED_ORIGINS` in `.env.prod` as a comma-separated list:
 
 - `https://www.yourdomain.com`
 - optionally `https://yourdomain.com` (if root serves frontend)
+- **IMPORTANT: Also include your API domain** (e.g., `https://api.yourdomain.com`) if using magic link confirmation pages
 
 Example:
 
 ```env
-CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com
+CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com,https://api.yourdomain.com
 ```
 
 This is read by `api/src/config.js` and applied in `api/src/index.js` using the Express `cors` middleware.
+
+> **Note on Magic Link Confirmation Pages:** The magic link flow uses a two-step verification (GET shows confirmation page, POST consumes token). The confirmation page is served from the API domain and submits a form back to the API. If the API domain is not in `CORS_ALLOWED_ORIGINS`, the POST request will fail with a CORS error. Always include your API domain when using magic link authentication.
+
+### 4.2 Cookie Domain for Cross-Subdomain Auth
+
+When using split hosting (frontend on `www.yourdomain.com`, API on `api.yourdomain.com`), the auth cookie must be shared across both subdomains. Set `COOKIE_DOMAIN` to your root domain with a leading dot:
+
+```env
+COOKIE_DOMAIN=.yourdomain.com
+```
+
+This allows the cookie to be:
+- Set by the API domain during login
+- Sent by the browser when accessing the frontend domain
+- Visible in DevTools regardless of which subdomain you're viewing
+
+Without this, the cookie is scoped only to the domain that set it (the API), making it invisible when viewing the frontend in DevTools and potentially causing authentication issues.
 
 ---
 

@@ -76,6 +76,7 @@ export const authCookieConfig = {
     path: "/",
     secure: (process.env.NODE_ENV || "development") === "production",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches JWT expiry)
+    domain: process.env.COOKIE_DOMAIN || undefined, // e.g., ".islamiccalendarsync.com" for cross-subdomain
   },
 };
 
