@@ -109,13 +109,8 @@ export async function RequireSubscriptionToken(req, res, next) {
     for (const row of candidates) {
       if (!row?.tokenHash || !row?.salt) continue;
       const tokenHash = await HashToken(token, row.salt);
-      const stored = Buffer.isBuffer(row.tokenHash)
-        ? row.tokenHash
-        : Buffer.from(row.tokenHash);
-      if (
-        tokenHash.length === stored.length &&
-        crypto.timingSafeEqual(tokenHash, stored)
-      ) {
+      const stored = row.tokenHash;
+      if (tokenHash === stored) {
         subscription = row;
         break;
       }
@@ -156,7 +151,7 @@ export async function HashToken(token, salt) {
       if (err) {
         reject(err);
       } else {
-        resolve(derivedKey);
+        resolve(derivedKey.toString("hex"));
       }
     });
   });
