@@ -185,7 +185,7 @@ All five services are orchestrated together using Docker Compose.
 | Technology              | Purpose                                                                     |
 | ----------------------- | --------------------------------------------------------------------------- |
 | PostgreSQL 15           | Primary relational database                                                 |
-| Redis                   | Caching layer                                                               |
+| Redis                   | Caching layer and session store (for OAuth state)                           |
 | Nginx                   | Reverse proxy; routes `/api/*` to Express, all other paths to the React app |
 | Docker / Docker Compose | Container orchestration for all five services                               |
 
