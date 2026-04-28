@@ -14,7 +14,8 @@ import {
 	// appleRedirect,
 	magicLinkSend,
 	checkEmailPage,
-	magicLinkVerify,
+	magicLinkVerifyGet,
+	magicLinkVerifyPost,
 } from "../Passport.js";
 import { AuthUser } from '../Constants.js';
 import { appConfig, sessionConfig, redisConfig } from "../Config.js";
@@ -90,7 +91,8 @@ router.get("/auth/google/redirect", googleSession, ...googleRedirect);
 // Magic-link login
 router.post("/auth/magiclink/send", ...magicLinkSend);
 router.get("/login/check-email", checkEmailPage);
-router.get("/auth/magiclink/verify", ...magicLinkVerify);
+router.get("/auth/magiclink/verify", magicLinkVerifyGet);
+router.post("/auth/magiclink/confirm", ...magicLinkVerifyPost);
 router.post("/contact", ...submitContact);
 
 // Subscription management (Bearer JWT)

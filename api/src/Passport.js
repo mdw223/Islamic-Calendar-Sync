@@ -428,17 +428,150 @@ export const checkEmailPage = (req, res, next) => {
 
 /**
  * GET /auth/magiclink/verify
- * Verify the token from the magic link and log the user in.
+ * Shows a confirmation page to prevent bots from auto-consuming magic links.
  * Query param: ?token=<magic_token>
  */
-export const magicLinkVerify = [
+export const magicLinkVerifyGet = (req, res) => {
+  const token = req.query.token;
+  if (!token) {
+    return res.redirect(`${appConfig.BASE_URL}/auth/login?error=missing_token`);
+  }
+
+  // Render a simple confirmation page with a button to continue
+  res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Login - Islamic Calendar Sync</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 32px;
+    }
+    h1 {
+      color: #1a1a2e;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #666;
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+    .email {
+      color: #667eea;
+      font-weight: 600;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .security-note {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #999;
+    }
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    button.loading .spinner {
+      display: block;
+    }
+    button.loading .text {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🕌</div>
+    <h1>Confirm Your Login</h1>
+    <p>Click the button below to sign in to Islamic Calendar Sync</p>
+    <form action="/api/auth/magiclink/confirm" method="POST">
+      <input type="hidden" name="token" value="${encodeURIComponent(token)}">
+      <button type="submit" id="submitBtn">
+        <span class="text">Continue to Islamic Calendar Sync</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+    <p class="security-note">This link expires in 10 minutes. Not you? Ignore this email.</p>
+  </div>
+  <script>
+    document.querySelector('form').addEventListener('submit', function() {
+      document.getElementById('submitBtn').classList.add('loading');
+    });
+  </script>
+</body>
+</html>
+  `);
+};
+
+/**
+ * POST /auth/magiclink/confirm
+ * Actually verifies and consumes the magic link token after user confirmation.
+ */
+export const magicLinkVerifyPost = [
   passport.authenticate("magiclink", {
     action: "acceptToken",
-    failureRedirect: "/login?error=invalid_token",
+    failureRedirect: `${appConfig.BASE_URL}/auth/login?error=invalid_token`,
     session: false,
     userPrimaryKey: "email",
   }),
-  (req, res, next) => {
+  (req, res) => {
     try {
       // User is authenticated; issue JWT and set httpOnly cookie (same as Google OAuth)
       const token = signToken(req.user);
@@ -450,7 +583,7 @@ export const magicLinkVerify = [
       defaultLogger.error("Error in magic link verify handler", {
         error: err,
       });
-      res.redirect(`${appConfig.BASE_URL}/login?error=callback_failed`);
+      res.redirect(`${appConfig.BASE_URL}/auth/login?error=callback_failed`);
     }
   },
 ];
