@@ -153,7 +153,33 @@ export default class APIClient {
     }
 
     const blob = await response.blob();
-    APIClient.downloadBlob(blob);
+    const filename = APIClient.buildIcsFilename(query);
+    APIClient.downloadBlob(blob, filename);
+  }
+
+  /**
+   * Build a filename for the ICS export based on query parameters.
+   * Format: islamic-calendar-<year-range>.ics
+   * Examples: islamic-calendar-2025-2026.ics, islamic-calendar-2025-2027.ics
+   */
+  static buildIcsFilename(query = {}) {
+    let yearRange = "";
+
+    if (Array.isArray(query.years) && query.years.length > 0) {
+      const sorted = [...query.years].sort((a, b) => a - b);
+      const min = sorted[0];
+      const max = sorted[sorted.length - 1];
+      yearRange = min === max ? String(min) : `${min}-${max}`;
+    } else if (query.from && query.to) {
+      // Parse year directly from YYYY-MM-DD format to avoid timezone issues
+      const fromYear = parseInt(String(query.from).slice(0, 4), 10);
+      const toYear = parseInt(String(query.to).slice(0, 4), 10);
+      yearRange = fromYear === toYear ? String(fromYear) : `${fromYear}-${toYear}`;
+    }
+
+    return yearRange
+      ? `islamic-calendar-${yearRange}.ics`
+      : APIClient.ICS_FILE_NAME;
   }
 
   /**
