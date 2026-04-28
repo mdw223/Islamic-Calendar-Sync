@@ -130,9 +130,22 @@ export default async function GetEventsIcs(req, res) {
         );
         const icsText = buildIcsString(filtered, {addSubscriptionUrl: true});
 
+        // Build filename with year range: islamic-calendar-2025-2026.ics
+        let yearRange = '';
+        if (years && years.length > 0) {
+            const min = years[0];
+            const max = years[years.length - 1];
+            yearRange = min === max ? String(min) : `${min}-${max}`;
+        } else {
+            const fromYear = fromD.getUTCFullYear();
+            const toYear = toD.getUTCFullYear();
+            yearRange = fromYear === toYear ? String(fromYear) : `${fromYear}-${toYear}`;
+        }
+        const filename = yearRange ? `islamic-calendar-${yearRange}.ics` : 'islamic-calendar.ics';
+
         res.status(200);
         res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="events.ics"');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.setHeader('Cache-Control', 'no-store');
         return res.send(icsText);
     } catch (error) {

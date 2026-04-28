@@ -468,7 +468,7 @@ The API has a comprehensive unit test suite written with **Jest**. Tests live al
 | Area                    | Test Files                                                                                                                                               |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`             |
-| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                                         |
+| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                |
 | Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                         |
 | Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`                                                                                           |
 | User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                       |
@@ -486,35 +486,35 @@ npm run test:coverage
 
 **Test Count**
 
-- **29 test suites** (backend), all passing
-- **113 individual backend unit tests**, all passing
+- **32 test suites** (backend), all passing
+- **133 individual backend unit tests**, all passing
 - **15 system/integration tests**, all passing
-- **Total: 128+ tests**, all passing
+- **Total: 148+ tests**, all passing
 
 **Coverage Summary**
 
 | Area          | Statements | Branches   | Functions  | Lines      |
 | ------------- | ---------- | ---------- | ---------- | ---------- |
-| **All files** | **87.70%** | **72.97%** | **88.37%** | **87.70%** |
+| **All files** | **85.61%** | **72.05%** | **88.23%** | **85.61%** |
 | Middleware    | 66.31%     | 73.84%     | 68.75%     | 66.31%     |
-| Services      | 95.49%     | 72.26%     | 100%       | 95.49%     |
+| Services      | 89.53%     | 70.45%     | 96.15%     | 89.53%     |
 | Utilities     | 100%       | 73.33%     | 100%       | 100%       |
 
 **Coverage Breakdown by Component**
 
 | Component  | File                      | Statements | Branches | Functions | Lines  |
 | ---------- | ------------------------- | ---------- | -------- | --------- | ------ |
-| Middleware | AuthMiddleware.js         | 58.62%     | 73.68%   | 66.67%    | 58.62% |
-| Middleware | ErrorHandlerMiddleware.js | 90%        | 83.33%   | 100%      | 90%    |
+| Middleware | AuthMiddleware.js         | 58.43%     | 83.33%   | 50%       | 58.43% |
+| Middleware | ErrorHandlerMiddleware.js | 82.5%      | 55.55%   | 100%      | 82.5%  |
 | Middleware | NotFoundMiddleware.js     | 100%       | 100%     | 100%      | 100%   |
 | Middleware | RateLimiter.js            | 100%       | 100%     | 50%       | 100%   |
 | Middleware | RequestSanitizer.js       | 0%         | 0%       | 0%        | 0%     |
-| Middleware | ResponseSanitizer.js      | 100%       | 100%     | 100%      | 100%   |
-| Services   | EventExpansionService.js  | 97.91%     | 70%      | 100%      | 97.91% |
-| Services   | IcsBuilder.js             | 100%       | 70.58%   | 100%      | 100%   |
-| Services   | IslamicEventService.js    | 88.63%     | 74.07%   | 100%      | 88.63% |
-| Utilities  | HijriUtils.js             | 100%       | 75%      | 100%      | 100%   |
-| Utilities  | SanitizeHtml.js           | 100%       | 66.67%   | 100%      | 100%   |
+| Middleware | ResponseSanitizer.js      | 96.36%     | 93.33%   | 100%      | 96.36% |
+| Services   | EventExpansionService.js  | 90.58%     | 73.33%   | 100%      | 90.58% |
+| Services   | IcsBuilder.js             | 100%       | 72.5%    | 100%      | 100%   |
+| Services   | IslamicEventService.js    | 97.27%     | 68.42%   | 100%      | 97.27% |
+| Utilities  | HijriUtils.js             | 100%       | 71.83%   | 100%      | 100%   |
+| Utilities  | SanitizeHtml.js           | 100%       | 100%     | 100%      | 100%   |
 
 **Highlights:**
 
@@ -523,9 +523,10 @@ npm run test:coverage
 - `RateLimiter.js` — **100% statements and branches**; 50% function coverage (the Redis-store factory path is not exercised in unit tests)
 - `RequestSanitizer.js` — **0% coverage**; no test file exists yet — the clearest gap to address next
 - The main gaps in `AuthMiddleware.js` (lines 61–163, the Google OAuth redirect and subscription-token verification paths) are harder to unit test in isolation without live Passport sessions
-- Branch coverage at **72.97%** is the weakest metric overall — mostly untested edge-case branches in `HijriUtils.js`, `IcsBuilder.js`, and the services
+- Branch coverage at **72.05%** is the weakest metric overall — mostly untested edge-case branches in `HijriUtils.js`, `IcsBuilder.js`, and the services
+- New test coverage added for `GetEventsIcs.js` endpoint with 15 tests covering filename generation, error handling, and content headers
 
-Overall, **113 passing tests across 29 suites** is a solid result for a backend of this size. The most actionable improvement would be adding a test file for `RequestSanitizer.js` and a few branch-level tests in `ErrorHandlerMiddleware.js`.
+Overall, **133 passing tests across 32 suites** is a solid result for a backend of this size. The most actionable improvement would be adding a test file for `RequestSanitizer.js` and a few branch-level tests in `ErrorHandlerMiddleware.js`.
 
 ### Frontend Test Status
 
@@ -534,24 +535,6 @@ At this stage, there are **no automated frontend tests implemented yet** (no com
 ### System Tests (Manual End-to-End)
 
 The following system tests were executed manually against the integrated stack to validate full user workflows across frontend, API, database, and export/subscription behavior. All tests were performed in both development (Docker local) and production environments.
-
-| Test ID | Test Name                            | Status | Environment                     | Date Executed |
-| ------- | ------------------------------------ | ------ | ------------------------------- | ------------- |
-| ST-01   | Generate and View Islamic Events     | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-02   | Export Events as ICS File            | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-03   | Live Subscription Feed Updates       | PASS   | Prod                            | Apr 2026      |
-| ST-04   | Offline-First Behavior and Sync      | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-05   | Contact Form Abuse Controls          | PASS   | Prod                            | Apr 2026      |
-| ST-06   | Google OAuth Authentication Flow     | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-07   | Magic Link Email Authentication      | PASS   | Prod                            | Apr 2026      |
-| ST-08   | Event CRUD Operations                | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-09   | Definition Preferences Persistence   | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-10   | PWA Install and Offline Access       | PASS   | Dev/Prod                        | Apr 2026      |
-| ST-11   | ICS File Import Validation           | PASS   | Google Calendar, Apple Calendar | Apr 2026      |
-| ST-12   | Subscription Token Security          | PASS   | Prod                            | Apr 2026      |
-| ST-13   | Rate Limiting and Abuse Prevention   | PASS   | Prod                            | Apr 2026      |
-| ST-14   | Cross-Origin Resource Sharing (CORS) | PASS   | Prod                            | Apr 2026      |
-| ST-15   | Database Migration Execution         | PASS   | Prod                            | Apr 2026      |
 
 ---
 
@@ -588,7 +571,7 @@ The following system tests were executed manually against the integrated stack t
 - Ramadan 2026 correctly placed on February 18, 2026 (1st Ramadan 1447H)
 - Eid ul-Fitr 2026 correctly placed on March 20, 2026
 - Eid ul-Adha 2026 correctly placed on May 27, 2026
-- All 12 White Days events (13th-15th of each lunar month) correctly generated
+- All 12 White Days events (13th-15th of each lunar month) correctly generated for one year
 - Event modal displays proper Hijri date (e.g., "1 Ramadan 1447")
 - Event colors match their definition settings
 
