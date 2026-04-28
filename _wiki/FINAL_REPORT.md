@@ -468,7 +468,7 @@ The API has a comprehensive unit test suite written with **Jest**. Tests live al
 | Area                    | Test Files                                                                                                                                               |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`             |
-| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                |
+| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                 |
 | Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                         |
 | Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`                                                                                           |
 | User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                       |
@@ -1016,7 +1016,6 @@ The following system tests were executed manually against the integrated stack t
 - Google Calendar: Import wizard accepted file, 289 events created
 - Apple Calendar: File opened directly, all events imported
 - Outlook 365: Import successful via "Open Calendar" > "From File"
-- Ramadan (all-day, 30 days): Correctly displayed as month-long block in all clients
 - Eid ul-Fitr (single all-day): Correctly displayed as all-day event
 - White Days (recurring monthly): Expanded to 12 occurrences per year in all clients
 - Event descriptions included rich text links (converted to plain text as expected)
