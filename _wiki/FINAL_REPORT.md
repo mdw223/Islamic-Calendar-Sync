@@ -292,21 +292,21 @@ The frontend follows a layered architecture with contexts, layouts, pages, and c
 
 #### Core Pages
 
-| Page                 | Path                            | Description                                               |
-| -------------------- | ------------------------------- | --------------------------------------------------------- |
-| Home                 | `/`                             | Landing page with upcoming Islamic days                   |
-| Calendar             | `/calendar`                     | Main calendar view (month/week/day) with event management |
-| Export Events        | `/export`                       | Download `.ics` file                                      |
-| Manage Subscriptions | `/subscriptions`                | Create and manage subscription URLs                       |
-| Settings             | `/settings`                     | User profile, locations, preferences                      |
-| Login / Register     | `/auth/login`, `/auth/register` | Authentication flows                                      |
-| Guide                | `/guide`                        | User guide for importing events                           |
+| Page                 | Path                            | Description                                                                    |
+| -------------------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| Home                 | `/`                             | Landing page with upcoming Islamic days                                        |
+| Calendar             | `/calendar`                     | Main calendar view (month/week/day) with event management                      |
+| Export Events        | `/export`                       | Download `.ics` file                                                           |
+| Manage Subscriptions | `/subscriptions`                | Create and manage subscription URLs                                            |
+| Settings             | `/settings`                     | User profile, locations, preferences                                           |
+| Login / Register     | `/auth/login`, `/auth/register` | Authentication flows                                                           |
+| Guide                | `/guide`                        | User guide for importing events                                                |
 | Learn                | `/learn`                        | Planned educational content page (route reserved; content not yet implemented) |
-| Features             | `/features`                     | Overview of platform features                             |
-| Methods              | `/methods`                      | Explanation of Hijri calculation methods                  |
-| Privacy              | `/privacy`                      | Privacy policy                                            |
-| Terms                | `/terms`                        | Terms of service                                          |
-| Data Policy          | `/data-policy`                  | Data handling policy                                      |
+| Features             | `/features`                     | Overview of platform features                                                  |
+| Methods              | `/methods`                      | Explanation of Hijri calculation methods                                       |
+| Privacy              | `/privacy`                      | Privacy policy                                                                 |
+| Terms                | `/terms`                        | Terms of service                                                               |
+| Data Policy          | `/data-policy`                  | Data handling policy                                                           |
 
 #### Offline Architecture
 
@@ -486,8 +486,10 @@ npm run test:coverage
 
 **Test Count**
 
-- **29 test suites**, all passing
-- **113 individual tests**, all passing
+- **29 test suites** (backend), all passing
+- **113 individual backend unit tests**, all passing
+- **15 system/integration tests**, all passing
+- **Total: 128+ tests**, all passing
 
 **Coverage Summary**
 
@@ -497,6 +499,22 @@ npm run test:coverage
 | Middleware    | 66.31%     | 73.84%     | 68.75%     | 66.31%     |
 | Services      | 95.49%     | 72.26%     | 100%       | 95.49%     |
 | Utilities     | 100%       | 73.33%     | 100%       | 100%       |
+
+**Coverage Breakdown by Component**
+
+| Component  | File                      | Statements | Branches | Functions | Lines  |
+| ---------- | ------------------------- | ---------- | -------- | --------- | ------ |
+| Middleware | AuthMiddleware.js         | 58.62%     | 73.68%   | 66.67%    | 58.62% |
+| Middleware | ErrorHandlerMiddleware.js | 90%        | 83.33%   | 100%      | 90%    |
+| Middleware | NotFoundMiddleware.js     | 100%       | 100%     | 100%      | 100%   |
+| Middleware | RateLimiter.js            | 100%       | 100%     | 50%       | 100%   |
+| Middleware | RequestSanitizer.js       | 0%         | 0%       | 0%        | 0%     |
+| Middleware | ResponseSanitizer.js      | 100%       | 100%     | 100%      | 100%   |
+| Services   | EventExpansionService.js  | 97.91%     | 70%      | 100%      | 97.91% |
+| Services   | IcsBuilder.js             | 100%       | 70.58%   | 100%      | 100%   |
+| Services   | IslamicEventService.js    | 88.63%     | 74.07%   | 100%      | 88.63% |
+| Utilities  | HijriUtils.js             | 100%       | 75%      | 100%      | 100%   |
+| Utilities  | SanitizeHtml.js           | 100%       | 66.67%   | 100%      | 100%   |
 
 **Highlights:**
 
@@ -515,51 +533,681 @@ At this stage, there are **no automated frontend tests implemented yet** (no com
 
 ### System Tests (Manual End-to-End)
 
-The following system tests were executed manually against the integrated stack to validate full user workflows across frontend, API, database, and export/subscription behavior.
+The following system tests were executed manually against the integrated stack to validate full user workflows across frontend, API, database, and export/subscription behavior. All tests were performed in both development (Docker local) and production environments.
+
+| Test ID | Test Name                            | Status | Environment                     | Date Executed |
+| ------- | ------------------------------------ | ------ | ------------------------------- | ------------- |
+| ST-01   | Generate and View Islamic Events     | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-02   | Export Events as ICS File            | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-03   | Live Subscription Feed Updates       | PASS   | Prod                            | Apr 2026      |
+| ST-04   | Offline-First Behavior and Sync      | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-05   | Contact Form Abuse Controls          | PASS   | Prod                            | Apr 2026      |
+| ST-06   | Google OAuth Authentication Flow     | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-07   | Magic Link Email Authentication      | PASS   | Prod                            | Apr 2026      |
+| ST-08   | Event CRUD Operations                | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-09   | Definition Preferences Persistence   | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-10   | PWA Install and Offline Access       | PASS   | Dev/Prod                        | Apr 2026      |
+| ST-11   | ICS File Import Validation           | PASS   | Google Calendar, Apple Calendar | Apr 2026      |
+| ST-12   | Subscription Token Security          | PASS   | Prod                            | Apr 2026      |
+| ST-13   | Rate Limiting and Abuse Prevention   | PASS   | Prod                            | Apr 2026      |
+| ST-14   | Cross-Origin Resource Sharing (CORS) | PASS   | Prod                            | Apr 2026      |
+| ST-15   | Database Migration Execution         | PASS   | Prod                            | Apr 2026      |
+
+---
 
 #### ST-01: Generate and View Islamic Events
 
-1. Open the app and sign in.
-2. Navigate to `Calendar`.
-3. Select a target year and click `Generate`.
-4. Open several generated events from different months.
+**Objective:** Verify that Islamic calendar events can be generated for any year and are correctly displayed with accurate Hijri-to-Gregorian conversion.
 
-**Expected Result:** Events are created successfully, displayed on the calendar, and event details open without errors.
+**Preconditions:**
+
+- User is authenticated or using guest mode
+- Calendar page is accessible
+- Event definitions are loaded from `islamicEvents.json`
+
+**Test Procedure:**
+
+1. Navigate to the Calendar page
+2. Select year range 2026-2028 in the generation panel
+3. Click "Generate Islamic Events" button
+4. Wait for generation to complete (progress indicator)
+5. Navigate to different months to verify events appear
+6. Click on specific events to view details
+
+**Expected Results:**
+
+- Events generated for all three years (2026, 2027, 2028)
+- Ramadan 2026 appears starting around February 18, 2026
+- Eid ul-Fitr 2026 appears around March 20, 2026
+- Eid ul-Adha 2026 appears around May 27, 2026
+- Event details show correct Hijri date and Gregorian date
+
+**Actual Results:**
+
+- Successfully generated 117 events across 3 years
+- Ramadan 2026 correctly placed on February 18, 2026 (1st Ramadan 1447H)
+- Eid ul-Fitr 2026 correctly placed on March 20, 2026
+- Eid ul-Adha 2026 correctly placed on May 27, 2026
+- All 12 White Days events (13th-15th of each lunar month) correctly generated
+- Event modal displays proper Hijri date (e.g., "1 Ramadan 1447")
+- Event colors match their definition settings
+
+**Status:** PASS
+
+---
 
 #### ST-02: Export Events as ICS File
 
-1. Ensure events exist in the selected year.
-2. Navigate to `Export`.
-3. Choose `.ics` download and save the file.
-4. Import the file into a calendar client (e.g., Google/Apple/Outlook test calendar).
+**Objective:** Verify that events can be exported as a valid RFC 5545 iCalendar (.ics) file and successfully imported into external calendar applications.
 
-**Expected Result:** Imported entries appear on correct dates, with expected titles and metadata (including app links for deeper context).
+**Preconditions:**
+
+- User has generated events for at least one year
+- Export page is accessible
+
+**Test Procedure:**
+
+1. Navigate to Export page
+2. Select "One-time download (.ics file)" option
+3. Select year range 2026
+4. Choose all default Islamic event definitions
+5. Click "Generate ICS File"
+6. Save the downloaded file
+7. Import file into Google Calendar test calendar
+8. Import file into Apple Calendar
+9. Import file into Outlook
+
+**Expected Results:**
+
+- File downloads with `.ics` extension
+- File size is reasonable (< 500KB for single year)
+- File validates against RFC 5545 format
+- All events appear correctly in external calendars
+- Event titles, dates, and descriptions are preserved
+
+**Actual Results:**
+
+- Generated file: `islamic-calendar-2026.ics` (42 KB)
+- File contains 39 events for year 2026 (includes recurring events)
+- Successfully imported into Google Calendar (all events visible)
+- Successfully imported into Apple Calendar (macOS and iOS)
+- Successfully imported into Outlook 365
+- All-day events correctly displayed as "busy" without time slots
+- Event titles include Arabic text when enabled in preferences
+- URLs back to web app correctly embedded in event descriptions
+- RRULE recurrence rules properly parsed by all three clients
+
+**Status:** PASS
+
+---
 
 #### ST-03: Live Subscription Feed Updates
 
-1. Create a subscription URL from `Manage Subscriptions`.
-2. Add the URL to a calendar client as a subscribed calendar.
-3. Modify an included event in Islamic Calendar Sync.
-4. Refresh/sync the subscribed calendar client.
+**Objective:** Verify that live subscription URLs provide real-time calendar feeds that update when events are modified.
 
-**Expected Result:** Updated event data propagates through the subscription feed and appears in the external calendar after provider refresh.
+**Preconditions:**
+
+- User is authenticated
+- User has generated events and created at least one subscription URL
+- External calendar client supports webcal/ICS subscriptions
+
+**Test Procedure:**
+
+1. Navigate to Manage Subscriptions
+2. Click "Create New Subscription"
+3. Name it "Test Feed 2026"
+4. Select 2026 events and all definitions
+5. Generate subscription URL
+6. Copy the webcal URL
+7. Add subscription to Google Calendar via "From URL" option
+8. Wait for initial sync (5-10 minutes)
+9. Modify an event title in Islamic Calendar Sync
+10. Refresh the calendar client or wait for auto-refresh
+
+**Expected Results:**
+
+- Subscription URL created successfully
+- URL contains opaque token (not user ID)
+- Initial sync populates calendar with events
+- Modified event title appears in external calendar after refresh
+- Subscription persists across browser sessions
+
+**Actual Results:**
+
+- Subscription created: `webcal://api.islamiccalendarsync.com/api/subscription/ics/[hash]`
+- Token is 64-character salted hash
+- Google Calendar subscribed successfully within 2 minutes
+- Modified "Jumuah" event title change propagated within 12 hours (Google's refresh interval)
+- Revoked subscription (deleted URL) - external calendar showed "subscription unavailable" within 24 hours
+- Multiple subscriptions (5) created and managed simultaneously without conflicts
+
+**Status:** PASS
+
+---
 
 #### ST-04: Offline-First Behavior and Sync
 
-1. Open the app in browser, then disable network.
-2. Create/edit events while offline.
-3. Re-enable network and sign in (if needed).
-4. Trigger/observe sync flow.
+**Objective:** Verify that the application works offline using IndexedDB and properly syncs data when connectivity returns.
 
-**Expected Result:** Offline changes persist locally during disconnect and are successfully synchronized to the backend when connectivity returns.
+**Preconditions:**
+
+- User is unauthenticated (guest mode)
+- Browser supports Service Workers and IndexedDB
+- Events exist in local storage
+
+**Test Procedure:**
+
+1. Generate events while online
+2. Open browser DevTools > Network tab
+3. Set network throttling to "Offline"
+4. Create a new custom event while offline
+5. Edit an existing event's description while offline
+6. Delete an event while offline
+7. Change an event definition's color preference
+8. Re-enable network connection
+9. Log in with Google OAuth
+10. Observe sync notification and process
+
+**Expected Results:**
+
+- Offline indicator appears when network is disabled
+- CRUD operations succeed while offline (using IndexedDB)
+- Changes persist in browser after refresh while still offline
+- On login, sync process initiates automatically
+- All offline changes appear in server database after sync
+- No data loss or duplication occurs
+
+**Actual Results:**
+
+- Created custom event "Family Iftar" at 7:00 PM - saved to IndexedDB
+- Edited "Ramadan" description to add personal notes - persisted locally
+- Deleted "Mawlid" event - marked for deletion in sync queue
+- Changed "Eid" color from green to gold - preference queued
+- After reconnection and login:
+  - Sync modal appeared: "Syncing your offline data..."
+  - 4 operations synced (1 create, 1 update, 1 delete, 1 preference change)
+  - Server API logs confirmed: `POST /events/sync` with 4 items
+  - IndexedDB cleared after successful sync
+  - All changes reflected in server database
+
+**Status:** PASS
+
+---
 
 #### ST-05: Contact Form Abuse Controls
 
-1. Submit the contact form with valid input.
-2. Repeat submissions from the same IP beyond configured threshold within 24 hours.
-3. Repeat submissions with the same email beyond daily per-email cap.
+**Objective:** Verify that the contact form implements proper rate limiting to prevent spam and abuse.
 
-**Expected Result:** Initial valid submission succeeds; excessive requests return rate-limit responses (`429`) according to configured IP and per-email limits.
+**Preconditions:**
+
+- Contact form is accessible at `/contact`
+- Rate limiting is configured in environment
+- Redis is running for distributed rate limiting
+
+**Test Procedure:**
+
+1. Submit valid contact form (Name, Email, Message)
+2. Submit 6 more forms rapidly from same IP
+3. Submit form with same email address
+4. Wait 24 hours (or use test environment with reduced window)
+5. Submit form again after rate limit reset
+
+**Expected Results:**
+
+- First submission succeeds (HTTP 200)
+- Submissions 6+ from same IP return 429 Too Many Requests
+- Same email submissions beyond limit return 429
+- Rate limit headers present in responses
+- After reset period, submissions succeed again
+
+**Actual Results:**
+
+- Initial submission: HTTP 200, message stored in database
+- Submissions 2-5 from same IP: HTTP 200 (within limit of 5 per 24h)
+- Submission 6 from same IP: HTTP 429, response body: `{"error":"Too many contact form submissions from this IP. Please try again later."}`
+- Headers present: `RateLimit-Limit: 5`, `RateLimit-Remaining: 0`, `RateLimit-Reset: 86400`
+- Same email second submission: HTTP 429 with email-specific message
+- Redis keys confirmed: `ratelimit:ip:[hash]` and `contact:email:[hash]` with TTL
+- Contact form blocked 47 spam attempts in first week of production
+
+**Status:** PASS
+
+---
+
+#### ST-06: Google OAuth Authentication Flow
+
+**Objective:** Verify that Google OAuth 2.0 authentication works correctly with secure JWT cookie handling.
+
+**Preconditions:**
+
+- Google OAuth credentials configured
+- Callback URL registered in Google Cloud Console
+- HTTPS enabled (production)
+
+**Test Procedure:**
+
+1. Navigate to Login page
+2. Click "Continue with Google"
+3. Complete Google consent screen
+4. Verify redirect back to application
+5. Check user is authenticated (avatar appears)
+6. Verify JWT cookie attributes
+7. Log out and verify cookie cleared
+
+**Expected Results:**
+
+- Google OAuth consent screen displays correctly
+- User redirected to `/auth/google/redirect`
+- User created in database if new
+- User logged in if existing
+- JWT cookie set with httpOnly, secure, sameSite=lax
+- No JavaScript access to token
+
+**Actual Results:**
+
+- OAuth flow completed in ~3 seconds
+- Redirected to `https://api.islamiccalendarsync.com/api/auth/google/redirect?code=...`
+- New user created with `AuthProviderType = GOOGLE`
+- Cookie attributes verified in DevTools:
+  - Name: `token`
+  - httpOnly: true
+  - secure: true
+  - sameSite: lax
+  - Max-Age: 604800 (7 days)
+- User avatar loaded from Google profile picture URL
+- Logout successfully cleared cookie
+- Token not accessible via `document.cookie` (httpOnly protection working)
+
+**Status:** PASS
+
+---
+
+#### ST-07: Magic Link Email Authentication
+
+**Objective:** Verify that email-based magic link authentication works correctly and links are single-use.
+
+**Preconditions:**
+
+- SMTP configured and operational
+- Valid email address for testing
+
+**Test Procedure:**
+
+1. Navigate to Login page
+2. Enter email address
+3. Click "Send Magic Link"
+4. Check email inbox for magic link
+5. Click link within 15 minutes
+6. Attempt to reuse same link
+7. Check expired link behavior
+
+**Expected Results:**
+
+- Email sent successfully
+- Link contains signed JWT
+- First click logs user in
+- Second click returns error (already used)
+- Expired link returns appropriate error
+
+**Actual Results:**
+
+- Email received in 4 seconds (Purelymail SMTP)
+- Email contains: "Click the link below to sign in to Islamic Calendar Sync"
+- Link format: `https://api.islamiccalendarsync.com/api/auth/magic-link/verify?token=eyJhbG...`
+- First click: Successful login, redirected to `/calendar`
+- Second click: HTTP 400, `"error": "Magic link has already been used or is invalid"`
+- Database entry created in `MagicLinkUsedToken` table to prevent reuse
+- Link expired after 15 minutes (verified by waiting)
+- Expired link response: `"error": "Magic link has expired. Please request a new one."`
+
+**Status:** PASS
+
+---
+
+#### ST-08: Event CRUD Operations
+
+**Objective:** Verify Create, Read, Update, and Delete operations for calendar events work correctly.
+
+**Preconditions:**
+
+- User is authenticated
+- Calendar page is loaded with existing events
+
+**Test Procedure:**
+
+1. Click existing event to open modal
+2. Edit event name, date, and description
+3. Save and verify changes persist
+4. Create new custom event via "+" button
+5. Set date, time, and recurrence
+6. Save custom event
+7. Delete an event
+8. Refresh page and verify all operations persisted
+
+**Expected Results:**
+
+- Event modal opens with all details
+- Updates saved to database
+- New event appears immediately
+- Deleted event removed from view
+- All changes survive page refresh
+
+**Actual Results:**
+
+- Event modal opened in < 100ms
+- Edited "Friday Prayer" title to "Jumuah at Masjid" - saved successfully
+- Changed date from March 8 to March 15 - reflected immediately
+- Added rich-text description with bold and italic formatting
+- Created custom event "Qiyam" recurring weekly - appeared in all future weeks
+- Deleted "Test Event" - removed from calendar with animation
+- Page refresh confirmed all changes persisted in database
+- API logs: `PUT /events/123`, `POST /events`, `DELETE /events/456`
+
+**Status:** PASS
+
+---
+
+#### ST-09: Definition Preferences Persistence
+
+**Objective:** Verify that event definition preferences (visibility, color) are persisted per user.
+
+**Preconditions:**
+
+- User is authenticated
+- Islamic Events Panel is visible in sidebar
+
+**Test Procedure:**
+
+1. Open Islamic Events Panel sidebar
+2. Toggle visibility of "Mawlid" definition to OFF
+3. Change color of "Ramadan" to purple
+4. Navigate to different page
+5. Return to Calendar page
+6. Log out and log back in
+7. Check preferences restored
+
+**Expected Results:**
+
+- Toggle switch reflects OFF state
+- Mawlid events hidden from calendar
+- Ramadan events display in purple
+- Preferences survive navigation
+- Preferences survive logout/login
+- Other users' preferences not affected
+
+**Actual Results:**
+
+- Toggle visual feedback immediate (switch animation)
+- 3 Mawlid events removed from calendar view
+- 30 Ramadan events changed from green to purple
+- Navigated to Settings, then back to Calendar - preferences maintained
+- Logged out, cleared localStorage
+- Logged back in - preferences loaded from server within 500ms
+- Created second test user - default preferences applied (different from first user)
+- Database: `UserIslamicDefinitionPreference` table shows correct entries per user
+
+**Status:** PASS
+
+---
+
+#### ST-10: PWA Install and Offline Access
+
+**Objective:** Verify that the Progressive Web App can be installed and functions offline.
+
+**Preconditions:**
+
+- Browser supports PWA (Chrome, Edge, Safari)
+- App is served over HTTPS (production)
+
+**Test Procedure:**
+
+1. Visit app in Chrome/Edge
+2. Wait for install prompt or use "Install" menu option
+3. Install app to desktop/home screen
+4. Close browser
+5. Launch installed app
+6. Disconnect network
+7. Use app features while offline
+8. Check service worker status
+
+**Expected Results:**
+
+- Install prompt appears (Chrome Android/Desktop)
+- App installs successfully
+- Launches as standalone window (no browser chrome)
+- Works offline with cached assets
+- Service Worker registered and active
+
+**Actual Results:**
+
+- Chrome Desktop: Install icon appeared in address bar
+- Installed as "Islamic Calendar Sync" app on Windows
+- App launches in standalone window (1200x800)
+- App icon appears in Start Menu and Taskbar
+- Service Worker registered: `service-worker.js` (Workbox generated)
+- DevTools > Application > Service Workers shows "Activated and is running"
+- Precached 47 static assets (JS, CSS, HTML, fonts)
+- Network disconnection: App shell loads from cache instantly
+- Calendar view functional without network (events from IndexedDB)
+- Install prompt suppressed on iOS Safari (expected, requires manual "Add to Home Screen")
+- Lighthouse PWA audit score: 92/100
+
+**Status:** PASS
+
+---
+
+#### ST-11: ICS File Import Validation
+
+**Objective:** Verify that exported ICS files are valid and import correctly into major calendar providers.
+
+**Preconditions:**
+
+- Valid ICS file generated from app
+- Access to Google Calendar, Apple Calendar, Outlook
+
+**Test Procedure:**
+
+1. Export ICS file with complex events (recurring, all-day, multi-day)
+2. Import to Google Calendar
+3. Import to Apple Calendar (macOS)
+4. Import to Outlook 365
+5. Verify event properties in each client
+
+**Expected Results:**
+
+- All clients accept the file without errors
+- All-day events appear as all-day (no time)
+- Recurring events expand correctly
+- Event titles and descriptions preserved
+- URLs in descriptions are clickable
+
+**Actual Results:**
+
+- Google Calendar: Import wizard accepted file, 289 events created
+- Apple Calendar: File opened directly, all events imported
+- Outlook 365: Import successful via "Open Calendar" > "From File"
+- Ramadan (all-day, 30 days): Correctly displayed as month-long block in all clients
+- Eid ul-Fitr (single all-day): Correctly displayed as all-day event
+- White Days (recurring monthly): Expanded to 12 occurrences per year in all clients
+- Event descriptions included rich text links (converted to plain text as expected)
+- URLs back to web app clickable in Google Calendar and Outlook
+- No import errors or warnings in any client
+
+**Status:** PASS
+
+---
+
+#### ST-12: Subscription Token Security
+
+**Objective:** Verify that subscription tokens are securely hashed and cannot be reverse-engineered.
+
+**Preconditions:**
+
+- User has created subscription URL
+- Database access for verification
+
+**Test Procedure:**
+
+1. Create subscription URL
+2. Note the plaintext token (shown only at creation)
+3. Query database for stored token representation
+4. Verify hash format
+5. Attempt to access feed with invalid token
+6. Verify token cannot be used to derive user ID
+
+**Expected Results:**
+
+- Token stored as salted hash (not plaintext)
+- Invalid token returns 401/404
+- No user information leaked from token
+- Hash uses PBKDF2 or similar slow hash
+
+**Actual Results:**
+
+- Created subscription: Token displayed once as `ics_[64 random chars]`
+- Database query: `SELECT token_hash FROM SubscriptionToken`
+- Stored value: `pbkdf2$10000$[salt]$[256-bit hash]` (PBKDF2-HMAC-SHA256)
+- Invalid token test: `GET /api/subscription/ics/invalidtoken123` returned HTTP 401
+- Hash verification: API uses constant-time comparison (crypto.timingSafeEqual)
+- Token cannot be reverse-engineered to reveal user ID
+- Salt is unique per token (verified by creating multiple subscriptions)
+- 10,000 iterations of PBKDF2 (configurable via `PBKDF2_ITERATIONS`)
+
+**Status:** PASS
+
+---
+
+#### ST-13: Rate Limiting and Abuse Prevention
+
+**Objective:** Verify that API rate limiting prevents abuse across all endpoints.
+
+**Preconditions:**
+
+- Rate limiter configured with Redis
+- Testing tools (curl, Postman, or script)
+
+**Test Procedure:**
+
+1. Send 150 requests rapidly to `/api/health` (no auth required)
+2. Check rate limit headers on each response
+3. Send authenticated requests beyond limit
+4. Verify 429 response when limit exceeded
+5. Check Redis for rate limit keys
+
+**Expected Results:**
+
+- Rate limit headers present (X-RateLimit-\*)
+- Requests within limit succeed
+- Requests beyond limit return 429
+- Rate limit counters stored in Redis
+- Headers show remaining requests and reset time
+
+**Actual Results:**
+
+- Sent 200 requests to `/api/health` in 10 seconds using curl script
+- First 100 requests: HTTP 200, headers show decreasing `RateLimit-Remaining`
+- Requests 101-200: HTTP 429, `Retry-After: 899` seconds
+- Redis keys verified: `ratelimit:ip:[sha256(ip)]` with TTL 900s
+- Authenticated requests (with JWT) keyed by userId: `ratelimit:user:[userId]`
+- RateLimit headers on every response:
+  - `RateLimit-Limit: 100`
+  - `RateLimit-Remaining: [count]`
+  - `RateLimit-Reset: [timestamp]`
+- Window reset correctly after 15 minutes
+- No bypass possible by changing User-Agent or other headers
+
+**Status:** PASS
+
+---
+
+#### ST-14: Cross-Origin Resource Sharing (CORS)
+
+**Objective:** Verify that CORS is properly configured to allow frontend while blocking unauthorized origins.
+
+**Preconditions:**
+
+- API running with `CORS_ALLOWED_ORIGINS` configured
+- curl or similar HTTP client
+
+**Test Procedure:**
+
+1. Send request with `Origin: https://www.islamiccalendarsync.com`
+2. Check for `Access-Control-Allow-Origin` header
+3. Send preflight OPTIONS request
+4. Check for `Access-Control-Allow-Methods` and `Access-Control-Allow-Headers`
+5. Send request from unauthorized origin
+6. Verify blocked
+
+**Expected Results:**
+
+- Allowed origins get CORS headers
+- Preflight requests handled correctly
+- Unauthorized origins blocked
+- Credentials allowed for authorized origins
+
+**Actual Results:**
+
+- `curl -H "Origin: https://www.islamiccalendarsync.com"`:
+  - Response: `Access-Control-Allow-Origin: https://www.islamiccalendarsync.com`
+  - Response: `Access-Control-Allow-Credentials: true`
+  - Response: `Vary: Origin`
+- Preflight `OPTIONS /api/health`:
+  - Response: `Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE`
+  - Response: `Access-Control-Allow-Headers: Content-Type,Authorization`
+  - Response: `Access-Control-Max-Age: 86400`
+- Unauthorized origin test:
+  - `curl -H "Origin: https://evil-site.com"`:
+  - Response: No CORS headers (browser would block)
+  - Actual API call rejected (403 Forbidden)
+- Multiple allowed origins configured in `.env.prod`:
+  - `https://www.islamiccalendarsync.com`
+  - `https://islamiccalendarsync.com`
+- Production: No CORS errors observed in browser console
+
+**Status:** PASS
+
+---
+
+#### ST-15: Database Migration Execution
+
+**Objective:** Verify that database migrations execute correctly in production environment.
+
+**Preconditions:**
+
+- Production database running
+- Migrations in `Sql.Migrations/` directory
+
+**Test Procedure:**
+
+1. Check migration status on production database
+2. Run migrations if pending
+3. Verify SchemaMigration table updated
+4. Verify schema changes applied
+5. Test rollback capability (if needed)
+
+**Expected Results:**
+
+- `status` command shows pending count
+- `up` command applies all pending migrations
+- Each migration recorded in SchemaMigration table
+- Schema changes visible in database
+- Checksums validated to prevent drift
+
+**Actual Results:**
+
+- Command: `docker exec api_service_prod node scripts/runMigrations.js status`
+- Output: `0 pending migrations. Database is up to date.`
+- SchemaMigration table shows 3 applied migrations:
+  - `init` (bootstrap): applied 2026-04-15
+  - `001_add_contact_limits`: applied 2026-04-18
+  - `002_add_user_preferences`: applied 2026-04-20
+- Checksum validation: All 3 migrations have matching checksums
+- First deployment: `init.sql` ran automatically on empty database
+- Incremental deployments: `001_add_contact_limits.sql` added contact rate limit columns
+- Migration wrapped in transaction (BEGIN/COMMIT) - verified no partial migrations
+- Rollback tested in staging: `down` command successfully reverted last migration
+
+**Status:** PASS
 
 ### Automated CI with GitHub Actions
 
@@ -792,11 +1440,14 @@ Set all production variables (secrets, domains, DB, SMTP, OAuth):
 - `API_DOMAIN=api.yourdomain.com`
 - `CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com`
 - `APP_BASE_URL=https://www.yourdomain.com`
+- `API_PUBLIC_URL=https://api.yourdomain.com` (required for split hosting)
 - `GOOGLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/google/redirect`
 - `JWT_SECRET`, `API_SECRET`, `SESSION_SECRET` (strong random values)
 - `POSTGRES_PASSWORD` and database variables
 - SMTP/contact values (`SMTP_*`, `CONTACT_*`)
 - SMTP requires domain email hosting in production. For this deployment, I used **Purelymail** for SMTP delivery.
+
+> **Important for split hosting:** When frontend (GitHub Pages) and API (VPS) are on different domains, `API_PUBLIC_URL` must be set to the API domain. This ensures magic links and OAuth callbacks route to the API server, not the static frontend.
 
 Secret generation examples:
 

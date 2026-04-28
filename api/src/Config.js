@@ -13,6 +13,7 @@ export const appConfig = {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  API_PUBLIC_URL: process.env.API_PUBLIC_URL || process.env.APP_BASE_URL,
 };
 
 // JWT signing/verifying (auth). Set JWT_SECRET in production; optional JWT_EXPIRY_DAYS, JWT_ALGORITHM.

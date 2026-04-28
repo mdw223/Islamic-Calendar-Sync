@@ -343,7 +343,7 @@ passport.use(
         }
 
         // Construct full magic-link URL
-        const magicLink = `${appConfig.BASE_URL}/api/auth/magiclink/verify?token=${encodeURIComponent(token)}`;
+        const magicLink = `${appConfig.API_PUBLIC_URL}/api/auth/magiclink/verify?token=${encodeURIComponent(token)}`;
 
         await sendMagicLinkEmail({
           toEmail: user.email,
