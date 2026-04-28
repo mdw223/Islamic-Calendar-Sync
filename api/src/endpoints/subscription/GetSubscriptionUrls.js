@@ -6,7 +6,7 @@ import { getBaseDefinitions } from "../../services/IslamicEventService.js";
 import { SubscriptionDefinitionId } from "../../Constants.js";
 
 function subscriptionEventsUrl(token) {
-	const base = appConfig.SUBSCRIPTION_URL.replace(/\/$/, "");
+	const base = appConfig.API_PUBLIC_URL.replace(/\/$/, "");
 	return `${base}/api/subscription/events?token=${encodeURIComponent(token)}`;
 }
 

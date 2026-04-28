@@ -6,7 +6,6 @@ export const appConfig = {
   NODE_ENV: process.env.NODE_ENV,
   TRUST_PROXY: true,
   BASE_URL: process.env.APP_BASE_URL,
-  SUBSCRIPTION_URL: process.env.SUBSCRIPTION_URL || process.env.APP_BASE_URL,
   API_SECRET: process.env.API_SECRET,
   RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX) || 100,
   CORS_ALLOWED_ORIGINS: (process.env.CORS_ALLOWED_ORIGINS || "")
