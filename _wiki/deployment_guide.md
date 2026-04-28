@@ -204,6 +204,7 @@ echo "POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
 
 - `API_DOMAIN=api.yourdomain.com` (must match the public API hostname and the Namecheap `A` record for `api`; used by Nginx `server_name` and TLS paths).
 - `CORS_ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com` (second origin optional if you do not serve the frontend from root).
+- `API_PUBLIC_URL=https://api.yourdomain.com` (required for split hosting; used for magic links and OAuth callback generation. When frontend and API are on different domains, this ensures server-generated links point to the API, not the static frontend).
 - SMTP for authentication and contact emails (Purelymail example):
   - `SMTP_HOST=smtp.purelymail.com`
   - `SMTP_PORT=465`

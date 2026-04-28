@@ -127,47 +127,53 @@ const LoginPage = () => {
             >
               Google
             </Button>
+            {/* Disabled - Coming Soon */}
             <Button
               variant="outlined"
               startIcon={
                 <img
                   src={MicrosoftIcon}
                   alt="Microsoft"
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 20, height: 20, opacity: 0.5 }}
                 />
               }
               fullWidth
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 2, opacity: 0.6 }}
+              disabled
             >
-              Microsoft
+              Microsoft (Soon)
             </Button>
+            {/* Disabled - Coming Soon */}
             <Button
               variant="outlined"
               startIcon={
                 <img
                   src={AppleIcon}
                   alt="Apple"
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 20, height: 20, opacity: 0.5 }}
                 />
               }
               fullWidth
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 2, opacity: 0.6 }}
+              disabled
             >
-              Apple
+              Apple (Soon)
             </Button>
+            {/* Disabled - Coming Soon */}
             <Button
               variant="outlined"
               startIcon={
                 <img
                   src={CalIcon}
                   alt="Cal.com"
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 20, height: 20, opacity: 0.5 }}
                 />
               }
               fullWidth
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 2, opacity: 0.6 }}
+              disabled
             >
-              Cal.com
+              Cal.com (Soon)
             </Button>
           </Stack>
 

@@ -229,12 +229,15 @@ DB_LOG_QUERIES=true
 
 ```bash
 APP_BASE_URL=https://www.yourdomain.com
+API_PUBLIC_URL=https://api.yourdomain.com
 GOOGLE_CALLBACK_URL=https://api.yourdomain.com/api/auth/google/redirect
 GOOGLE_CLIENT_ID=your-production-client-id
 GOOGLE_CLIENT_SECRET=your-production-client-secret
 JWT_SECRET=your-production-jwt-secret
 NODE_ENV=production
 ```
+
+> **Split hosting note:** `API_PUBLIC_URL` is required when frontend and API are on different domains (e.g., GitHub Pages + VPS). Magic links and OAuth callbacks use this to generate URLs that point to the API server, while `APP_BASE_URL` is used for post-login redirects to the frontend.
 
 ---
 
