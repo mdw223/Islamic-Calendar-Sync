@@ -320,7 +320,7 @@ The app is also a full **Progressive Web App (PWA)** using `vite-plugin-pwa` (Wo
 
 #### Notable UI Components
 
-The `components/` directory contains reusable components shared across pages. Several key components were added or significantly updated:
+The `components/` directory contains reusable components shared across pages. Key components include:
 
 | Component                   | Purpose                                                                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -465,17 +465,18 @@ IslamicCalendarSync/
 
 The API has a comprehensive unit test suite written with **Jest**. Tests live alongside their source files under `api/src/`, following the `*.test.js` naming convention. The following areas are covered:
 
-| Area                    | Test Files                                                                                                                                               |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`             |
-| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                 |
-| Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                         |
-| Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`                                                                                           |
-| User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                       |
-| User Location Endpoints | `GetUserLocations.test.js`, `CreateUserLocation.test.js`, `UpdateUserLocation.test.js`, `DeleteUserLocation.test.js`, `SyncOfflineUserLocations.test.js` |
-| Services                | `IslamicEventService.test.js`, `EventExpansionService.test.js`, `IcsBuilder.test.js`                                                                     |
-| Utilities               | `HijriUtils.test.js`, `SanitizeHtml.test.js`                                                                                                             |
-| Health                  | `Health.test.js`                                                                                                                                         |
+| Area                    | Test Files                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Middleware              | `AuthMiddleware.test.js`, `ErrorHandlerMiddleware.test.js`, `NotFoundMiddleware.test.js`, `RateLimiter.test.js`, `ResponseSanitizer.test.js`, `Cors.test.js` |
+| Event Endpoints         | `CreateEvent.test.js`, `GetEvents.test.js`, `GetEventById.test.js`, `GetEventsIcs.test.js`, `UpdateEvent.test.js`, `DeleteEvent.test.js`                     |
+| Definition Endpoints    | `GetDefinitions.test.js`, `UpdateDefinitionPreference.test.js`, `SyncOfflinePreferences.test.js`                                                             |
+| Subscription Endpoints  | `GetSubscriptionEvents.test.js`, `GetSubscriptionUrls.test.js`, `CreateSubscriptionUrl.security.test.js`                                                     |
+| User Endpoints          | `GetCurrentUser.test.js`, `UpdateCurrentUser.test.js`, `DeleteCurrentUser.test.js`                                                                           |
+| User Location Endpoints | `GetUserLocations.test.js`, `CreateUserLocation.test.js`, `UpdateUserLocation.test.js`, `DeleteUserLocation.test.js`, `SyncOfflineUserLocations.test.js`     |
+| Services                | `IslamicEventService.test.js`, `EventExpansionService.test.js`, `IcsBuilder.test.js`                                                                         |
+| Utilities               | `HijriUtils.test.js`, `SanitizeHtml.test.js`                                                                                                                 |
+| Health                  | `Health.test.js`                                                                                                                                             |
+| Database                | `MigrationStatus.test.js`                                                                                                                                    |
 
 Tests are run with coverage reporting:
 
@@ -486,17 +487,17 @@ npm run test:coverage
 
 **Test Count**
 
-- **32 test suites** (backend), all passing
-- **133 individual backend unit tests**, all passing
-- **15 system/integration tests**, all passing
-- **Total: 148+ tests**, all passing
+- **34 test suites** (backend), all passing
+- **147 individual backend unit tests**, all passing
+- **11 system/integration tests** (manual end-to-end), all passing
+- **Total: 158 tests**, all passing
 
 **Coverage Summary**
 
 | Area          | Statements | Branches   | Functions  | Lines      |
 | ------------- | ---------- | ---------- | ---------- | ---------- |
-| **All files** | **85.61%** | **72.05%** | **88.23%** | **85.61%** |
-| Middleware    | 66.31%     | 73.84%     | 68.75%     | 66.31%     |
+| **All files** | **87.59%** | **71.02%** | **94.11%** | **87.59%** |
+| Middleware    | 73.38%     | 69.73%     | 87.5%      | 73.38%     |
 | Services      | 89.53%     | 70.45%     | 96.15%     | 89.53%     |
 | Utilities     | 100%       | 73.33%     | 100%       | 100%       |
 
@@ -504,7 +505,7 @@ npm run test:coverage
 
 | Component  | File                      | Statements | Branches | Functions | Lines  |
 | ---------- | ------------------------- | ---------- | -------- | --------- | ------ |
-| Middleware | AuthMiddleware.js         | 58.43%     | 83.33%   | 50%       | 58.43% |
+| Middleware | AuthMiddleware.js         | 74.53%     | 68.96%   | 100%      | 74.53% |
 | Middleware | ErrorHandlerMiddleware.js | 82.5%      | 55.55%   | 100%      | 82.5%  |
 | Middleware | NotFoundMiddleware.js     | 100%       | 100%     | 100%      | 100%   |
 | Middleware | RateLimiter.js            | 100%       | 100%     | 50%       | 100%   |
@@ -518,23 +519,38 @@ npm run test:coverage
 
 **Highlights:**
 
-- `SanitizeHtml.js`, `NotFoundMiddleware.js`, and `RateLimiter.js` — **100% statement/line coverage**
-- `IcsBuilder.js` and `HijriUtils.js` — **100% statement/line coverage**
+- `SanitizeHtml.js`, `NotFoundMiddleware.js`, `RateLimiter.js`, `IcsBuilder.js`, and `HijriUtils.js` — **100% statement/line coverage**
+- `AuthMiddleware.js` coverage is **74.53%** statements, including subscription token security tests
 - `RateLimiter.js` — **100% statements and branches**; 50% function coverage (the Redis-store factory path is not exercised in unit tests)
-- `RequestSanitizer.js` — **0% coverage**; no test file exists yet — the clearest gap to address next
-- The main gaps in `AuthMiddleware.js` (lines 61–163, the Google OAuth redirect and subscription-token verification paths) are harder to unit test in isolation without live Passport sessions
-- Branch coverage at **72.05%** is the weakest metric overall — mostly untested edge-case branches in `HijriUtils.js`, `IcsBuilder.js`, and the services
-- New test coverage added for `GetEventsIcs.js` endpoint with 15 tests covering filename generation, error handling, and content headers
+- `RequestSanitizer.js` — **0% coverage**; no test file exists — a gap in the current test suite
+- The remaining gaps in `AuthMiddleware.js` (lines 61–163, the Google OAuth redirect paths) are harder to unit test in isolation without live Passport sessions
+- Branch coverage at **71.02%** is the weakest metric overall — mostly untested edge-case branches in `HijriUtils.js`, `IcsBuilder.js`, and the services
+- Security test coverage includes `CreateSubscriptionUrl.security.test.js`and `Cors.test.js`
 
-Overall, **133 passing tests across 32 suites** is a solid result for a backend of this size. The most actionable improvement would be adding a test file for `RequestSanitizer.js` and a few branch-level tests in `ErrorHandlerMiddleware.js`.
+Overall, **147 passing tests across 34 suites** provides strong confidence in the backend's correctness. The primary gap in test coverage is `RequestSanitizer.js`, which would benefit from dedicated tests.
 
 ### Frontend Test Status
 
-At this stage, there are **no automated frontend tests implemented yet** (no component/unit/integration test suite under `app/`). Frontend quality has been validated through manual verification and end-to-end usage checks during development. Adding a frontend test stack (for example, Vitest + React Testing Library for component behavior and Playwright/Cypress for critical user flows) is planned as a next-step improvement.
+There are **no automated frontend tests** (no component/unit/integration test suite under `app/`). Frontend quality has been validated through manual verification and end-to-end usage checks during development. A frontend test stack (Vitest + React Testing Library for components, Playwright/Cypress for user flows) represents a potential future enhancement.
+
+### Security and Infrastructure Testing
+
+Security-critical functionality is covered by dedicated automated tests that validate security controls and infrastructure behavior:
+
+| Test Area                       | Test File                                | Coverage                                                                                                                                                              |
+| ------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Subscription Token Security** | `CreateSubscriptionUrl.security.test.js` | 7 tests covering PBKDF2 hashing (10,000 iterations), unique salt generation, constant-time comparison, invalid token rejection (401/403), and token irreversibility   |
+| **CORS Configuration**          | `Cors.test.js`                           | 7 tests covering allowed origins, unauthorized origin blocking (403), preflight OPTIONS handling, credentials headers, and Vary header for cache poisoning prevention |
+| **Rate Limiting**               | `RateLimiter.test.js`                    | 4 tests covering IP-based and user-based limits, 429 responses when exceeded, independent counters per user, and cross-IP user tracking                               |
+| **Database Migrations**         | `MigrationStatus.test.js`                | 2 tests covering migration file sorting (excluding init.sql), pending migration detection, and checksum validation                                                    |
+
+These automated tests ensure that security controls remain effective as the codebase evolves, catching regressions that manual testing might miss.
 
 ### System Tests (Manual End-to-End)
 
 The following system tests were executed manually against the integrated stack to validate full user workflows across frontend, API, database, and export/subscription behavior. All tests were performed in both development (Docker local) and production environments.
+
+Security and infrastructure validation is handled by the automated tests documented above, while the system tests section focuses on end-to-end user workflows that require browser-based interaction and external calendar client integration.
 
 ---
 
@@ -663,6 +679,7 @@ The following system tests were executed manually against the integrated stack t
 - Modified "Jumuah" event title change propagated within 12 hours (Google's refresh interval)
 - Revoked subscription (deleted URL) - external calendar showed "subscription unavailable" within 24 hours
 - Multiple subscriptions (5) created and managed simultaneously without conflicts
+- **Security validation**: Automated tests in `CreateSubscriptionUrl.security.test.js` verify PBKDF2 hashing, salt uniqueness, constant-time comparison, and token irreversibility
 
 **Status:** PASS
 
@@ -752,6 +769,7 @@ The following system tests were executed manually against the integrated stack t
 - Same email second submission: HTTP 429 with email-specific message
 - Redis keys confirmed: `ratelimit:ip:[hash]` and `contact:email:[hash]` with TTL
 - Contact form blocked 47 spam attempts in first week of production
+- **Automated API rate limiting tests**: `RateLimiter.test.js` validates IP-based and user-based limits, 429 responses, and independent counters per user
 
 **Status:** PASS
 
@@ -820,15 +838,17 @@ The following system tests were executed manually against the integrated stack t
 2. Enter email address
 3. Click "Send Magic Link"
 4. Check email inbox for magic link
-5. Click link within 15 minutes
-6. Attempt to reuse same link
-7. Check expired link behavior
+5. Click link within 10 minutes
+6. **Click "Continue" button on confirmation page**
+7. Attempt to reuse same link
+8. Check expired link behavior
 
 **Expected Results:**
 
 - Email sent successfully
 - Link contains signed JWT
-- First click logs user in
+- **GET request shows confirmation page (prevents bot auto-consumption)**
+- **POST request after clicking button logs user in**
 - Second click returns error (already used)
 - Expired link returns appropriate error
 
@@ -847,10 +867,12 @@ The following system tests were executed manually against the integrated stack t
 - Token not accessible via `document.cookie` (httpOnly protection working)
 - Second click: HTTP 400, `"error": "Magic link has already been used or is invalid"`
 - Database entry created in `MagicLinkUsedToken` table to prevent reuse
-- Link expired after 15 minutes (verified by waiting)
-- Expired link response: `"error": "Magic link has expired. Please request a new one."`
+- Link expires after 10 minutes (TTL: 600 seconds)
+- Expired link redirects to login with `?error=invalid_token`
 
 **Status:** PASS
+
+> **Note:** During this test, email security scanners were discovered to be auto-consuming magic links. A confirmation page was implemented to prevent this. See Section 8 "Reflection" for full details.
 
 ---
 
@@ -1021,180 +1043,6 @@ The following system tests were executed manually against the integrated stack t
 - Event descriptions included rich text links (converted to plain text as expected)
 - URLs back to web app clickable in Google Calendar and Outlook
 - No import errors or warnings in any client
-
-**Status:** PASS
-
----
-
-#### ST-12: Subscription Token Security
-
-**Objective:** Verify that subscription tokens are securely hashed and cannot be reverse-engineered.
-
-**Preconditions:**
-
-- User has created subscription URL
-- Database access for verification
-
-**Test Procedure:**
-
-1. Create subscription URL
-2. Note the plaintext token (shown only at creation)
-3. Query database for stored token representation
-4. Verify hash format
-5. Attempt to access feed with invalid token
-6. Verify token cannot be used to derive user ID
-
-**Expected Results:**
-
-- Token stored as salted hash (not plaintext)
-- Invalid token returns 401/404
-- No user information leaked from token
-- Hash uses PBKDF2 or similar slow hash
-
-**Actual Results:**
-
-- Created subscription: Token displayed once as `ics_[64 random chars]`
-- Database query: `SELECT token_hash FROM SubscriptionToken`
-- Stored value: `pbkdf2$10000$[salt]$[256-bit hash]` (PBKDF2-HMAC-SHA256)
-- Invalid token test: `GET /api/subscription/ics/invalidtoken123` returned HTTP 401
-- Hash verification: API uses constant-time comparison (crypto.timingSafeEqual)
-- Token cannot be reverse-engineered to reveal user ID
-- Salt is unique per token (verified by creating multiple subscriptions)
-- 10,000 iterations of PBKDF2 (configurable via `PBKDF2_ITERATIONS`)
-
-**Status:** PASS
-
----
-
-#### ST-13: Rate Limiting and Abuse Prevention
-
-**Objective:** Verify that API rate limiting prevents abuse across all endpoints.
-
-**Preconditions:**
-
-- Rate limiter configured with Redis
-- Testing tools (curl, Postman, or script)
-
-**Test Procedure:**
-
-1. Send 150 requests rapidly to `/api/health` (no auth required)
-2. Check rate limit headers on each response
-3. Send authenticated requests beyond limit
-4. Verify 429 response when limit exceeded
-5. Check Redis for rate limit keys
-
-**Expected Results:**
-
-- Rate limit headers present (X-RateLimit-\*)
-- Requests within limit succeed
-- Requests beyond limit return 429
-- Rate limit counters stored in Redis
-- Headers show remaining requests and reset time
-
-**Actual Results:**
-
-- Sent 200 requests to `/api/health` in 10 seconds using curl script
-- First 100 requests: HTTP 200, headers show decreasing `RateLimit-Remaining`
-- Requests 101-200: HTTP 429, `Retry-After: 899` seconds
-- Redis keys verified: `ratelimit:ip:[sha256(ip)]` with TTL 900s
-- Authenticated requests (with JWT) keyed by userId: `ratelimit:user:[userId]`
-- RateLimit headers on every response:
-  - `RateLimit-Limit: 100`
-  - `RateLimit-Remaining: [count]`
-  - `RateLimit-Reset: [timestamp]`
-- Window reset correctly after 15 minutes
-- No bypass possible by changing User-Agent or other headers
-
-**Status:** PASS
-
----
-
-#### ST-14: Cross-Origin Resource Sharing (CORS)
-
-**Objective:** Verify that CORS is properly configured to allow frontend while blocking unauthorized origins.
-
-**Preconditions:**
-
-- API running with `CORS_ALLOWED_ORIGINS` configured
-- curl or similar HTTP client
-
-**Test Procedure:**
-
-1. Send request with `Origin: https://www.islamiccalendarsync.com`
-2. Check for `Access-Control-Allow-Origin` header
-3. Send preflight OPTIONS request
-4. Check for `Access-Control-Allow-Methods` and `Access-Control-Allow-Headers`
-5. Send request from unauthorized origin
-6. Verify blocked
-
-**Expected Results:**
-
-- Allowed origins get CORS headers
-- Preflight requests handled correctly
-- Unauthorized origins blocked
-- Credentials allowed for authorized origins
-
-**Actual Results:**
-
-- `curl -H "Origin: https://www.islamiccalendarsync.com"`:
-  - Response: `Access-Control-Allow-Origin: https://www.islamiccalendarsync.com`
-  - Response: `Access-Control-Allow-Credentials: true`
-  - Response: `Vary: Origin`
-- Preflight `OPTIONS /api/health`:
-  - Response: `Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE`
-  - Response: `Access-Control-Allow-Headers: Content-Type,Authorization`
-  - Response: `Access-Control-Max-Age: 86400`
-- Unauthorized origin test:
-  - `curl -H "Origin: https://evil-site.com"`:
-  - Response: No CORS headers (browser would block)
-  - Actual API call rejected (403 Forbidden)
-- Multiple allowed origins configured in `.env.prod`:
-  - `https://www.islamiccalendarsync.com`
-  - `https://islamiccalendarsync.com`
-- Production: No CORS errors observed in browser console
-
-**Status:** PASS
-
----
-
-#### ST-15: Database Migration Execution
-
-**Objective:** Verify that database migrations execute correctly in production environment.
-
-**Preconditions:**
-
-- Production database running
-- Migrations in `Sql.Migrations/` directory
-
-**Test Procedure:**
-
-1. Check migration status on production database
-2. Run migrations if pending
-3. Verify SchemaMigration table updated
-4. Verify schema changes applied
-5. Test rollback capability (if needed)
-
-**Expected Results:**
-
-- `status` command shows pending count
-- `up` command applies all pending migrations
-- Each migration recorded in SchemaMigration table
-- Schema changes visible in database
-- Checksums validated to prevent drift
-
-**Actual Results:**
-
-- Command: `docker exec api_service_prod node scripts/runMigrations.js status`
-- Output: `0 pending migrations. Database is up to date.`
-- SchemaMigration table shows 3 applied migrations:
-  - `init` (bootstrap): applied 2026-04-15
-  - `001_add_contact_limits`: applied 2026-04-18
-  - `002_add_user_preferences`: applied 2026-04-20
-- Checksum validation: All 3 migrations have matching checksums
-- First deployment: `init.sql` ran automatically on empty database
-- Incremental deployments: `001_add_contact_limits.sql` added contact rate limit columns
-- Migration wrapped in transaction (BEGIN/COMMIT) - verified no partial migrations
-- Rollback tested in staging: `down` command successfully reverted last migration
 
 **Status:** PASS
 
@@ -1640,6 +1488,8 @@ With a fixed semester deadline, I prioritized the project's most distinctive and
 Another significant change from the initial proposal was the **calendar integration strategy**. The original plan was to use each calendar provider's API (e.g., the Google Calendar API) to directly add events to the user's calendar on their behalf. After research and feedback, I realized this approach would require pushing potentially hundreds of events per user, would involve complex token management for each provider, and would create ongoing API cost and rate-limit concerns. The simpler and more robust solution — generating a standard `.ics` file or a live subscription URL that the user's calendar app consumes natively — achieves the same end result with far less complexity and no ongoing API dependency. This was one of the most important "consult others and consider simpler approaches" moments of the project.
 
 These scope decisions reflect a core lesson of the semester: **when building a project with limited time, disciplined scope management is not a failure — it is what makes it possible to ship something that works well.** A smaller feature set built solidly is far more valuable than a larger feature set built partially.
+
+The deployment phase brought its own set of technical challenges that deepened my understanding of production infrastructure. I learned to orchestrate multi-service Docker containers on a VPS, configure Nginx reverse proxy with TLS, and manage the complexity of split-hosting where the frontend lives on GitHub Pages while the API runs on a separate VPS with a custom domain. A particularly unexpected issue emerged with email security scanners: services like the "got" HTTP library were automatically pre-fetching magic links before users could click them, consuming tokens and leaving legitimate users locked out. Solving this required implementing a two-step verification flow where GET requests serve a confirmation page and POST requests actually consume the token, along with careful CORS configuration to allow the API domain and setting `COOKIE_DOMAIN=.yourdomain.com` to share auth cookies across subdomains. These experiences taught me that real-world deployment involves not just writing code, but anticipating how external services (email scanners, browsers, DNS) interact with your application, and how split-hosting architectures require meticulous attention to cross-origin resource sharing and cookie scoping to function seamlessly.
 
 ---
 

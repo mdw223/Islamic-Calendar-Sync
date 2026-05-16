@@ -388,13 +388,18 @@ export function CalendarProvider({ children }) {
    * Update an existing event. Tries API first; falls back to IndexedDB.
    */
   async function updateEvent(eventId, updates) {
+    const existing = eventsRef.current.find((e) => e.eventId === eventId);
+    const payload = { ...updates };
+    if (existing?.islamicDefinitionId != null && "color" in payload) {
+      delete payload.color;
+    }
     try {
       let res;
       try {
-        res = await APIClient.updateEvent(eventId, updates);
+        res = await APIClient.updateEvent(eventId, payload);
       } catch (err) {
         if (shouldFallbackToOffline(err)) {
-          res = await OfflineClient.updateEvent(eventId, updates);
+          res = await OfflineClient.updateEvent(eventId, payload);
         } else {
           throw err;
         }

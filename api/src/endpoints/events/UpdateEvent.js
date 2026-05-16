@@ -60,10 +60,15 @@ export default async function UpdateEvent(req, res) {
                 });
             }
             if (userEvent.islamicDefinitionId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Definition-linked Islamic events inherit definition color and cannot set per-event color.",
-                });
+                const storedColor = userEvent.color?.toUpperCase() ?? null;
+                const requestedColor = req.body.color.toUpperCase();
+                if (storedColor !== requestedColor) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Definition-linked Islamic events use definition color. Update color via definition preferences.",
+                    });
+                }
+                delete req.body.color;
             }
         }
 
