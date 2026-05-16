@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -20,7 +21,7 @@ import {
   Typography,
   Checkbox,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import DOMPurify from "dompurify";
 import dayjs from "dayjs";
@@ -89,12 +90,29 @@ function formatFormDateTime(value) {
   return value?.isValid?.() ? value.format("YYYY-MM-DDTHH:mm") : "";
 }
 
+function normalizeEventColor(color) {
+  if (!color || !HEX_COLOR_RE.test(color)) return null;
+  return color.trim().toUpperCase();
+}
+
 export default function EventModal({ open, onClose, initialDate, event }) {
-  const { addEvent, updateEvent, removeEvent, refreshEventData } =
-    useCalendar();
+  const {
+    addEvent,
+    updateEvent,
+    removeEvent,
+    refreshEventData,
+    updateIslamicDefinitionColor,
+    islamicEventDefs,
+  } = useCalendar();
   const { userLocations, user } = useUser();
   const navigate = useNavigate();
   const isEdit = Boolean(event);
+  const isDefinitionLinked = Boolean(isEdit && event?.islamicDefinitionId);
+  const definitionDisplayName = useMemo(() => {
+    if (!isDefinitionLinked) return null;
+    const def = islamicEventDefs.find((d) => d.id === event.islamicDefinitionId);
+    return def?.name ?? event?.name ?? "this event type";
+  }, [isDefinitionLinked, islamicEventDefs, event?.islamicDefinitionId, event?.name]);
   const localTimezone =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
   const locationTimezoneOptions = (userLocations ?? [])
@@ -112,6 +130,8 @@ export default function EventModal({ open, onClose, initialDate, event }) {
   const nameRef = useRef("");
   const locationRef = useRef("");
   const descriptionRef = useRef("");
+  const initialColorRef = useRef(null);
+  const [applyingColor, setApplyingColor] = useState(false);
 
   const effectiveColor =
     form.color && HEX_COLOR_RE.test(form.color)
@@ -155,6 +175,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         nameRef.current = base.name;
         locationRef.current = base.location;
         descriptionRef.current = base.description;
+        initialColorRef.current = normalizeEventColor(base.color);
         setForm(base);
       } else {
         // initialDate may be "YYYY-MM-DD" (from MonthView) or
@@ -191,6 +212,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         nameRef.current = "";
         locationRef.current = "";
         descriptionRef.current = "";
+        initialColorRef.current = null;
       }
     }
   }, [open, isEdit, event, initialDate, localTimezone]);
@@ -208,9 +230,28 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     setAnchorEl(null);
   }
 
-  function applyColor() {
+  async function applyColor() {
     if (!HEX_COLOR_RE.test(draftColor)) return;
-    handleChange("color", draftColor.toUpperCase());
+    const normalized = draftColor.toUpperCase();
+    if (isDefinitionLinked) {
+      setApplyingColor(true);
+      setError(null);
+      try {
+        await updateIslamicDefinitionColor(
+          event.islamicDefinitionId,
+          normalized,
+        );
+        handleChange("color", normalized);
+        initialColorRef.current = normalized;
+        closeColorPicker();
+      } catch (err) {
+        setError(err.message ?? "Failed to update color.");
+      } finally {
+        setApplyingColor(false);
+      }
+      return;
+    }
+    handleChange("color", normalized);
     closeColorPicker();
   }
 
@@ -235,6 +276,7 @@ export default function EventModal({ open, onClose, initialDate, event }) {
     setError(null);
     setSaving(true);
     try {
+      const normalizedColor = normalizeEventColor(form.color);
       const payload = {
         name: nameRef.current,
         location: locationRef.current,
@@ -249,8 +291,11 @@ export default function EventModal({ open, onClose, initialDate, event }) {
         eventTimezone: form.useLocalTimezone
           ? localTimezone
           : form.eventTimezone,
-        color: form.color?.trim() ? form.color.trim().toUpperCase() : null,
       };
+
+      if (!isDefinitionLinked) {
+        payload.color = normalizedColor;
+      }
 
       if (form.startDate) {
         const dt = new Date(form.startDate);
@@ -269,6 +314,17 @@ export default function EventModal({ open, onClose, initialDate, event }) {
       }
 
       if (isEdit) {
+        if (
+          isDefinitionLinked &&
+          normalizedColor &&
+          normalizedColor !== initialColorRef.current
+        ) {
+          await updateIslamicDefinitionColor(
+            event.islamicDefinitionId,
+            normalizedColor,
+          );
+          initialColorRef.current = normalizedColor;
+        }
         const savedEvent = await updateEvent(event.eventId, payload);
         if (savedEvent?.eventId) {
           void refreshEventData(savedEvent.eventId).catch(() => {});
@@ -366,11 +422,21 @@ export default function EventModal({ open, onClose, initialDate, event }) {
               label="All Day"
             />
             <Box>
-              <Tooltip title="Change event color">
+              <Tooltip
+                title={
+                  isDefinitionLinked
+                    ? `Changes color for all ${definitionDisplayName} events on your calendar`
+                    : "Change event color"
+                }
+              >
                 <IconButton
                   size="small"
                   onClick={openColorPicker}
-                  aria-label="Change event color"
+                  aria-label={
+                    isDefinitionLinked
+                      ? `Change color for all ${definitionDisplayName} events`
+                      : "Change event color"
+                  }
                 >
                   <Box
                     sx={{
@@ -394,10 +460,17 @@ export default function EventModal({ open, onClose, initialDate, event }) {
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             transformOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            <Box sx={{ p: 1.5, width: 220 }}>
+            <Box sx={{ p: 1.5, width: 260 }}>
               <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Event color
+                {isDefinitionLinked ? "Definition color" : "Event color"}
               </Typography>
+              {isDefinitionLinked && (
+                <Alert severity="info" sx={{ mt: 1, mb: 0.5, py: 0 }}>
+                  This is an Islamic calendar event. Changing the color updates
+                  every occurrence of {definitionDisplayName}, not just this
+                  instance.
+                </Alert>
+              )}
               <Stack
                 direction="row"
                 spacing={0.75}
@@ -460,7 +533,9 @@ export default function EventModal({ open, onClose, initialDate, event }) {
                   size="small"
                   variant="contained"
                   onClick={applyColor}
-                  disabled={!HEX_COLOR_RE.test(draftColor)}
+                  disabled={
+                    !HEX_COLOR_RE.test(draftColor) || applyingColor
+                  }
                 >
                   Apply
                 </Button>
