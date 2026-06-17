@@ -517,13 +517,70 @@ docker logs api_service_prod --tail 10
 
 ---
 
-## 15) Optional improvement: backend CI/CD
+## 15) Backend CI/CD (GitHub Actions → VPS)
 
-After this is stable, add a backend deployment workflow that:
+Workflow: `.github/workflows/deploy-vps.yml` (runs on push to `main` or manual dispatch).
 
-1. SSHs to Contabo VPS
-2. Pulls latest `main`
-3. Runs `docker compose -f compose.prod.yml up -d --build`
-4. Runs health checks and rolls back if needed
+### Two different SSH keys (do not mix them up)
 
-This gives one-command or automated backend releases.
+| Direction | Purpose | Private key lives in | Public key lives in |
+|-----------|---------|----------------------|---------------------|
+| **VPS → GitHub** | `git pull` on the server (section 6.1) | VPS: `~/.ssh/id_ed25519_vps_deploy` | GitHub: **Deploy keys** |
+| **GitHub Actions → VPS** | CI deploy over SSH | GitHub secret `VPS_SSH_KEY` | VPS: `~/.ssh/authorized_keys` |
+
+`ssh: unable to authenticate, attempted methods [none publickey]` means the **Actions → VPS** pair is missing or wrong—not the deploy key from section 6.1.
+
+### One-time setup: Actions → VPS key
+
+**1. On your laptop** (not on the VPS), generate a dedicated key with no passphrase:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_actions_vps -N ""
+```
+
+**2. On the VPS**, install the **public** key for the user Actions will log in as (often `root`, or your deploy user):
+
+```bash
+# As the target user (example: root)
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+echo 'PASTE_CONTENT_OF_github_actions_vps.pub' >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Or from your laptop:
+
+```bash
+ssh-copy-id -i ~/.ssh/github_actions_vps.pub root@<vps-ip>
+```
+
+**3. Verify locally** before touching GitHub:
+
+```bash
+ssh -i ~/.ssh/github_actions_vps -o IdentitiesOnly=yes root@<vps-ip> 'echo ok'
+```
+
+**4. GitHub repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Example / notes |
+|--------|-----------------|
+| `VPS_HOST` | VPS public IP or `api.yourdomain.com` |
+| `VPS_USER` | Same user as step 2 (`root` or deploy user) |
+| `VPS_DEPLOY_PATH` | Absolute path to the cloned repo on the VPS, e.g. `/root/Islamic-Calendar-Sync` |
+| `VPS_SSH_KEY` | **Entire private key file**, including `-----BEGIN OPENSSH PRIVATE KEY-----` / `-----END ...-----` |
+
+To copy the private key for the secret:
+
+```bash
+cat ~/.ssh/github_actions_vps
+```
+
+Paste into `VPS_SSH_KEY` as-is (multiline is supported). Do **not** paste the `.pub` file or the VPS deploy key from section 6.1.
+
+**5. Re-run** the workflow (Actions → Deploy to VPS → Run workflow).
+
+### Troubleshooting
+
+- **Still publickey failed:** `VPS_USER` does not match the account that owns `authorized_keys`, or the wrong key is in the secret.
+- **Host key / connection refused:** Check `VPS_HOST`, firewall (`ufw allow OpenSSH`), and that SSH listens on port 22 (or set `port` in the workflow if you use a custom port).
+- **`git pull` fails inside the job:** SSH from Actions worked; fix the **VPS → GitHub** deploy key (section 6.1), not `VPS_SSH_KEY`.
+- **Temporary debug:** add `debug: true` under `with:` in `deploy-vps.yml`, re-run once, then remove it (avoids leaking paths in logs).
