@@ -8,6 +8,8 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: api_service_prod
+    ports:
+      - "127.0.0.1:3000:3000"
     env_file:
       - .env.prod
     restart: unless-stopped
@@ -18,9 +20,6 @@ services:
   proxy:
     image: nginx:latest
     container_name: nginx_proxy_prod
-    ports:
-      - "80:80"
-      - "443:443"
     env_file:
       - .env.prod
     volumes:
