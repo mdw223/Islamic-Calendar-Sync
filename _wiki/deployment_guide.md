@@ -18,9 +18,11 @@ The examples below use:
 
 ## 1) Target architecture
 
-- `api.yourdomain.com` -> Contabo VPS public IP -> Nginx reverse proxy -> API container
+- `api.yourdomain.com` -> Contabo VPS public IP -> **host nginx** (edge) -> API container on `127.0.0.1:3000`
 - `www.yourdomain.com` -> GitHub Pages
 - Frontend calls backend at `https://api.yourdomain.com/api/...` (see `VITE_API_BASE_URL`)
+
+On the shared Contabo VPS, see `/root/docs/vps-edge-proxy.md` and `deploy/nginx/api.islamiccalendarsync.com.conf`.
 
 This separates static hosting (cheap and simple) from backend runtime (VPS control).
 
@@ -66,8 +68,8 @@ Then point GitHub Pages custom domain to root domain instead of `www`.
 
 The repo is configured for split hosting:
 
-- `compose.prod.yml` runs `api`, `database`, `redis`, and `proxy` only (no `app` container).
-- Production Nginx is API-only (strips the `/api` path prefix, same contract as `proxy/nginx.conf` in development) and uses `proxy/nginx.prod.https.template` directly.
+- **Current (Contabo shared VPS):** `compose.prod.yml` runs `api`, `database`, and `redis`. The Compose `proxy` service is **commented out**; host nginx terminates TLS (see `deploy/nginx/` and `/root/docs/vps-edge-proxy.md`).
+- **Legacy (dedicated / single-project VPS):** uncomment `proxy` in `compose.prod.yml` so Docker nginx uses `proxy/nginx.prod.https.template` on 80/443.
 - `proxy/nginx.conf` is still used by `compose.yml` for local full-stack dev (React + API behind one port).
 
 ### 4.1 CORS for GitHub Pages domain
@@ -259,9 +261,35 @@ docker compose -f compose.prod.yml logs -f api
 
 ## 7) Enable HTTPS for the API (`api.yourdomain.com`)
 
+### Current (Contabo shared VPS — host nginx)
+
+On this Contabo box, **host nginx** owns 80/443 and proxies `api.islamiccalendarsync.com` → `127.0.0.1:3000` with the `/api` rewrite. Do not start the Compose `proxy` service here.
+
+1. Ensure API is published: `127.0.0.1:3000:3000` in `compose.prod.yml`.
+2. Install or refresh the site file from the repo:
+
+```bash
+sudo cp deploy/nginx/api.islamiccalendarsync.com.conf \
+  /etc/nginx/sites-available/api.islamiccalendarsync.com
+sudo ln -sf /etc/nginx/sites-available/api.islamiccalendarsync.com \
+  /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+3. Certs: existing Let’s Encrypt under `/etc/letsencrypt/live/api.islamiccalendarsync.com/`. Renewals: reload **host** nginx (`sudo systemctl reload nginx`), not a Docker proxy.
+4. Full operator notes: `/root/docs/vps-edge-proxy.md`.
+
+GitHub Pages still provides HTTPS for the frontend (section 10).
+
+---
+
+### Legacy (dedicated VPS — TLS inside Docker nginx)
+
+> Kept for moving this project alone to a VPS where the stack owns 80/443. Uncomment `proxy` in `compose.prod.yml` first.
+
 TLS is terminated **inside the Nginx container** (`proxy` service). GitHub Pages already provides HTTPS for the frontend once you set a custom domain and enable **Enforce HTTPS** (see section 10).
 
-### 7.1 What each system does
+#### 7.1 What each system does
 
 | System          | Role for HTTPS                                                                                                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -269,11 +297,11 @@ TLS is terminated **inside the Nginx container** (`proxy` service). GitHub Pages
 | **Contabo VPS** | Hosts Docker; Nginx serves port **80** (ACME + HTTP or redirect) and **443** (API over TLS). Let’s Encrypt files live on the host at `/etc/letsencrypt` and are mounted read-only into the container. |
 | **GitHub**      | Issues and renews TLS for `www.yourdomain.com` on Pages.                                                                                                                                              |
 
-### 7.2 How the repo behaves
+#### 7.2 How the repo behaves
 
 `compose.prod.yml` mounts `proxy/nginx.prod.https.template` directly as Nginx's active config template. This means the proxy expects certificate files to already exist at `/etc/letsencrypt/live/${API_DOMAIN}/...` when it starts.
 
-### 7.3 Prerequisites before requesting a cert
+#### 7.3 Prerequisites before requesting a cert
 
 1. Namecheap **A** record for `api` points to the VPS public IP (section 3).
 2. Firewall allows **80** and **443** (section 5).
@@ -281,13 +309,13 @@ TLS is terminated **inside the Nginx container** (`proxy` service). GitHub Pages
 
 4. `.env.prod` includes `API_DOMAIN=api.yourdomain.com` (same hostname you pass to Certbot).
 
-### 7.4 Install Certbot on the VPS (host)
+#### 7.4 Install Certbot on the VPS (host)
 
 ```bash
 apt install -y certbot
 ```
 
-### 7.5 Issue a certificate (standalone, first-time setup)
+#### 7.5 Issue a certificate (standalone, first-time setup)
 
 For first-time issuance, use standalone mode on the VPS host:
 
@@ -309,7 +337,7 @@ Verify:
 curl -sI https://api.yourdomain.com/api/health   # or your health path
 ```
 
-### 7.6 Renewal
+#### 7.6 Renewal
 
 Certbot installs a **systemd** timer on Ubuntu (`certbot.timer`). With standalone renewals, port 80 must be free during challenge validation.
 
@@ -322,11 +350,11 @@ docker compose -f compose.prod.yml exec proxy nginx -s reload
 
 Optional: add a deploy hook that temporarily stops/starts the proxy around renewals and then runs `nginx -s reload` (see Certbot deploy-hook documentation).
 
-### 7.7 Frontend (GitHub Pages) HTTPS
+#### 7.7 Frontend (GitHub Pages) HTTPS
 
 No VPS change required for the SPA certificate. In GitHub: **Settings → Pages → Custom domain** set to `www.yourdomain.com`, wait for verification, then enable **Enforce HTTPS** (section 10).
 
-### 7.8 Build-time API URL
+#### 7.8 Build-time API URL
 
 Set repository secret `VITE_API_BASE_URL` to `https://api.yourdomain.com/api` (must include `/api`) so the Pages build talks to the API over HTTPS (section 8).
 

@@ -1,3 +1,6 @@
+# Legacy HTTP-only Docker nginx template (dedicated / bootstrap). Contabo production
+# uses host nginx — see deploy/nginx/ and /root/docs/vps-edge-proxy.md.
+
 server {
     listen 80;
     listen [::]:80;
