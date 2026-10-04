@@ -306,7 +306,7 @@ After the callback, the server does **not** use Google's token to authenticate A
 
 The application JWT (signed with `JWT_SECRET`) is what `passport-jwt` validates on protected routes.
 
-See [google_oauth_strategy_implementation.md](google_oauth_strategy_implementation.md) for the complete technical breakdown of all backend components, the end-to-end flow, and the token summary table.
+See [google-oauth.md](../auth/google-oauth.md) for the complete technical breakdown of all backend components, the end-to-end flow, and the token summary table.
 
 ---
 

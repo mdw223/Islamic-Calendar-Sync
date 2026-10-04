@@ -53,4 +53,4 @@ Used for routes such as `GET /api/subscription/events?token=...`.
 - **Revocation**: Deleting the row removes the hash match; old URLs stop working.
 - **Comparison**: `timingSafeEqual` reduces timing leakage when comparing derived hashes.
 
-For local testing and tunnels (e.g. ngrok), see [subscription_testing.md](./subscription_testing.md).
+For local testing and tunnels (e.g. ngrok), see [subscription-testing.md](../features/subscription-testing.md).

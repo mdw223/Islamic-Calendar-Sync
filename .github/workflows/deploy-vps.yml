@@ -1,6 +1,6 @@
 name: Deploy to VPS
 
-# Required repo secrets (Actions → VPS SSH; see _wiki/deployment_guide.md §15):
+# Required repo secrets (Actions → VPS SSH; see docs/getting-started/deployment.md §15):
 #   VPS_HOST, VPS_USER, VPS_DEPLOY_PATH, VPS_SSH_KEY (private key; NOT the VPS→GitHub deploy key)
 on:
   workflow_dispatch: # Manual trigger (you click "Run workflow" in GitHub UI)
