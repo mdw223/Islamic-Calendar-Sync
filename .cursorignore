@@ -1,0 +1,9 @@
+# Secrets — never index or expose to Agent
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.neon.example
+
+node_modules/
+dist/
+.vercel/

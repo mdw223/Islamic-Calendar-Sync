@@ -1,7 +1,10 @@
-# Production: API + data stores + Nginx. Frontend (app/) is deployed separately (e.g. GitHub Pages).
+# Production (Contabo shared VPS): API + data stores only.
+# TLS / public HTTP: host nginx owns 80/443 — see deploy/nginx/ and /root/docs/vps-edge-proxy.md
 # Local dev full stack still uses compose.yml + proxy/nginx.conf
 #
-# Set API_DOMAIN in .env.prod (e.g. api.yourdomain.com). TLS: host /etc/letsencrypt + ./certbot/www; see deployment-guide.md section 7.
+# Set API_DOMAIN in .env.prod (e.g. api.yourdomain.com).
+# Legacy single-project VPS: uncomment the `proxy` service below and use
+# proxy/nginx.prod.https.template (Docker nginx terminates TLS on 80/443).
 services:
   api:
     build:
@@ -17,17 +20,23 @@ services:
       - database
       - redis
 
-  proxy:
-    image: nginx:latest
-    container_name: nginx_proxy_prod
-    env_file:
-      - .env.prod
-    volumes:
-      - ./proxy/nginx.prod.https.template:/etc/nginx/templates/default.conf.template:ro
-      - ./certbot/www:/var/www/certbot:rw
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - api
+  # Contabo multi-project: host nginx owns 443. Uncomment for a dedicated VPS
+  # where this stack terminates TLS (mounts letsencrypt + nginx.prod.https.template).
+  # proxy:
+  #   image: nginx:latest
+  #   container_name: nginx_proxy_prod
+  #   env_file:
+  #     - .env.prod
+  #   volumes:
+  #     - ./proxy/nginx.prod.https.template:/etc/nginx/templates/default.conf.template:ro
+  #     - ./certbot/www:/var/www/certbot:rw
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro
+  #   depends_on:
+  #     - api
+  #   # Also publish 80/443 on a dedicated box, e.g.:
+  #   # ports:
+  #   #   - "80:80"
+  #   #   - "443:443"
 
   redis:
     image: redis:latest
