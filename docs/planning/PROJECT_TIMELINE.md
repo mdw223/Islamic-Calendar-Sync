@@ -8,7 +8,18 @@ This is the working roadmap for Islamic Calendar Sync from "where the board actu
 
 **Budget:** ~10 hrs/week, no hard deadline. Event Descriptions work runs in parallel the whole time at ~3 hrs/week rather than blocking everything else.
 
-**Total estimate: ~14 weeks at 10 hrs/week (~145 hrs)** to reach the bar above.
+**Manual estimate: ~14 weeks at 10 hrs/week (~145 hrs).**
+**AI-accelerated estimate: ~9 weeks at 10 hrs/week (~85 hrs)** — see methodology below. This is the number to plan against.
+
+### Why AI-accelerated is ~40% faster, not 90% faster
+
+Building with an AI pair compresses *coding, boilerplate, and content-drafting* time hard — scaffolding a test runner, writing an OAuth strategy, generating meta tags/sitemaps/JSON-LD, drafting README/LICENSE copy, fixing a click-handler bug. It does **not** compress:
+
+- **Reading the book for Event Descriptions** (`#34`) — this is inherently human-paced research, not a coding task. AI drafting the short/long blurbs from your notes is near-instant; the reading and note-taking is the real bottleneck and stays at the same pace.
+- **External waits** — Google OAuth app review, DNS propagation, domain verification. These are wall-clock, not hands-on hours, and can add calendar days even though they cost ~0 of your actual time.
+- **Account setup / manual console clicks** — creating Fly/Render/Cloudflare accounts, registering OAuth apps in each provider's console. Faster with AI guiding you step-by-step, but still real minutes you spend clicking.
+
+Phase-by-phase breakdown below reflects this: phases that are mostly code/content (3, 5, 7, 8, 9) compress by ~55-60%; Event Descriptions (2) barely compresses (~20%, drafting only); the VPS migration and multi-provider auth (4, 6) land in between because they mix fast AI-written config with slower manual account/console work.
 
 Board: [ICS_Tasks](https://github.com/users/mdw223/projects/4/views/1)
 
@@ -67,20 +78,20 @@ The board was checked against the actual code and brought up to date. Every chan
 
 ## 2. Phased roadmap
 
-| Phase | Weeks | Hours | Scope |
+| Phase | Weeks (AI-accel) | Hours: manual → AI-accelerated | Scope |
 |---|---|---|---|
-| 1 | 1 | ~8 | Board triage (done), root README, PWA icons, magic-link branding, set up the Event Descriptions note-taking pipeline (section 3) |
-| 2 | 1-9 (parallel, ~3 hrs/wk) | ~25 | Event Descriptions end-to-end (sections 3-4) |
-| 3 | 2-4 | ~20 | Reliability — front-end test runner (`#33`), cron jobs (`#14`), lower-event click bug (`#69`), fix search (`#67`), default-All-Events-logged-out (`#70`) |
-| 4 | 4-5 | ~16 | Migrate off the VPS to managed hosting — Fly.io + Render Postgres + Cloudflare Pages + Upstash Redis (section 5) |
-| 5 | 5-7 | ~14 | Remaining security/infra — fix vulnerabilities (`#66`), minimal admin page (`#18`) |
-| 6 | 7-9 | ~22 | Multi-provider & auth — additional auth providers (`#21`), Nodemailer OTP login (`#15`), calendar providers beyond ICS subscribe (`#26`), confirm Google OAuth app publish status (`#68`) |
-| 7 | 9-11 | ~14 | UX polish from feedback — `#55`-`#61`, `#31`, `#72` |
-| 8 | 11-12 | ~10 | Analytics & SEO (section 6) |
-| 9 | 12 | ~10 | Open-source readiness — repo visibility/License/CONTRIBUTING (`#25`), accept GC testers (`#54`), verify Fly preview-deploy staging (`#35`) |
-| 10 | 13-14 | — | Launch — root README/About (`#62`), portfolio + LinkedIn (`#63`), schedule LinkedIn launch posts via its native scheduler |
+| 1 | 1 | ~8 → **~5** | Board triage (done), root README, PWA icons, magic-link branding, set up the Event Descriptions note-taking pipeline (section 3) |
+| 2 | 1-7 (parallel, ~3 hrs/wk) | ~25 → **~20** | Event Descriptions end-to-end (sections 3-4) — reading/notes stay human-paced, only the drafting step speeds up |
+| 3 | 1-2 | ~20 → **~9** | Reliability — front-end test runner (`#33`), cron jobs (`#14`), lower-event click bug (`#69`), fix search (`#67`), default-All-Events-logged-out (`#70`) |
+| 4 | 2-3 | ~16 → **~10** | Migrate off the VPS to managed hosting — Fly.io + Render Postgres + Cloudflare Pages + Upstash Redis (section 4) |
+| 5 | 3-4 | ~14 → **~6** | Remaining security/infra — fix vulnerabilities (`#66`), minimal admin page (`#18`) |
+| 6 | 4-6 | ~22 → **~14** | Multi-provider & auth — additional auth providers (`#21`), Nodemailer OTP login (`#15`), calendar providers beyond ICS subscribe (`#26`), confirm Google OAuth app publish status (`#68`, external review wait not counted in hours) |
+| 7 | 6-7 | ~14 → **~6** | UX polish from feedback — `#55`-`#61`, `#31`, `#72` |
+| 8 | 7-8 | ~10 → **~4** | Analytics & SEO (section 5) |
+| 9 | 8 | ~10 → **~5** | Open-source readiness — repo visibility/License/CONTRIBUTING (`#25`), accept GC testers (`#54`), verify Fly preview-deploy staging (`#35`) |
+| 10 | 8-9 | ~6 → **~3** | Launch — root README/About (`#62`), portfolio + LinkedIn (`#63`), schedule LinkedIn launch posts via its native scheduler |
 
-**Total: ~14 weeks (~145 hrs)**
+**Total: manual ~145 hrs (~14 weeks) → AI-accelerated ~85 hrs (~9 weeks)** at 10 hrs/week.
 
 ---
 
@@ -102,7 +113,7 @@ The 27 calendar events map onto only **13 real research topics**, because Ibn Ra
 | 10 | Dhul-Hijjah mega-topic (+ Dhul Hijjah Begins, First 10 Days, Hajj, Arafah, Eid al-Adha, Tashreeq) | ~4 |
 | 11 | White Days (recurring monthly fast) | ~1 |
 
-**Total ≈ 25 hours** for all 27 events, not 500 pages of blind reading.
+**Total ≈ 25 hours** for all 27 events, not 500 pages of blind reading. This is the one phase AI barely speeds up (~20 hrs AI-accelerated, see the note on methodology above) — the hour numbers above are mostly reading + note-taking, which stays at your pace regardless of tooling. Steps 2-3 in the drafting workflow below (writing the short/long blurbs from your notes) are the part AI compresses to near-zero; review in step 4 is still yours.
 
 ### Sources
 
@@ -167,17 +178,19 @@ Based on the personal "Hosting Tech Stack" notes (Obsidian vault, outside this r
 
 The Hosting Tech Stack notes already settled this for the 10-app case, and it holds for ICS too. Each project gets its own Fly "app" (own machines/env/volume) under one Fly org; autostop scales an idle app to ~$0; Fly is explicitly cheaper than Render for many small containers per those notes. Railway Pro (~$20+usage) is simpler DX but a flat fee regardless of app count — it stops being cheap past one or two projects. Keep Postgres on Render (one instance per app, never Fly's own managed Postgres — flagged as "reject" at ~$38/instance). Reuse this same Fly-org + Render-per-app pattern for any future Dockerized project.
 
-### Migration steps (~16 hrs)
+### Migration steps (~16 hrs manual → ~10 hrs AI-accelerated)
 
-1. Create Fly.io, Render, Cloudflare, Better Stack accounts/projects — 1 hr
-2. Write `fly.toml`, deploy API container to Fly, verify against existing Dockerfile — 3 hrs
-3. Provision Render Postgres, `pg_dump`/`pg_restore` data from the VPS DB — 3 hrs
-4. Provision Upstash Redis, point rate-limit config at it — 1 hr
-5. Cloudflare Pages project for the frontend, verify build — 2 hrs
-6. Move secrets into GitHub Environments + `fly secrets` — 1 hr
-7. Rewrite `.github/workflows/deploy-vps.yml` into Fly + Cloudflare deploy workflows — 2 hrs
-8. Better Stack monitor + DNS cutover — 1 hr
-9. Validate end-to-end in production, decommission the VPS — 2 hrs
+Config/workflow-writing steps compress hard with AI; account creation, data migration execution, and DNS propagation stay closer to real time.
+
+1. Create Fly.io, Render, Cloudflare, Better Stack accounts/projects — 1 hr → 1 hr (manual clicking)
+2. Write `fly.toml`, deploy API container to Fly, verify against existing Dockerfile — 3 hrs → 1.5 hrs
+3. Provision Render Postgres, `pg_dump`/`pg_restore` data from the VPS DB — 3 hrs → 2.5 hrs (execution + validation still takes real time)
+4. Provision Upstash Redis, point rate-limit config at it — 1 hr → 0.5 hr
+5. Cloudflare Pages project for the frontend, verify build — 2 hrs → 1 hr
+6. Move secrets into GitHub Environments + `fly secrets` — 1 hr → 0.5 hr
+7. Rewrite `.github/workflows/deploy-vps.yml` into Fly + Cloudflare deploy workflows — 2 hrs → 0.5 hr
+8. Better Stack monitor + DNS cutover — 1 hr → 1 hr (DNS propagation is wall-clock, not hands-on)
+9. Validate end-to-end in production, decommission the VPS — 2 hrs → 1.5 hrs
 
 ---
 
@@ -193,7 +206,7 @@ The Hosting Tech Stack notes already settled this for the 10-app case, and it ho
 - JSON-LD structured data (`SoftwareApplication` or `WebSite`) on the landing page.
 - Verify the domain in Google Search Console, submit the sitemap.
 
-**~10 hrs:** GA4 + Cloudflare Analytics setup (2 hrs), meta/OG/Twitter tags (2 hrs), sitemap + robots.txt + noindex gating (2 hrs), JSON-LD (2 hrs), Search Console verification + submit (2 hrs).
+**~10 hrs manual → ~4 hrs AI-accelerated:** GA4 + Cloudflare Analytics setup (2 hrs → 1 hr), meta/OG/Twitter tags (2 hrs → 0.5 hr), sitemap + robots.txt + noindex gating (2 hrs → 0.5 hr), JSON-LD (2 hrs → 0.5 hr), Search Console verification + submit (2 hrs → 1.5 hrs, domain verification/DNS is manual).
 
 ---
 
