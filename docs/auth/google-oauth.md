@@ -1,6 +1,6 @@
 # Google OAuth Strategy and Authentication
 
-This document describes how Google OAuth2 is integrated with Passport.js and how it works with the application's JWT-based authentication. For the overall JWT flow (issuing, validating, logout), see [jwt_implementation.md](jwt_implementation.md).
+This document describes how Google OAuth2 is integrated with Passport.js and how it works with the application's JWT-based authentication. For the overall JWT flow (issuing, validating, logout), see [jwt.md](jwt.md).
 
 ---
 
@@ -79,7 +79,7 @@ APP_BASE_URL=http://localhost:5000
 
 ## Why the app issues its own JWT
 
-Google identity proves who the user is during OAuth callback, but ongoing app authorization is handled by the app's own JWT (`sub: userId`) validated by `passport-jwt`. See [jwt_implementation.md](jwt_implementation.md).
+Google identity proves who the user is during OAuth callback, but ongoing app authorization is handled by the app's own JWT (`sub: userId`) validated by `passport-jwt`. See [jwt.md](jwt.md).
 
 ---
 
