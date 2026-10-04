@@ -27,6 +27,10 @@ Start here if you're new to the project.
 - [Logging](features/logging.md) — Winston + Postgres transport
 - [Subscription testing](features/subscription-testing.md) — validate live ICS feeds
 
+## Planning
+
+- [Project timeline](planning/PROJECT_TIMELINE.md) — board audit, phased roadmap, Event Descriptions sourcing/pipeline, VPS-to-managed-hosting migration, Analytics & SEO
+
 ## Report
 
 - [Final report](report/FINAL_REPORT.md) — CSC 490 independent study write-up
