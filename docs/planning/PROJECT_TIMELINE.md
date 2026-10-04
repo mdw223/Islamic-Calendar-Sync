@@ -1,15 +1,15 @@
 # Project Timeline
 
-Last updated: 2026-10-04
+Last updated: 2026-10-04 (notes audit applied to the board later the same day)
 
 This is the working roadmap for Islamic Calendar Sync from "where the board actually is" to a polished, complete product: rich event descriptions, test coverage, open source, multi-provider auth/calendar sync, managed hosting, and a public launch.
 
-**Definition of "complete" used here:** a polished product — content-rich Learn/descriptions, tests, open source, multi-provider.
+**Definition of "complete" used here:** a polished product — content-rich Learn/descriptions, tests, open source, multi-provider. Prayer times (`#78`), TypeScript (`#83`), and the V2 habit-tracker/mobile ideas (`#90`) sit **after** that line, not on it.
 
 **Budget:** ~10 hrs/week, no hard deadline. Event Descriptions work runs in parallel the whole time at ~3 hrs/week rather than blocking everything else.
 
-**Manual estimate: ~14 weeks at 10 hrs/week (~145 hrs).**
-**AI-accelerated estimate: ~9 weeks at 10 hrs/week (~85 hrs)** — see methodology below. This is the number to plan against.
+**Manual estimate: ~19 weeks at 10 hrs/week (~190 hrs).**
+**AI-accelerated estimate: ~11 weeks at 10 hrs/week (~105 hrs)** — see methodology below. This is the number to plan against. The bump from the earlier ~85 hrs is the notes-audit items folded into phases 2 and 5–10 (auth decision, SAST, feedback form, subscribe UX, small calendar/settings UX, launch marketing).
 
 ### Why AI-accelerated is ~40% faster, not 90% faster
 
@@ -70,9 +70,9 @@ The board was checked against the actual code and brought up to date. Every chan
 
 ### Deferred past "complete" (stretch goals, not on the critical path)
 
-`#29` chrome extension, `#30` browser background.
+`#29` chrome extension, `#30` browser background. After the notes audit: `#78` prayer times, `#83` TypeScript, `#16`+`#82` public versioned API, `#90` V2 epic — see section 7.
 
-**Board totals after applying:** 31 Backlog, 2 Ready, 1 In progress, 1 In review, 26 Done.
+**Board totals after the first audit:** 31 Backlog, 2 Ready, 1 In progress, 1 In review, 26 Done. `#75`–`#77` were created next (now 34 Backlog). Notes-audit issues `#78`–`#90` landed later the same day — current totals are in section 7.
 
 ---
 
@@ -81,17 +81,19 @@ The board was checked against the actual code and brought up to date. Every chan
 | Phase | Weeks (AI-accel) | Hours: manual → AI-accelerated | Scope |
 |---|---|---|---|
 | 1 | 1 | ~8 → **~5** | Board triage (done), root README, PWA icons, magic-link branding, set up the Event Descriptions note-taking pipeline (section 3) |
-| 2 | 1-7 (parallel, ~3 hrs/wk) | ~25 → **~20** | Event Descriptions end-to-end (sections 3-4) — reading/notes stay human-paced, only the drafting step speeds up |
+| 2 | 1-7 (parallel, ~3 hrs/wk) | ~28 → **~22** | Event Descriptions end-to-end (sections 3-4) — reading/notes stay human-paced, only the drafting step speeds up. Also add the missing Mon/Thu and Shawwal-six event types (`#28`) |
 | 3 | 1-2 | ~20 → **~9** | Reliability — front-end test runner (`#33`), cron jobs (`#14`), lower-event click bug (`#69`), fix search (`#67`), default-All-Events-logged-out (`#70`) |
 | 4 | 2-3 | ~16 → **~10** | Migrate off the VPS to managed hosting — Fly.io + Render Postgres + Cloudflare Pages + Upstash Redis (section 4) |
-| 5 | 3-4 | ~14 → **~6** | Remaining security/infra — fix vulnerabilities (`#66`), minimal admin page (`#18`) |
-| 6 | 4-6 | ~22 → **~14** | Multi-provider & auth — additional auth providers (`#21`), Nodemailer OTP login (`#15`), calendar providers beyond ICS subscribe (`#26`), confirm Google OAuth app publish status (`#68`, external review wait not counted in hours) |
-| 7 | 6-7 | ~14 → **~6** | UX polish from feedback — `#55`-`#61`, `#31`, `#72` |
-| 8 | 7-8 | ~10 → **~4** | Analytics & SEO (section 5) |
-| 9 | 8 | ~10 → **~5** | Open-source readiness — repo visibility/License/CONTRIBUTING (`#25`), accept GC testers (`#54`), verify Fly preview-deploy staging (`#35`) |
-| 10 | 8-9 | ~6 → **~3** | Launch — root README/About (`#62`), portfolio + LinkedIn (`#63`), schedule LinkedIn launch posts via its native scheduler |
+| 5 | 3-5 | ~32 → **~15** | Remaining security/infra — fix vulnerabilities (`#66`), minimal admin page (`#18`), auth decision + JWT revocation or session migration (`#80`), SAST / threat model (`#81`), structured feedback form (`#85`) |
+| 6 | 5-7 | ~28 → **~17** | Multi-provider & auth — additional auth providers (`#21`), Nodemailer OTP login (`#15`), calendar providers beyond ICS subscribe (`#26`), subscribe URL one-click add + filters (`#86`), confirm Google OAuth app publish status (`#68`, external review wait not counted in hours) |
+| 7 | 7-8 | ~21 → **~10** | UX polish from feedback — `#55`-`#61`, `#31`, `#72`, date converter (`#79`), settings account email (`#84`), overlapping fasting-day UI (`#87`) |
+| 8 | 8-9 | ~10 → **~4** | Analytics & SEO (section 5) |
+| 9 | 9 | ~11 → **~6** | Open-source readiness — repo visibility/License/CONTRIBUTING (`#25`), accept GC testers (`#54`), verify Fly preview-deploy staging (`#35`), Beta badge (`#88`) |
+| 10 | 9-11 | ~14 → **~9** | Launch — root README/About (`#62`), portfolio + LinkedIn + mentor shoutout (`#63`), outreach / demos / survey (`#89`) |
 
-**Total: manual ~145 hrs (~14 weeks) → AI-accelerated ~85 hrs (~9 weeks)** at 10 hrs/week.
+**Total: manual ~190 hrs (~19 weeks) → AI-accelerated ~105 hrs (~11 weeks)** at 10 hrs/week.
+
+Post-complete (not in the total): prayer times (`#78`, ~25 hrs → ~12), TypeScript (`#83`), public API versioning (`#16` + `#82`), V2 (`#90`). See section 7.
 
 ---
 
@@ -210,8 +212,79 @@ Config/workflow-writing steps compress hard with AI; account creation, data migr
 
 ---
 
-## 6. New issues to create
+## 6. Notes audit applied to the board
 
-- "Migrate off VPS to managed hosting (Fly.io + Render Postgres + Cloudflare Pages)" — section 4
-- "Analytics (Cloudflare Web Analytics + GA4)" — section 5
-- "SEO for marketing pages (meta/OG tags, sitemap, robots.txt, JSON-LD, noindex on app routes, Search Console)" — section 5
+Source: personal Obsidian note. Every uncrossed item is now either a comment on an existing issue, a new issue, explicitly skipped, or parked on the V2 epic.
+
+### ⚠️ Date-converter discrepancy — resolved
+
+The notes had "Date converter between gregorian and hijri (in navbar)" marked done. Confirmed **not built**: navbar has no converter, `HijriUtils` is Gregorian → Hijri only. Re-opened as `#79`.
+
+### New issues created
+
+| Issue | What | Phase |
+|---|---|---|
+| `#75` | Migrate off VPS to managed hosting (Fly.io + Render Postgres + Cloudflare Pages) | 4 |
+| `#76` | Analytics (Cloudflare Web Analytics + GA4) | 8 |
+| `#77` | SEO for marketing pages | 8 |
+| `#78` | Prayer times (navbar, monthly table, methods, qibla, masjid) | post-complete |
+| `#79` | Hijri ↔ Gregorian date converter in the navbar | 7 |
+| `#80` | Auth decision: sessions vs JWT revocation | 5 |
+| `#81` | SAST + threat modeling | 5 |
+| `#82` | API `/v1` versioning and documentation | post-complete (with `#16`) |
+| `#83` | Migrate API to TypeScript | post-complete |
+| `#84` | Show signed-in account email on Settings | 7 |
+| `#85` | Structured feature-request / bug-report form | 5 |
+| `#86` | Subscribe URL: one-click provider add + filter customization | 6 |
+| `#87` | Special calendar UI for overlapping fasting days | 7 |
+| `#88` | Add a Beta badge to the site | 9 |
+| `#89` | Launch marketing: outreach, demos, survey, swag | 10 |
+| `#90` | V2 backlog epic (habit tracker, mobile, makeup tracker) | deferred |
+
+### Mapped onto existing issues (comment added, no new issue)
+
+| Existing issue | What the notes added |
+|---|---|
+| `#34` Event Descriptions | dawah/encouragement page + share popup, Learn-page preface from the book intro, downloadable PDF, hadith sourcing, default duas in descriptions, seerah as a follow-on, SEO the Learn pages |
+| `#28` Add more Islamic Days | Mon/Thu sunnah fasting and 6 days of Shawwal as **new event types**; seerah/companions later |
+| `#26` Add Calendar Providers | two-way OAuth sync research, change-provider later, cal.com docs, optional paid auto-sync |
+| `#67` Fix search results | search should hit write-ups once `#34` content exists |
+| `#18` Admin page | monitor sign-ups; then `#85` + `#54` |
+| `#68` Publish Google Auth app | "allow sign-ups in Google Cloud" |
+| `#54` Accept GC testers | get beta testers / announce beta / show friends |
+| `#63` Update portfolio/LinkedIn | mentor shoutout, teaser, v1 LinkedIn post |
+| `#77` SEO for marketing pages | top-of-Google goal; also SEO public Learn pages |
+| `#25` Make open source | "setup repo for opensource" |
+| `#29` / `#30` Chrome extension / browser background | rationale only (reminders, learning project, holiday notifications) |
+| `#31` Versioning popup | already this issue |
+| `#75` VPS migration | Docker Hub + "scaling cloud" superseded; HTTPS at cutover; Better Stack logs + Slack alerts; hold off documenting the old VPS setup |
+| `#16` make backend API public | pair with `#82` `/v1` + docs |
+| `#23` integration testing | curl + nginx/proxy checks |
+| `#27` emailUpdates / notifications | holiday-near popups (virtues, date, how-to link); prayer popups wait on `#78` |
+| `#32` testing/coverage workflows | BlinkDoc GH Actions note is too vague — add concrete diffs here when known; VPS auto-pull half superseded by `#75` |
+| `#57` landing-page goal messaging | product description + room for demo videos; Loom production is `#89` |
+| `#58` unique font | Dribbble / Dua composer as visual reference only |
+
+### Explicitly not turned into issues
+
+- **Lovable mock / waitlist** — the real app and landing page already exist.
+- **Organize notes on the laptop / add old todos to the board** — this pass.
+- **HTTPS as its own task** — comes with `#75` (Fly + Cloudflare).
+- **Document the current VPS / Vercel setup now** — would go stale the moment `#75` lands.
+- **Pure reference** in the notes (tool links, Islamic resource links, Dockerfile/logging snippets, full OAuth and Passport research blocks).
+
+---
+
+## 7. Board totals and post-complete
+
+**Board totals after applying the notes audit:** 47 Backlog, 2 Ready, 1 In progress, 1 In review, 26 Done.
+
+### After "complete" (not on the 11-week critical path)
+
+| Issue | Why it waits |
+|---|---|
+| `#78` Prayer times | Entirely new product surface. Scaffolding exists but nothing is wired. Roughly ~25 hrs manual → ~12 AI-accelerated once started. |
+| `#16` + `#82` Public versioned API | Useful, not required to ship the polished app. Do it when you actually want third-party consumers. |
+| `#83` TypeScript migration | Compile-time safety, no user-facing change. |
+| `#29` / `#30` Chrome extension / browser background | Already deferred stretch goals. |
+| `#90` V2 epic | Habit tracker, prayer makeup, hasanat, zakat, hifdh, iPhone widgets, provider-calendar prayer color blocks, DeenPal rebuild. Separate product phase. |
